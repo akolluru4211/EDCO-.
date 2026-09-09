@@ -1,0 +1,58 @@
+{
+  "expo": {
+    "name": "Edworld Co",
+    "slug": "edworld-co-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0f172a"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "co.edworld.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Edworld Co uses your camera to record mock interview practice answers for AI speech and presentation feedback.",
+        "NSMicrophoneUsageDescription": "Edworld Co uses your microphone to transcribe your interview answers and analyze speech pace and delivery metrics."
+      },
+      "usesAppleSignIn": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0f172a"
+      },
+      "package": "co.edworld.app",
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "NOTIFICATIONS"
+      ]
+    },
+    "plugins": [
+      "expo-apple-authentication",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Edworld Co to access your camera for mock interview video recordings.",
+          "microphonePermission": "Allow Edworld Co to access your microphone for mock interview audio transcription."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#0284c7"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "edworld-co-mobile-id"
+      }
+    }
+  }
+}

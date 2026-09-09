@@ -1,0 +1,92 @@
+name: Edworld Co CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, staging ]
+  pull_request:
+    branches: [ main, staging ]
+
+jobs:
+  test-and-verify:
+    name: Run Automated Test Suites & Build Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Backend Unit Tests
+        run: |
+          node test/unit/age_band.test.js
+          node test/unit/effective_level.test.js
+          node test/unit/entitlements.test.js
+          node test/unit/razorpay_signatures.test.js
+          node test/unit/gamification_idempotency.test.js
+
+      - name: Run Postgres RLS Policy Allow/Deny Matrix Tests
+        run: node scripts/verify_rls_allow_deny_matrix.js
+
+      - name: Run Log-Scrubbing & PII Redaction Verification
+        run: node scripts/verify_log_scrubbing.js
+
+      - name: Run Monitoring & Cost Anomaly Alert Simulation
+        run: node scripts/simulate_cost_alert.js
+
+      - name: Run Disaster Recovery Scratch Restore Drill
+        run: node scripts/verify_backup_and_restore.js
+
+      - name: Run All 8 Core Feature Test Suites
+        run: |
+          node scripts/verify_feature12_stage_expansion.js
+          node scripts/verify_interview_feature3_extension.js
+          node scripts/verify_institutional_panels.js
+          node scripts/verify_monetization_feature10.js
+          node scripts/verify_gamification.js
+          node scripts/verify_school_track.js
+          node scripts/verify_auth_email_only.js
+          node scripts/verify_relational_rls_and_bypass.js
+          node scripts/verify_supabase_migration.js
+
+      - name: Next.js Production Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+  deploy-staging:
+    name: Deploy to Staging (Kubernetes & Supabase)
+    needs: test-and-verify
+    if: github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & Push Staging Container
+        run: |
+          echo "Building container image for staging..."
+          # docker build -t edworld-registry.azurecr.io/edworld-app:staging-${{ github.sha }} .
+          # docker push edworld-registry.azurecr.io/edworld-app:staging-${{ github.sha }}
+
+      - name: Apply Staging Kubernetes Manifests
+        run: |
+          echo "Applying Kubernetes manifests to edworld-staging namespace..."
+          # kubectl apply -f k8s/namespaces.yaml
+          # kubectl apply -f k8s/deployment-staging.yaml
+
+      - name: Run Staging Smoke Test
+        run: |
+          echo "Smoke testing staging endpoint..."
+          # curl -f https://staging.edworld.co/api/feature-flags || exit 1

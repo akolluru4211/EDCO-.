@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: edworld-app
+  namespace: edworld-prod
+  labels:
+    app: edworld-app
+    environment: prod
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: edworld-app
+  template:
+    metadata:
+      labels:
+        app: edworld-app
+    spec:
+      containers:
+        - name: edworld-next-server
+          image: edworld-registry.azurecr.io/edworld-app:prod-v1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: NEXT_PUBLIC_APP_URL
+              value: "https://app.edworld.co"
+            - name: NEXT_PUBLIC_SUPABASE_URL
+              value: "https://wgyscapdywroefsjenno.supabase.co"
+            - name: NEXT_PUBLIC_SUPABASE_ANON_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: edworld-secrets
+                  key: supabase-anon-key
+            - name: SUPABASE_SERVICE_ROLE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: edworld-secrets
+                  key: supabase-service-role-key
+            - name: RAZORPAY_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: edworld-secrets
+                  key: razorpay-key-id
+            - name: RAZORPAY_KEY_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: edworld-secrets
+                  key: razorpay-secret
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1024Mi"
+            limits:
+              cpu: "2000m"
+              memory: "2048Mi"
+          readinessProbe:
+            httpGet:
+              path: /api/feature-flags
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /api/feature-flags
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 10

@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: edworld-app
+  namespace: edworld-staging
+  labels:
+    app: edworld-app
+    environment: staging
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: edworld-app
+  template:
+    metadata:
+      labels:
+        app: edworld-app
+    spec:
+      containers:
+        - name: edworld-next-server
+          image: edworld-registry.azurecr.io/edworld-app:staging-latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: NEXT_PUBLIC_APP_URL
+              value: "https://staging.edworld.co"
+            - name: NEXT_PUBLIC_SUPABASE_URL
+              value: "https://staging-wgyscapdywroefsjenno.supabase.co"
+            - name: NEXT_PUBLIC_SUPABASE_ANON_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: edworld-secrets
+                  key: supabase-anon-key
+            - name: SUPABASE_SERVICE_ROLE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: edworld-secrets
+                  key: supabase-service-role-key
+            - name: RAZORPAY_KEY_ID
+              value: "rzp_test_staging_key"
+            - name: RAZORPAY_KEY_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: edworld-secrets
+                  key: razorpay-secret
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1024Mi"
+          readinessProbe:
+            httpGet:
+              path: /api/feature-flags
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /api/feature-flags
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 10

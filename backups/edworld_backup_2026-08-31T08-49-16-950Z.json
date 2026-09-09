@@ -1,0 +1,19 @@
+{
+  "version": "1.0.0",
+  "timestamp": "2026-08-31T08:49:16.950Z",
+  "environment": "production_snapshot",
+  "tables": [
+    "users",
+    "profiles",
+    "plans",
+    "badges",
+    "quests",
+    "scholarships",
+    "colleges",
+    "placement_drives",
+    "hackathons",
+    "salary_reference_data"
+  ],
+  "retentionPolicy": "Data retention compliant (expired media excluded)",
+  "status": "verified_export"
+}

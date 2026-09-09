@@ -1,0 +1,682 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: #fbfaf8;
+    --foreground: #18181b;
+  }
+
+  body {
+    color: var(--foreground);
+    background-color: var(--background);
+    font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Custom Scrollbar for Builder & Editor panels */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Neumorphic Soft-Embossed Button System */
+.btn-neumorphic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #516d91;
+  background-color: #e0e8ef;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  border-radius: 40px;
+  padding: 12px 24px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: -4px -2px 16px 0px #ffffff, 4px 2px 16px 0px rgba(95, 157, 231, 0.42);
+  cursor: pointer;
+}
+
+.btn-neumorphic:hover {
+  color: #2d496d;
+  background-color: #e6eff7;
+  transform: scale(1.02);
+  box-shadow: -2px -1px 8px 0px #ffffff, 2px 1px 10px 0px rgba(95, 157, 231, 0.48);
+}
+
+.btn-neumorphic:active {
+  box-shadow: inset -2px -2px 6px #ffffff, inset 2px 2px 6px rgba(95, 157, 231, 0.4);
+  transform: scale(0.98);
+}
+
+.btn-neumorphic-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-radius: 40px;
+  padding: 12px 24px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: -4px -2px 16px 0px rgba(255, 255, 255, 0.75), 4px 3px 18px 0px rgba(2, 132, 199, 0.48);
+  cursor: pointer;
+}
+
+.btn-neumorphic-primary:hover {
+  color: #ffffff;
+  background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+  transform: scale(1.02);
+  box-shadow: -2px -1px 8px 0px rgba(255, 255, 255, 0.8), 2px 2px 12px 0px rgba(2, 132, 199, 0.55);
+}
+
+.btn-neumorphic-primary:active {
+  box-shadow: inset -2px -2px 6px rgba(255, 255, 255, 0.2), inset 2px 2px 6px rgba(0, 0, 0, 0.3);
+  transform: scale(0.98);
+}
+
+/* Minimal Lucid Design System Classes */
+.lucid-card {
+  background-color: #ffffff;
+  border-radius: 24px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02), 0 10px 30px -10px rgba(15, 23, 42, 0.04);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.lucid-card-hover {
+  background-color: #ffffff;
+  border-radius: 24px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02), 0 10px 30px -10px rgba(15, 23, 42, 0.04);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.lucid-card-hover:hover {
+  border-color: rgba(203, 213, 225, 1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.03), 0 20px 35px -12px rgba(15, 23, 42, 0.08);
+}
+
+.lucid-glass {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+.lucid-badge-emerald {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  background-color: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #dcfce7;
+}
+
+.lucid-badge-amber {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  background-color: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fef3c7;
+}
+
+.lucid-badge-indigo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  background-color: #eef2ff;
+  color: #4338ca;
+  border: 1px solid #e0e7ff;
+}
+
+.btn-neumorphic-dark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+  background-color: #020617;
+  border: 2px solid rgba(51, 65, 85, 0.8);
+  border-radius: 40px;
+  padding: 12px 24px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: -3px -2px 12px 0px rgba(255, 255, 255, 0.5), 4px 3px 16px 0px rgba(15, 23, 42, 0.4);
+  cursor: pointer;
+}
+
+.btn-neumorphic-dark:hover {
+  background-color: #0f172a;
+  transform: scale(1.02);
+  box-shadow: -2px -1px 6px 0px rgba(255, 255, 255, 0.6), 2px 2px 10px 0px rgba(15, 23, 42, 0.5);
+}
+
+.btn-neumorphic-dark:active {
+  transform: scale(0.98);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+/* Neumorphic Inset Input System (for Auth & Search Spaces) */
+.input-neumorphic {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  outline: none;
+  border-radius: 16px;
+  padding: 12px 18px;
+  background-color: #e2e8f0;
+  box-shadow: inset 2px 4px 8px rgba(15, 23, 42, 0.12), inset -2px -2px 6px rgba(255, 255, 255, 0.9);
+  transition: all 250ms ease-in-out;
+  color: #0f172a;
+  font-size: 13px;
+}
+
+.input-neumorphic::placeholder {
+  color: #94a3b8;
+}
+
+.input-neumorphic:focus {
+  background-color: #ffffff;
+  transform: scale(1.01);
+  box-shadow: 6px 6px 20px rgba(148, 163, 184, 0.3), -6px -6px 20px #ffffff, 0 0 0 2px #0284c7;
+}
+
+/* Expanding Corner Hover Card System */
+.card-hover-expand {
+  display: block;
+  position: relative;
+  border-radius: 16px;
+  padding: 1.8em 1.5em;
+  text-decoration: none;
+  z-index: 0;
+  overflow: hidden;
+  background: linear-gradient(145deg, #e2f1f5 0%, #cbe5eb 100%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
+  transition: all 0.35s ease-out;
+}
+
+.card-hover-expand::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: -16px;
+  right: -16px;
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  height: 36px;
+  width: 36px;
+  border-radius: 36px;
+  transform: scale(1);
+  transform-origin: 50% 50%;
+  transition: transform 0.45s ease-out;
+}
+
+.card-hover-expand:hover::before {
+  transform: scale(38);
+}
+
+.card-hover-expand .card-title {
+  color: #0f172a;
+  font-size: 1.25em;
+  line-height: 1.3;
+  font-weight: 800;
+  margin-bottom: 0.5em;
+  transition: color 0.4s ease-out;
+}
+
+.card-hover-expand .small-desc {
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.55;
+  color: #334155;
+  transition: color 0.4s ease-out;
+}
+
+.card-hover-expand:hover .card-title {
+  color: #ffffff;
+}
+
+.card-hover-expand:hover .small-desc {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.card-hover-expand .go-corner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  width: 2.2em;
+  height: 2.2em;
+  overflow: hidden;
+  top: 0;
+  right: 0;
+  background: linear-gradient(135deg, #0284c7, #0369a1);
+  border-radius: 0 16px 0 32px;
+  box-shadow: -2px 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.card-hover-expand .go-arrow {
+  margin-top: -3px;
+  margin-right: -3px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 900;
+  font-family: inherit;
+  transition: transform 0.3s ease-out;
+}
+
+.card-hover-expand:hover .go-arrow {
+  transform: translate(2px, -2px);
+}
+
+/* Vibrant Gradient Subscription Card System */
+.sub-card-gradient {
+  background: linear-gradient(to top right, #975af4, #2f7cf8 40%, #78aafa 65%, #934cff 100%);
+  padding: 4px;
+  border-radius: 32px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 12px 32px rgba(47, 124, 248, 0.25);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.sub-card-gradient:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(151, 90, 244, 0.35);
+}
+
+.sub-card-gradient .title-card {
+  display: flex;
+  align-items: center;
+  padding: 14px 18px;
+  justify-content: space-between;
+  color: #fff;
+}
+
+.sub-card-gradient .title-card p {
+  font-size: 13px;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 8px rgba(41, 117, 238, 0.8);
+}
+
+.sub-card-gradient .card-content {
+  width: 100%;
+  height: 100%;
+  background-color: #161a20;
+  border-radius: 28px;
+  color: #94a3b8;
+  font-size: 12px;
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sub-card-gradient .card-btn {
+  background: linear-gradient(4deg, #975af4, #2f7cf8 40%, #78aafa 65%, #934cff 100%);
+  padding: 12px;
+  border: none;
+  width: 100%;
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.sub-card-gradient .card-btn:hover {
+  color: #ffffff;
+  text-shadow: 0 0 8px #ffffff;
+  transform: scale(1.02);
+}
+
+.sub-card-gradient .card-btn:active {
+  transform: scale(0.98);
+}
+
+/* Holographic Event Ticket System */
+.ticket-card {
+  --perforation-size: 12px;
+  --cutouts-adjust: 70px;
+
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 1rem;
+  grid-template-areas:
+    "header"
+    "body"
+    "footer";
+
+  width: 200px;
+  min-height: 320px;
+  padding: var(--perforation-size) 0;
+
+  font-family: inherit;
+  user-select: none;
+  overflow: hidden;
+  border-radius: 12px;
+
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.12)) drop-shadow(0 10px 20px rgba(0, 0, 0, 0.15));
+  animation: ticket-hover 3.5s ease-in-out infinite;
+  will-change: transform, filter;
+}
+
+@keyframes ticket-hover {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.12)) drop-shadow(0 10px 20px rgba(0, 0, 0, 0.15));
+  }
+  50% {
+    transform: translateY(-8px) scale(1.02);
+    filter: drop-shadow(0 12px 14px rgba(0, 0, 0, 0.1)) drop-shadow(0 24px 32px rgba(2, 132, 199, 0.2));
+  }
+}
+
+.ticket-bg-holographic {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-color: #fff;
+  background-image: linear-gradient(to bottom, rgba(254, 88, 88, 0.5), 90%, rgba(0, 0, 0, 0.1)),
+    conic-gradient(
+      at 60% 50%,
+      #ccc,
+      #ff6bfe,
+      #00f9f8,
+      #ddd,
+      #0081fd,
+      #eef0bc,
+      #0081fd,
+      #ff6bfe,
+      rgba(0, 0, 0, 0.1),
+      #0081fd,
+      #ddd,
+      #01fefb,
+      #ccc
+    );
+}
+
+.ticket-bg-holographic::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at 70% 20%, #f0f, transparent),
+    repeating-radial-gradient(circle at 30% 80%, #fff, #f4a 48px, #eeeeee 150px);
+  mix-blend-mode: color-burn;
+}
+
+.ticket-bg-holographic::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(to bottom, rgba(242, 0, 85, 0.3), #f00, #0f0, rgba(242, 0, 85, 0.3));
+  mix-blend-mode: difference;
+  animation: ticket-bg-pos 4s ease-in-out infinite alternate;
+  background-size: 100% 300%;
+}
+
+@keyframes ticket-bg-pos {
+  to {
+    background-position: 0 400px;
+  }
+}
+
+.ticket-barcode {
+  justify-self: center;
+  width: 0;
+  height: 28px;
+  box-shadow:
+    0px 0 0 1px #000,
+    4px 0 0 1px #000,
+    6px 0 0 1px #000,
+    9px 0 0 1px #000,
+    13px 0 0 1px #000,
+    14px 0 0 1px #000,
+    18px 0 0 1px #000,
+    23px 0 0 1px #000,
+    25px 0 0 1px #000,
+    29px 0 0 1px #000,
+    30px 0 0 1px #000,
+    34px 0 0 1px #000,
+    38px 0 0 1px #000,
+    42px 0 0 1px #000,
+    44px 0 0 1px #000,
+    48px 0 0 1px #000,
+    52px 0 0 1px #000,
+    56px 0 0 1px #000,
+    60px 0 0 1px #000;
+  transform: translateX(30px);
+}
+
+/* Print Rules for ATS Resumes */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-page {
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    page-break-after: always;
+  }
+}
+
+/* ========================================================================= */
+/* QUIXEL MODERN GAMIFIED UI/UX SYSTEM                                       */
+/* ========================================================================= */
+
+.quixel-page-container {
+  background-color: #F4F6FB;
+  min-height: 100vh;
+}
+
+.quixel-shell {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 1.25rem 1.5rem 3rem 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .quixel-shell {
+    padding: 1.75rem 2.25rem 4rem 2.25rem;
+  }
+}
+
+/* Base Quixel Card */
+.card-quixel {
+  background: #ffffff;
+  border-radius: 1.75rem;
+  border: 1px solid #E8ECF2;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.035);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+}
+
+.card-quixel-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.06);
+  border-color: #D6DCE7;
+}
+
+/* Decorative Organic Blobs for Cards */
+.blob-accent-lime {
+  background: radial-gradient(circle at center, #D7FC51 0%, #C4F731 100%);
+  border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+  animation: blob-pulse 8s ease-in-out infinite alternate;
+}
+
+.blob-accent-lavender {
+  background: radial-gradient(circle at center, #ECE7FF 0%, #D8CEFD 100%);
+  border-radius: 50% 50% 40% 60% / 60% 40% 60% 40%;
+}
+
+.blob-accent-peach {
+  background: radial-gradient(circle at center, #FFEFEA 0%, #FFD6CB 100%);
+  border-radius: 60% 40% 50% 50% / 40% 60% 40% 60%;
+}
+
+@keyframes blob-pulse {
+  0% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.04) rotate(4deg); }
+  100% { transform: scale(0.98) rotate(-3deg); }
+}
+
+/* Quixel Pill Stats */
+.pill-stat {
+  background: #ffffff;
+  border-radius: 1.25rem;
+  border: 1px solid #E8ECF2;
+  padding: 0.625rem 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  min-width: 0;
+}
+
+@media (min-width: 640px) {
+  .pill-stat {
+    padding: 0.75rem 1.25rem;
+    gap: 0.875rem;
+  }
+}
+
+.pill-stat:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* Mobile Touch Scrollable Containers */
+.touch-scroll-x {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.touch-scroll-x::-webkit-scrollbar {
+  display: none;
+}
+
+/* Cyan Segmented Progress Bar */
+.progress-cyan-striped {
+  background-color: #E6FAF6;
+  border-radius: 9999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-cyan-fill {
+  background: linear-gradient(90deg, #00D2B4 0%, #1AE0C4 100%);
+  background-size: 16px 16px;
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.25) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.25) 50%,
+    rgba(255, 255, 255, 0.25) 75%,
+    transparent 75%,
+    transparent
+  );
+  animation: progress-stripes 1.5s linear infinite;
+  border-radius: 9999px;
+  height: 100%;
+}
+
+@keyframes progress-stripes {
+  from { background-position: 16px 0; }
+  to { background-position: 0 0; }
+}
+
+/* Vibrant Purple / Indigo Callout Banner */
+.banner-quixel-purple {
+  background: linear-gradient(135deg, #5C38FF 0%, #7B57FF 50%, #906FFF 100%);
+  border-radius: 1.75rem;
+  color: #ffffff;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 12px 32px rgba(106, 64, 255, 0.25);
+}
+
+.banner-quixel-purple::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Quixel Floating Streak Card */
+.floating-streak-card {
+  background: #ffffff;
+  border-radius: 1.75rem;
+  border: 1px solid #E5E8F0;
+  box-shadow: 0 20px 40px -10px rgba(18, 20, 30, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.02);
+}
+
+

@@ -1,0 +1,142 @@
+{
+  "mcp": {
+    "inputs": [
+      {
+        "type": "promptString",
+        "id": "anthropic_api_key",
+        "description": "Anthropic Claude API Key",
+        "password": true
+      },
+      {
+        "type": "promptString",
+        "id": "razorpay_key_id",
+        "description": "Razorpay Key ID",
+        "password": false
+      },
+      {
+        "type": "promptString",
+        "id": "razorpay_key_secret",
+        "description": "Razorpay Key Secret",
+        "password": true
+      },
+      {
+        "type": "promptString",
+        "id": "linkedin_li_at_cookie",
+        "description": "LinkedIn li_at session cookie",
+        "password": true
+      },
+      {
+        "type": "promptString",
+        "id": "github_personal_access_token",
+        "description": "GitHub Personal Access Token (PAT)",
+        "password": true
+      },
+      {
+        "type": "promptString",
+        "id": "google_oauth_client_id",
+        "description": "Google Workspace OAuth Client ID",
+        "password": false
+      },
+      {
+        "type": "promptString",
+        "id": "google_oauth_client_secret",
+        "description": "Google Workspace OAuth Client Secret",
+        "password": true
+      }
+    ],
+    "servers": {
+      "claude-analyzer": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "@anthropic-ai/claude-code",
+          "mcp",
+          "serve"
+        ],
+        "env": {
+          "ANTHROPIC_API_KEY": "${input:anthropic_api_key}"
+        }
+      },
+      "claude-plugins": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "@anthropic-ai/claude-plugins-mcp",
+          "--registry",
+          "https://github.com/anthropics/claude-plugins-official.git"
+        ],
+        "env": {
+          "ANTHROPIC_API_KEY": "${input:anthropic_api_key}",
+          "CLAUDE_PLUGINS_REGISTRY": "anthropics/claude-plugins-official"
+        }
+      },
+      "torchleet": {
+        "command": "python",
+        "args": [
+          "-m",
+          "torchleet.mcp"
+        ],
+        "env": {
+          "TORCHLEET_AUTOGRADER": "enabled"
+        }
+      },
+      "github": {
+        "command": "docker",
+        "args": [
+          "run",
+          "-i",
+          "--rm",
+          "-e",
+          "GITHUB_PERSONAL_ACCESS_TOKEN",
+          "ghcr.io/github/github-mcp-server:latest"
+        ],
+        "env": {
+          "GITHUB_PERSONAL_ACCESS_TOKEN": "${input:github_personal_access_token}"
+        }
+      },
+      "linkedin": {
+        "command": "docker",
+        "args": [
+          "run",
+          "-i",
+          "--rm",
+          "-e",
+          "LI_AT",
+          "stickerdaniel/linkedin-mcp-server:latest"
+        ],
+        "env": {
+          "LI_AT": "${input:linkedin_li_at_cookie}"
+        }
+      },
+      "razorpay": {
+        "command": "docker",
+        "args": [
+          "run",
+          "-i",
+          "--rm",
+          "-e",
+          "RAZORPAY_KEY_ID",
+          "-e",
+          "RAZORPAY_KEY_SECRET",
+          "razorpay-mcp-server:latest"
+        ],
+        "env": {
+          "RAZORPAY_KEY_ID": "${input:razorpay_key_id}",
+          "RAZORPAY_KEY_SECRET": "${input:razorpay_key_secret}"
+        }
+      },
+      "google-workspace": {
+        "command": "uvx",
+        "args": [
+          "workspace-mcp",
+          "--tool-tier",
+          "extended"
+        ],
+        "env": {
+          "GOOGLE_OAUTH_CLIENT_ID": "${input:google_oauth_client_id}",
+          "GOOGLE_OAUTH_CLIENT_SECRET": "${input:google_oauth_client_secret}"
+        }
+      }
+    }
+  }
+}
