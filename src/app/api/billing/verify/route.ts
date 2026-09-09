@@ -26,14 +26,12 @@ export async function POST(req: NextRequest) {
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest("hex");
 
-    if (razorpay_signature) {
+    if (!razorpay_signature || generatedSignature !== razorpay_signature) {
       const genBuf = Buffer.from(generatedSignature, "utf8");
-      const sigBuf = Buffer.from(razorpay_signature, "utf8");
+      const sigBuf = Buffer.from(razorpay_signature || "", "utf8");
       if (genBuf.length !== sigBuf.length || !crypto.timingSafeEqual(genBuf, sigBuf)) {
         return NextResponse.json({ error: "Invalid payment signature. Payment verification failed." }, { status: 400 });
       }
-    } else if (process.env.NODE_ENV === "production") {
-      return NextResponse.json({ error: "Missing payment signature" }, { status: 400 });
     }
 
     const periodDays = cycle === "yearly" ? 365 : 30;

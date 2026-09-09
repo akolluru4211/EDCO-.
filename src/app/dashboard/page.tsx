@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import GrowthRing from "@/components/ui/GrowthRing";
+import GamificationHUD from "@/components/dashboard/GamificationHUD";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -84,6 +85,18 @@ export default function DashboardPage() {
       } catch (err) {
         console.warn("Update career stage note:", err);
       }
+    }
+  };
+
+  const handleAwardPoints = async (actionType: string) => {
+    try {
+      await fetch("/api/gamification/award", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: actionType }),
+      });
+    } catch (e) {
+      console.warn("Points award note:", e);
     }
   };
 
@@ -576,6 +589,9 @@ export default function DashboardPage() {
                 />
               </div>
             </div>
+
+            {/* 4. Gamification HUD Widget */}
+            <GamificationHUD />
 
           </div>
 

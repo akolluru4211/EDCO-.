@@ -314,7 +314,7 @@ Prompt Engineering Tip: To get even deeper precision, try specifying output form
                     <div className="card-quixel rounded-3xl p-6 sm:p-8 border border-[#E8ECF2] bg-white space-y-4">
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] font-black uppercase text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                          AI Literacy Curriculum
+                          Mandatory Ethics &amp; AI Literacy Curriculum
                         </span>
                         <span className="text-xs font-mono text-[#8F9CAE]">Ages 13–15 Certified</span>
                       </div>
@@ -880,17 +880,26 @@ Prompt Engineering Tip: To get even deeper precision, try specifying output form
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-black text-[#13141B]">Verified Scholarships &amp; Grants</h3>
-                  <span className="text-xs text-[#8F9CAE] font-bold">Verified on a recurring schedule</span>
+                  <span className="text-xs text-emerald-700 font-bold bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                    ✓ Freshness Verified (Updated Weekly)
+                  </span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {scholarshipsList.map(s => (
+                  {scholarshipsList.map((s, idx) => (
                     <div key={s.id} className="card-quixel rounded-3xl p-6 border border-[#E8ECF2] bg-white space-y-3 flex flex-col justify-between">
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-mono text-[#8F9CAE]">Verified: {s.verifiedDate}</span>
+                          <span className="text-[10px] font-mono text-[#8F9CAE]">Freshness Verified: {s.verifiedDate}</span>
                           <span className="text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full">{s.amount}</span>
                         </div>
-                        <h4 className="font-bold text-base text-[#13141B]">{s.name}</h4>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-base text-[#13141B]">{s.name}</h4>
+                          {idx === 2 && (
+                            <span className="text-[9px] font-black uppercase text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                              Needs Review
+                            </span>
+                          )}
+                        </div>
                         <p className="text-xs text-[#5E6573] leading-relaxed">{s.criteria}</p>
                       </div>
                       <div className="pt-2 border-t border-[#E8ECF2] flex items-center justify-between text-xs">
