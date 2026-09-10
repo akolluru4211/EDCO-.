@@ -633,6 +633,25 @@ export async function getExecutiveKPI(): Promise<ExecutiveKPI> {
   return initialKpi;
 }
 
+export async function getExecutiveKPIs(): Promise<ExecutiveKPI> {
+  return getExecutiveKPI();
+}
+
+export async function getFinancialRecords(): Promise<FinancialRecord[]> {
+  return getStored<FinancialRecord>(KEYS.FINANCIALS, []);
+}
+
+export async function saveFinancialRecord(rec: Omit<FinancialRecord, "id">): Promise<FinancialRecord> {
+  const all = getStored<FinancialRecord>(KEYS.FINANCIALS, []);
+  const newRec: FinancialRecord = {
+    ...rec,
+    id: `fin_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+  };
+  all.unshift(newRec);
+  setStored(KEYS.FINANCIALS, all);
+  return newRec;
+}
+
 export async function getStrategicInitiatives(): Promise<StrategicInitiative[]> {
   return getStored<StrategicInitiative>(KEYS.INITIATIVES, []);
 }
