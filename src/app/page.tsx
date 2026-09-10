@@ -8,8 +8,7 @@ import {
   Compass, 
   ArrowRight, 
   ShieldCheck,
-  Zap,
-  Lock
+  ChevronRight
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import Button from "@/components/ui/Button";
@@ -37,167 +36,168 @@ export default async function HomePage() {
   };
 
   return (
-    <main className="h-[100dvh] max-h-[100dvh] w-full bg-[#0E0F15] text-white flex flex-col justify-between overflow-hidden relative select-none selection:bg-[#D7FC51] selection:text-[#13141B]">
+    <main className="h-[100dvh] max-h-[100dvh] w-full bg-white text-slate-900 flex flex-col justify-between overflow-hidden relative select-none overscroll-none touch-pan-y selection:bg-[#D7FC51] selection:text-slate-950">
       
-      {/* Background Animated Gradient Blobs */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-gradient-to-b from-[#7B57FF]/15 via-[#D7FC51]/10 to-transparent rounded-full blur-[100px] pointer-events-none animate-pulse duration-1000" />
-      <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-[#00D2B4]/10 rounded-full blur-[90px] pointer-events-none" />
-
-      {/* Top Minimal Navigation Bar */}
-      <header className="w-full px-4 sm:px-8 pt-4 sm:pt-6 pb-2 z-20 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-[#181924] border border-white/10 p-1 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform overflow-hidden">
-            <Image
-              src="/images/edworld-logo.png"
-              alt="Edworld Logo"
-              width={26}
-              height={26}
-              className="object-contain"
-              priority
-            />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-base sm:text-lg font-black tracking-tight text-white flex items-center gap-1 leading-none font-sans">
-              Edworld <span className="text-[#D7FC51]">Co.</span>
-            </span>
-            <span className="text-[9px] font-bold text-[#8E95A5] uppercase tracking-wider mt-0.5 leading-none">
-              Skills &amp; Career OS
-            </span>
-          </div>
-        </Link>
-
-        <div className="flex items-center gap-2 sm:gap-3">
-          <Link
-            href="/auth/login"
-            className="px-4 py-2 rounded-xl text-xs font-bold text-[#A6ABB9] hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-all shadow-sm"
-          >
-            Sign In
+      {/* Top Header — Sleek Dark Floating Bar ("except header" requirement) */}
+      <header className="w-full max-w-5xl mx-auto px-3 sm:px-6 pt-2.5 sm:pt-4 z-20 shrink-0">
+        <div className="bg-[#0F1117] text-white rounded-2xl px-3.5 sm:px-5 py-2.5 shadow-md flex items-center justify-between border border-slate-800">
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#1A1C24] border border-white/10 p-1 flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform overflow-hidden">
+              <Image
+                src="/images/edworld-logo.png"
+                alt="Edworld Logo"
+                width={24}
+                height={24}
+                className="object-contain"
+                priority
+              />
+            </div>
+            <div className="flex flex-col text-left">
+              <span className="text-sm sm:text-base font-black tracking-tight text-white flex items-center gap-1 leading-none font-sans">
+                Edworld <span className="text-[#D7FC51]">Co.</span>
+              </span>
+              <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5 leading-none">
+                Skills &amp; Career OS
+              </span>
+            </div>
           </Link>
-          <Button
-            href="/auth/signup"
-            variant="primary"
-            size="sm"
-            className="px-4 py-2 rounded-xl text-xs font-black bg-[#D7FC51] text-[#13141B] hover:bg-[#E9FFA4] shadow-md transition-all active:scale-95"
-          >
-            <span>Get Started</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Button>
+
+          <div className="flex items-center gap-2">
+            <Link
+              href="/auth/login"
+              className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white bg-white/10 hover:bg-white/15 border border-white/10 transition-all shadow-xs"
+            >
+              Sign In
+            </Link>
+            <Button
+              href="/auth/signup"
+              variant="primary"
+              size="sm"
+              className="px-3.5 py-1.5 rounded-xl text-xs font-black bg-[#D7FC51] text-[#0F1117] hover:bg-[#E8FFA6] shadow-sm transition-all active:scale-95"
+            >
+              <span>Get Started</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Button>
+          </div>
         </div>
       </header>
 
-      {/* Center Stage: Minimal Hero & Track Entrance Grid (Mobile Animated) */}
-      <div className="max-w-4xl mx-auto px-4 w-full z-10 my-auto py-2 flex flex-col items-center text-center space-y-4 sm:space-y-6 animate-in fade-in zoom-in-95 duration-500">
+      {/* Main Center Area: Mobile Application Style Cards (White Background, Black Text) */}
+      <div className="flex-1 w-full max-w-4xl mx-auto px-3.5 sm:px-6 py-1.5 sm:py-3 flex flex-col justify-center items-center text-center space-y-2.5 sm:space-y-4 animate-in fade-in zoom-in-95 duration-300 overflow-hidden">
         
-        {/* Sleek Pill Badge */}
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-bold text-[#D7FC51] shadow-inner backdrop-blur-md">
-          <Sparkles className="w-3.5 h-3.5 text-[#D7FC51]" />
-          <span>Calibrated to your exact effective level</span>
+        {/* Sleek Minimal Pill Badge */}
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-800 text-[11px] font-bold shadow-xs">
+          <Sparkles className="w-3.5 h-3.5 text-violet-600 shrink-0" />
+          <span>Calibrated Career &amp; Skills Platform</span>
         </div>
 
-        {/* Minimal Hero Title */}
-        <div className="space-y-2 max-w-2xl">
-          <h1 className="text-2xl sm:text-4xl md:text-5xl font-black font-display tracking-tight text-white leading-tight">
-            Real adaptivity for <br className="hidden sm:inline" />
-            <span className="bg-gradient-to-r from-white via-[#E8ECF2] to-[#D7FC51] bg-clip-text text-transparent">
-              every career stage.
-            </span>
+        {/* Hero Title & Subtitle */}
+        <div className="space-y-1 max-w-xl mx-auto">
+          <h1 className="text-xl sm:text-3xl md:text-4xl font-black tracking-tight text-slate-900 leading-tight">
+            Real adaptivity for every career stage.
           </h1>
-          <p className="text-xs sm:text-sm text-[#8E95A5] font-medium max-w-lg mx-auto leading-relaxed">
+          <p className="text-[11px] sm:text-xs text-slate-600 font-medium max-w-md mx-auto leading-relaxed">
             Select your learning pathway to enter your customized portal with zero generic rubrics.
           </p>
         </div>
 
-        {/* 3 Dedicated Segmented Portals (Kids, Students, Working Professionals) */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3.5 w-full pt-1 sm:pt-2">
+        {/* 3 Mobile App Style Track Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3.5 w-full max-w-3xl">
           
           {/* Track 1: Kid / Junior (13-15) */}
           <Link
             href="/auth/login?track=junior"
-            className="group p-3.5 sm:p-4 rounded-2xl bg-[#14151F]/90 hover:bg-[#1C1D2B] border border-white/10 hover:border-[#7B57FF]/60 text-left transition-all duration-200 shadow-lg hover:-translate-y-0.5 flex flex-col justify-between"
+            className="group p-3 sm:p-4 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/90 hover:border-violet-400 text-left transition-all duration-150 shadow-xs hover:shadow-md active:scale-[0.98] flex items-center sm:flex-col sm:items-start justify-between gap-2.5"
           >
-            <div className="space-y-2">
-              <div className="w-8 h-8 rounded-xl bg-[#EDE8FD] text-[#7B57FF] flex items-center justify-center shadow-sm">
+            <div className="flex items-center sm:flex-col sm:items-start gap-2.5 sm:gap-2">
+              <div className="w-8 h-8 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center shrink-0 shadow-xs">
                 <Compass className="w-4 h-4" />
               </div>
               <div>
-                <span className="text-[9px] font-black uppercase tracking-wider text-[#7B57FF] bg-[#EDE8FD]/10 px-2 py-0.5 rounded-full border border-[#7B57FF]/30">
-                  Ages 13–15
-                </span>
-                <h2 className="text-sm font-black text-white mt-1 group-hover:text-[#D7FC51] transition-colors">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[9px] font-black uppercase tracking-wider text-violet-700 bg-violet-50 px-1.5 py-0.5 rounded-md border border-violet-200">
+                    Ages 13–15
+                  </span>
+                </div>
+                <h2 className="text-xs sm:text-sm font-black text-slate-900 mt-0.5 group-hover:text-violet-700 transition-colors">
                   Junior School Lab
                 </h2>
-                <p className="text-[11px] text-[#8E95A5] mt-0.5 leading-snug line-clamp-2">
+                <p className="text-[10px] sm:text-[11px] text-slate-600 leading-snug line-clamp-1 sm:line-clamp-2 mt-0.5">
                   Curiosity quests, digital literacy &amp; private growth reflection.
                 </p>
               </div>
             </div>
-            <div className="pt-2 flex items-center text-[10px] font-black text-[#D7FC51] gap-1 group-hover:translate-x-0.5 transition-transform">
-              <span>Junior Login</span>
-              <ArrowRight className="w-3 h-3" />
+            <div className="flex items-center text-[10px] font-black text-violet-700 gap-0.5 shrink-0 group-hover:translate-x-0.5 transition-transform">
+              <span className="hidden sm:inline">Junior Login</span>
+              <ChevronRight className="w-4 h-4 sm:w-3 sm:h-3" />
             </div>
           </Link>
 
           {/* Track 2: Student / College (16-18) */}
           <Link
             href="/auth/login?track=student"
-            className="group p-3.5 sm:p-4 rounded-2xl bg-[#14151F]/90 hover:bg-[#1C1D2B] border border-white/10 hover:border-[#00D2B4]/60 text-left transition-all duration-200 shadow-lg hover:-translate-y-0.5 flex flex-col justify-between relative overflow-hidden"
+            className="group p-3 sm:p-4 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/90 hover:border-emerald-500 text-left transition-all duration-150 shadow-xs hover:shadow-md active:scale-[0.98] flex items-center sm:flex-col sm:items-start justify-between gap-2.5"
           >
-            <div className="space-y-2">
-              <div className="w-8 h-8 rounded-xl bg-[#E0FAF6] text-[#00D2B4] flex items-center justify-center shadow-sm">
+            <div className="flex items-center sm:flex-col sm:items-start gap-2.5 sm:gap-2">
+              <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0 shadow-xs">
                 <GraduationCap className="w-4 h-4" />
               </div>
               <div>
-                <span className="text-[9px] font-black uppercase tracking-wider text-[#00D2B4] bg-[#E0FAF6]/10 px-2 py-0.5 rounded-full border border-[#00D2B4]/30">
-                  Ages 16–18 &bull; College
-                </span>
-                <h2 className="text-sm font-black text-white mt-1 group-hover:text-[#D7FC51] transition-colors">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[9px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-200">
+                    Ages 16–18 &bull; College
+                  </span>
+                </div>
+                <h2 className="text-xs sm:text-sm font-black text-slate-900 mt-0.5 group-hover:text-emerald-800 transition-colors">
                   Student &amp; Campus
                 </h2>
-                <p className="text-[11px] text-[#8E95A5] mt-0.5 leading-snug line-clamp-2">
+                <p className="text-[10px] sm:text-[11px] text-slate-600 leading-snug line-clamp-1 sm:line-clamp-2 mt-0.5">
                   College comparisons, micro-projects, exams &amp; placement prep.
                 </p>
               </div>
             </div>
-            <div className="pt-2 flex items-center text-[10px] font-black text-[#D7FC51] gap-1 group-hover:translate-x-0.5 transition-transform">
-              <span>Student Login</span>
-              <ArrowRight className="w-3 h-3" />
+            <div className="flex items-center text-[10px] font-black text-emerald-800 gap-0.5 shrink-0 group-hover:translate-x-0.5 transition-transform">
+              <span className="hidden sm:inline">Student Login</span>
+              <ChevronRight className="w-4 h-4 sm:w-3 sm:h-3" />
             </div>
           </Link>
 
           {/* Track 3: Working Professional (18+) */}
           <Link
             href="/auth/login?track=pro"
-            className="group p-3.5 sm:p-4 rounded-2xl bg-[#14151F]/90 hover:bg-[#1C1D2B] border border-white/10 hover:border-[#D7FC51]/60 text-left transition-all duration-200 shadow-lg hover:-translate-y-0.5 flex flex-col justify-between"
+            className="group p-3 sm:p-4 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/90 hover:border-amber-500 text-left transition-all duration-150 shadow-xs hover:shadow-md active:scale-[0.98] flex items-center sm:flex-col sm:items-start justify-between gap-2.5"
           >
-            <div className="space-y-2">
-              <div className="w-8 h-8 rounded-xl bg-[#FFF6DC] text-[#FFB800] flex items-center justify-center shadow-sm">
+            <div className="flex items-center sm:flex-col sm:items-start gap-2.5 sm:gap-2">
+              <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-900 flex items-center justify-center shrink-0 shadow-xs">
                 <Briefcase className="w-4 h-4" />
               </div>
               <div>
-                <span className="text-[9px] font-black uppercase tracking-wider text-[#FFB800] bg-[#FFF6DC]/10 px-2 py-0.5 rounded-full border border-[#FFB800]/30">
-                  Ages 18+ Career
-                </span>
-                <h2 className="text-sm font-black text-white mt-1 group-hover:text-[#D7FC51] transition-colors">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[9px] font-black uppercase tracking-wider text-amber-900 bg-amber-50 px-1.5 py-0.5 rounded-md border border-amber-200">
+                    Ages 18+ Career
+                  </span>
+                </div>
+                <h2 className="text-xs sm:text-sm font-black text-slate-900 mt-0.5 group-hover:text-amber-900 transition-colors">
                   Working Professional
                 </h2>
-                <p className="text-[11px] text-[#8E95A5] mt-0.5 leading-snug line-clamp-2">
+                <p className="text-[10px] sm:text-[11px] text-slate-600 leading-snug line-clamp-1 sm:line-clamp-2 mt-0.5">
                   ATS resume scoring, STAR mock drills &amp; salary telemetry.
                 </p>
               </div>
             </div>
-            <div className="pt-2 flex items-center text-[10px] font-black text-[#D7FC51] gap-1 group-hover:translate-x-0.5 transition-transform">
-              <span>Career Login</span>
-              <ArrowRight className="w-3 h-3" />
+            <div className="flex items-center text-[10px] font-black text-amber-900 gap-0.5 shrink-0 group-hover:translate-x-0.5 transition-transform">
+              <span className="hidden sm:inline">Career Login</span>
+              <ChevronRight className="w-4 h-4 sm:w-3 sm:h-3" />
             </div>
           </Link>
 
         </div>
 
         {/* Central Sign In Action */}
-        <div className="pt-1 sm:pt-2 flex items-center gap-3">
+        <div className="pt-0.5 sm:pt-1 w-full max-w-sm mx-auto">
           <Link
             href="/auth/login"
-            className="px-6 py-2.5 rounded-2xl bg-[#D7FC51] hover:bg-[#E9FFA4] text-[#13141B] text-xs font-black shadow-lg hover:scale-105 transition-all flex items-center gap-2"
+            className="w-full py-2.5 sm:py-3 px-6 rounded-2xl bg-slate-900 hover:bg-black text-white text-xs font-black shadow-md hover:shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
           >
             <span>Sign In to Your Workspace</span>
             <ArrowRight className="w-4 h-4" />
@@ -206,23 +206,23 @@ export default async function HomePage() {
 
       </div>
 
-      {/* Bottom Minimal Footer & Compliance (Single line) */}
-      <footer className="w-full px-4 sm:px-8 py-3 z-20 border-t border-white/5 bg-[#0A0B0E]/80 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] text-[#717786]">
+      {/* Bottom Minimal Footer Bar (White Background, Black Text, Fixed Height) */}
+      <footer className="w-full max-w-5xl mx-auto px-4 py-2 z-20 shrink-0 border-t border-slate-100 bg-white">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-1.5 text-[10px] text-slate-500">
           <div className="flex items-center gap-2">
             <span>&copy; {new Date().getFullYear()} Edworld Co.</span>
             <span>&bull;</span>
-            <span className="flex items-center gap-1 text-[#8E95A5]">
-              <ShieldCheck className="w-3 h-3 text-emerald-400" />
+            <span className="flex items-center gap-1 text-slate-600 font-medium">
+              <ShieldCheck className="w-3 h-3 text-emerald-600" />
               DPDP Act &amp; Youth Safe
             </span>
           </div>
-          <div className="flex items-center gap-4 text-[#8E95A5] font-semibold">
-            <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
-            <Link href="/for-schools" className="hover:text-white transition-colors">For Schools</Link>
-            <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
-            <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
-            <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
+          <div className="flex items-center gap-3.5 text-slate-700 font-bold">
+            <Link href="/pricing" className="hover:text-slate-950 transition-colors">Pricing</Link>
+            <Link href="/for-schools" className="hover:text-slate-950 transition-colors">For Schools</Link>
+            <Link href="/privacy" className="hover:text-slate-950 transition-colors">Privacy</Link>
+            <Link href="/terms" className="hover:text-slate-950 transition-colors">Terms</Link>
+            <Link href="/contact" className="hover:text-slate-950 transition-colors">Contact</Link>
           </div>
         </div>
       </footer>
@@ -236,3 +236,4 @@ export default async function HomePage() {
     </main>
   );
 }
+

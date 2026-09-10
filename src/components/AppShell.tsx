@@ -14,6 +14,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   const visualMode = user?.ageBand === "18+" || !user?.ageBand ? "career" : "maximalist";
   const isAuthPage = pathname === "/auth/login" || pathname === "/auth/signup" || pathname?.startsWith("/auth/");
+  const isLandingPage = pathname === "/";
+  const noBottomPadding = isAuthPage || isLandingPage;
 
   useEffect(() => {
     if (user) {
@@ -34,10 +36,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     <div
       data-visual-mode={visualMode}
       data-age-band={user?.ageBand || "18+"}
-      className="min-h-screen flex flex-col bg-[#F4F6FB] font-sans text-[#181920] selection:bg-[#E1FD53] selection:text-[#181920]"
+      className={`min-h-screen flex flex-col font-sans selection:bg-[#E1FD53] selection:text-[#181920] ${
+        isLandingPage ? "bg-white text-slate-900 overflow-hidden" : "bg-[#F4F6FB] text-[#181920]"
+      }`}
     >
       {!isAuthPage && <Navbar />}
-      <main className={`flex-1 ${isAuthPage ? "" : "pb-24 md:pb-20 lg:pb-0"}`}>{children}</main>
+      <main className={`flex-1 ${noBottomPadding ? "" : "pb-24 md:pb-20 lg:pb-0"}`}>{children}</main>
 
       <ReconsentModal
         isOpen={showReconsent}
