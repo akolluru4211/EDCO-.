@@ -36,6 +36,8 @@ interface AuthContextType {
   isAdmin: boolean;
   isSuperAdmin: boolean;
   isPro: boolean;
+  sendOtp: (identifier: string, purpose?: "login" | "signup") => Promise<{ success: boolean; maskedIdentifier: string; cooldownSeconds: number; devOtp?: string }>;
+  verifyOtp: (identifier: string, otp: string, purpose?: "login" | "signup", metaData?: any) => Promise<{ role: UserRole; redirectUrl: string }>;
   loginWithEmail: (emailOrPhone: string, pass: string) => Promise<{ role: UserRole; redirectUrl: string }>;
   signupWithEmail: (name: string, email: string, pass: string, dob: string, gradeLevel?: string, phone?: string, careerStage?: CareerStage) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
@@ -487,11 +489,60 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { success: true, token };
   };
 
+  const sendOtp = async (identifier: string, purpose: "login" | "signup" = "login") => {
+    const res = await fetch("/api/auth/otp/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ identifier, purpose }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || "Failed to dispatch verification code.");
+    }
+    return data;
+  };
+
+  const verifyOtp = async (
+    identifier: string, 
+    otp: string, 
+    purpose: "login" | "signup" = "login", 
+    metaData?: any
+  ) => {
+    const res = await fetch("/api/auth/otp/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ identifier, otp, purpose, ...metaData }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || "Invalid or expired verification code.");
+    }
+
+    if (data.user) {
+      setUser(data.user);
+      const userRole = data.role || "CLIENT";
+      setActiveRole(userRole);
+      if (typeof window !== "undefined") {
+        localStorage.setItem(`edworld_active_role_${data.user.uid}`, userRole);
+        localStorage.setItem("edworld_auth_session", JSON.stringify(data.user));
+      }
+    }
+
+    return { role: data.role, redirectUrl: data.redirectUrl };
+  };
+
   const logout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {}
     await supabase.auth.signOut();
     setUser(null);
     setProfile(null);
     setSubscription(null);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("edworld_auth_session");
+      localStorage.removeItem("edworld_user_profile");
+    }
   };
 
   const updateUserProfile = async (data: Partial<UserProfile>) => {
@@ -647,6 +698,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAdmin,
         isSuperAdmin,
         isPro,
+        sendOtp,
+        verifyOtp,
         loginWithEmail,
         signupWithEmail,
         resetPassword,

@@ -75,6 +75,8 @@ export interface AppUser {
   isAdmin: boolean;            // Default false
   isTeacher?: boolean;         // Educator role
   isSchoolAdmin?: boolean;     // Institutional Admin role
+  role?: UserRole;             // Phase 19/22 RBAC system role
+  status?: string;             // Account status (ACTIVE, SUSPENDED, etc.)
   guardianConsent?: GuardianConsent;
   tosVersion?: string;
   privacyVersion?: string;

@@ -49,16 +49,13 @@ runTest('3. Landing page contains career-stage switcher, cards, and modal', () =
   assert(stageComponent.includes('Change Stage'), 'Stage confirmation change button missing');
 });
 
-// Test 4: Sign In page has stage switcher, dynamic microcopy, and password eye toggle
-runTest('4. Login page dynamically adapts to career stages and has password toggle', () => {
+// Test 4: Sign In page has unified OTP flow with 6-digit pin entry and resend countdown
+runTest('4. Login page provides unified OTP authentication with 6-digit input and zero role leakage', () => {
   const loginPage = fs.readFileSync(path.join(rootDir, 'src/app/auth/login/page.tsx'), 'utf8');
-  assert(loginPage.includes('STAGE_CONFIGS'), 'Login page must have STAGE_CONFIGS');
-  assert(loginPage.includes('Junior School Lab') || loginPage.includes('Junior Lab'), 'Login page must mention junior stage');
-  assert(loginPage.includes('Student & Campus') || loginPage.includes('Student Workspace'), 'Login page must mention student stage');
-  assert(loginPage.includes('Working Professional') || loginPage.includes('Career OS'), 'Login page must mention pro stage');
-  assert(loginPage.includes('showPassword'), 'Password toggle state missing');
-  assert(loginPage.includes('EyeOff') && loginPage.includes('Eye'), 'Eye / EyeOff icon missing');
-  assert(loginPage.includes('@edworld.co.in'), 'Corporate login guidance missing');
+  assert(loginPage.includes('Sign in to Edworld'), 'Login page must have Sign in to Edworld header');
+  assert(loginPage.includes('otp') && loginPage.includes('Send OTP'), 'Login page must support OTP flow');
+  assert(loginPage.includes('6-digit') || loginPage.includes('OTP code'), 'Login page must mention 6-digit OTP code');
+  assert(!loginPage.includes('Founder') && !loginPage.includes('Super Admin'), 'Login page must not leak internal roles');
 });
 
 // Test 5: Sign Up page has segmented switcher, common fields, and stage-specific fields

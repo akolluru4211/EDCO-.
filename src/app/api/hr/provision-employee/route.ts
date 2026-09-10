@@ -26,7 +26,7 @@ let provisionedEmployeesStore: ProvisionedEmployee[] = [
     fullName: "Aditya Verma",
     personalEmail: "aditya.v.dev@gmail.com",
     companyEmail: "aditya.verma@edworld.co.in",
-    temporaryPassword: "edworld@122",
+    temporaryPassword: "OTP-Secured Login",
     role: "Senior Backend Systems Engineer",
     department: "Engineering",
     employeeId: "EDW-EMP-2026-081",
@@ -43,7 +43,7 @@ let provisionedEmployeesStore: ProvisionedEmployee[] = [
     fullName: "Sneha Mukherjee",
     personalEmail: "sneha.m.design@outlook.com",
     companyEmail: "sneha.mukherjee@edworld.co.in",
-    temporaryPassword: "edworld@122",
+    temporaryPassword: "OTP-Secured Login",
     role: "Staff Frontend Architect",
     department: "Engineering",
     employeeId: "EDW-EMP-2026-082",
@@ -60,7 +60,7 @@ let provisionedEmployeesStore: ProvisionedEmployee[] = [
     fullName: "Rohan Kapoor",
     personalEmail: "rohan.kapoor99@gmail.com",
     companyEmail: "rohan.kapoor@edworld.co.in",
-    temporaryPassword: "edworld@122",
+    temporaryPassword: "OTP-Secured Login",
     role: "Lead Product Manager",
     department: "Product",
     employeeId: "EDW-EMP-2026-083",
@@ -68,9 +68,9 @@ let provisionedEmployeesStore: ProvisionedEmployee[] = [
     managerName: "Neha T. (Director of Product)",
     workLocation: "Delhi NCR / Hybrid",
     portalUrl: "https://edworld.co/employee",
-    status: "Invited - Pending First Login",
-    createdAt: "2026-09-09T14:00:00.000Z",
-    lastEmailSentAt: "2026-09-09T14:05:00.000Z"
+    status: "Active",
+    createdAt: "2026-09-09T14:20:00.000Z",
+    lastEmailSentAt: "2026-09-09T14:25:00.000Z"
   }
 ];
 
@@ -125,8 +125,8 @@ export async function POST(req: NextRequest) {
     const cleanName = fullName.toLowerCase().replace(/[^a-z0-9]/g, ".");
     const finalCompanyEmail = companyEmail || `${cleanName}@edworld.co.in`;
 
-    // Default temporary password
-    const finalPassword = temporaryPassword || "edworld@122";
+    // OTP Secured Auth
+    const finalPassword = temporaryPassword || "OTP-Secured Login";
 
     const newEmpId = `EDW-EMP-2026-${Math.floor(100 + Math.random() * 900)}`;
 
