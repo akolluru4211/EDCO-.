@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { calculateAgeBandFromDob } from "@/lib/utils";
-import { ShieldCheck, Lock, ArrowRight, AlertTriangle, AlertCircle, CheckCircle2, MailCheck, KeyRound } from "lucide-react";
+import { ShieldCheck, Lock, ArrowRight, AlertTriangle, AlertCircle, CheckCircle2, MailCheck, KeyRound, Compass, GraduationCap, Briefcase } from "lucide-react";
 import EdworldLogo from "@/components/ui/EdworldLogo";
 import Button from "@/components/ui/Button";
 
@@ -18,19 +18,34 @@ const GRADE_OPTIONS = [
   "Working Professional",
 ];
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { signupWithEmail } = useAuth();
+  
+  const trackParam = searchParams?.get("track");
+  const defaultGrade = trackParam === "junior" ? "Class 9" : trackParam === "pro" ? "Working Professional" : "Class 11";
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [dob, setDob] = useState("");
-  const [grade, setGrade] = useState("Class 11");
+  const [grade, setGrade] = useState(defaultGrade);
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [signupSuccess, setSignupSuccess] = useState(false);
+
+  useEffect(() => {
+    if (trackParam === "junior") {
+      setGrade("Class 9");
+    } else if (trackParam === "student") {
+      setGrade("Class 11");
+    } else if (trackParam === "pro") {
+      setGrade("Working Professional");
+    }
+  }, [trackParam]);
 
   const derivedAgeBand = dob ? calculateAgeBandFromDob(dob) : null;
   const isMinorBand = derivedAgeBand === "13-15" || derivedAgeBand === "16-18";
@@ -352,3 +367,12 @@ export default function SignupPage() {
     </div>
   );
 }
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-xs text-ink-muted">Loading signup portal...</div>}>
+      <SignupForm />
+    </Suspense>
+  );
+}
+
