@@ -28,6 +28,7 @@ import {
 import Button from "@/components/ui/Button";
 import { UserRole, SystemAuditLog } from "@/lib/types";
 import { getAuditLogs, recordAuditLog } from "@/lib/audit-logger";
+import AccessDeniedPortal from "@/components/ui/AccessDeniedPortal";
 
 interface AdminUserRecord {
   id: string;
@@ -40,7 +41,19 @@ interface AdminUserRecord {
 }
 
 export default function AdminControlPage() {
-  const { user, isAdmin, isSuperAdmin } = useAuth();
+  const { user, role, isAdmin, isSuperAdmin } = useAuth();
+
+  if (user && !isAdmin && !isSuperAdmin) {
+    return (
+      <AccessDeniedPortal
+        portalName="Platform Admin Console"
+        requiredRole="System Administrator"
+        userRole={role}
+        redirectTo="/dashboard"
+      />
+    );
+  }
+
   const [activeTab, setActiveTab] = useState<"users_roles" | "audit_logs" | "organizations" | "security_events">("users_roles");
 
   // State

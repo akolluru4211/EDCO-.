@@ -43,9 +43,22 @@ import {
   getCompanyPartners 
 } from "@/lib/db-service";
 import { runPlacementInsightAgent, AgentInsight } from "@/lib/ai-agents";
+import AccessDeniedPortal from "@/components/ui/AccessDeniedPortal";
 
 export default function CollegesPlacementHubPage() {
-  const { user, isCollegeAdmin, isAdmin } = useAuth();
+  const { user, role, isCollegeAdmin, isAdmin } = useAuth();
+
+  if (user && !isCollegeAdmin && !isAdmin) {
+    return (
+      <AccessDeniedPortal
+        portalName="College & Placement Hub"
+        requiredRole="College Placement Officer or Administrator"
+        userRole={role}
+        redirectTo="/dashboard"
+      />
+    );
+  }
+
   const [activeTab, setActiveTab] = useState<"drives" | "student_radar" | "syllabus_alignment" | "company_crm" | "analytics">("drives");
 
   // State

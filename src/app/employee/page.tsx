@@ -56,9 +56,22 @@ import {
   getEmployeeDocuments 
 } from "@/lib/db-service";
 import { runEmployeeProductivityAgent, AgentInsight } from "@/lib/ai-agents";
+import AccessDeniedPortal from "@/components/ui/AccessDeniedPortal";
 
 export default function EmployeeWorkspacePage() {
-  const { user, profile } = useAuth();
+  const { user, profile, role, isEmployee, isHR, isFounder, isAdmin } = useAuth();
+
+  if (user && !isEmployee && !isHR && !isFounder && !isAdmin) {
+    return (
+      <AccessDeniedPortal
+        portalName="Employee Workspace"
+        requiredRole="Corporate Employee / Staff"
+        userRole={role}
+        redirectTo="/dashboard"
+      />
+    );
+  }
+
   const [activeTab, setActiveTab] = useState<"today" | "my_work" | "people" | "hr">("today");
 
   // State

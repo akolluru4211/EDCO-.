@@ -42,9 +42,22 @@ import {
   savePayrollBatch 
 } from "@/lib/db-service";
 import { runHRInsightAgent, AgentInsight } from "@/lib/ai-agents";
+import AccessDeniedPortal from "@/components/ui/AccessDeniedPortal";
 
 export default function HrCommandCenterPage() {
-  const { user, isHR, isAdmin, isFounder } = useAuth();
+  const { user, role, isHR, isAdmin, isFounder } = useAuth();
+
+  if (user && !isHR && !isAdmin && !isFounder) {
+    return (
+      <AccessDeniedPortal
+        portalName="HR Command Center"
+        requiredRole="HR Operations or System Administrator"
+        userRole={role}
+        redirectTo="/dashboard"
+      />
+    );
+  }
+
   const [activeTab, setActiveTab] = useState<"recruitment" | "onboarding" | "leaves" | "payroll" | "attendance">("recruitment");
 
   // State

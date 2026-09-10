@@ -17,9 +17,22 @@ import {
   Lock 
 } from "lucide-react";
 import Button from "@/components/ui/Button";
+import AccessDeniedPortal from "@/components/ui/AccessDeniedPortal";
 
 export default function AdminModerationPage() {
-  const { user, isAdmin, loading } = useAuth();
+  const { user, role, isAdmin, loading } = useAuth();
+
+  if (user && !isAdmin) {
+    return (
+      <AccessDeniedPortal
+        portalName="Content Moderation Console"
+        requiredRole="Content Moderator / Administrator"
+        userRole={role}
+        redirectTo="/dashboard"
+      />
+    );
+  }
+
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [fetching, setFetching] = useState(true);
   const [actionMessage, setActionMessage] = useState<string | null>(null);

@@ -22,6 +22,7 @@ import {
   Eye
 } from "lucide-react";
 import Button from "@/components/ui/Button";
+import AccessDeniedPortal from "@/components/ui/AccessDeniedPortal";
 
 interface AuditLog {
   id: string;
@@ -48,7 +49,18 @@ const CATEGORY_MAP: Record<string, string> = {
 
 export default function AdminAuditLogsPage() {
   const router = useRouter();
-  const { user, isAdmin, loading: authLoading } = useAuth();
+  const { user, role, isAdmin, loading: authLoading } = useAuth();
+
+  if (user && !isAdmin) {
+    return (
+      <AccessDeniedPortal
+        portalName="System Security Audit Logs"
+        requiredRole="Security Administrator"
+        userRole={role}
+        redirectTo="/dashboard"
+      />
+    );
+  }
   
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);

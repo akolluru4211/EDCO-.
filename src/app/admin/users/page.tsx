@@ -35,6 +35,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import Button from "@/components/ui/Button";
+import AccessDeniedPortal from "@/components/ui/AccessDeniedPortal";
 
 interface UserAdminRecord {
   id: string;
@@ -58,13 +59,27 @@ interface UserAdminRecord {
   badges_list: string[];
   interviews_count: number;
   avg_interview_score: number;
-  quests_completed: number;
   resumes_count: number;
+  quests_completed: number;
+  quests_count?: number;
+  mentor_status?: string;
   interests?: any[];
 }
 
 export default function AdminUsersPage() {
-  const { user, isAdmin, loading } = useAuth();
+  const { user, role, isAdmin, loading } = useAuth();
+
+  if (user && !isAdmin) {
+    return (
+      <AccessDeniedPortal
+        portalName="Admin User Directory"
+        requiredRole="System Administrator"
+        userRole={role}
+        redirectTo="/dashboard"
+      />
+    );
+  }
+
   const [usersList, setUsersList] = useState<UserAdminRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [trackFilter, setTrackFilter] = useState<string>("all");

@@ -19,9 +19,22 @@ import {
 import Button from "@/components/ui/Button";
 import { getEmployeeOKRs, getEmployeeTasks } from "@/lib/db-service";
 import { EmployeeOKR, EmployeeTask } from "@/lib/types";
+import AccessDeniedPortal from "@/components/ui/AccessDeniedPortal";
 
 export default function EmployeePerformancePage() {
-  const { user } = useAuth();
+  const { user, role, isEmployee, isHR, isFounder, isAdmin } = useAuth();
+
+  if (user && !isEmployee && !isHR && !isFounder && !isAdmin) {
+    return (
+      <AccessDeniedPortal
+        portalName="Employee Performance Hub"
+        requiredRole="Corporate Employee / Staff"
+        userRole={role}
+        redirectTo="/dashboard"
+      />
+    );
+  }
+
   const [okrs, setOkrs] = useState<EmployeeOKR[]>([]);
   const [tasks, setTasks] = useState<EmployeeTask[]>([]);
 

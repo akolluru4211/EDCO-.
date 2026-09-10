@@ -44,9 +44,22 @@ import {
   sendParentMessage 
 } from "@/lib/db-service";
 import { runSchoolOperationsAgent, AgentInsight } from "@/lib/ai-agents";
+import AccessDeniedPortal from "@/components/ui/AccessDeniedPortal";
 
 export default function SchoolTeacherStudioPage() {
-  const { user, isTeacher, isAdmin } = useAuth();
+  const { user, role, isTeacher, isAdmin } = useAuth();
+
+  if (user && !isTeacher && !isAdmin) {
+    return (
+      <AccessDeniedPortal
+        portalName="Teacher Studio"
+        requiredRole="School Teacher or Administrator"
+        userRole={role}
+        redirectTo="/dashboard"
+      />
+    );
+  }
+
   const [activeTab, setActiveTab] = useState<"dashboard" | "classes" | "attendance_radar" | "gradebook" | "lesson_planner" | "parent_comm">("dashboard");
 
   // State

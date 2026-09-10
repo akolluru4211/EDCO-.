@@ -49,9 +49,21 @@ import {
   getFounderAlerts 
 } from "@/lib/db-service";
 import { runFounderInsightAgent, AgentInsight } from "@/lib/ai-agents";
+import AccessDeniedPortal from "@/components/ui/AccessDeniedPortal";
 
 export default function FounderExecutivePage() {
-  const { user, isFounder, isAdmin } = useAuth();
+  const { user, role, isFounder, isAdmin } = useAuth();
+
+  if (user && !isFounder && !isAdmin) {
+    return (
+      <AccessDeniedPortal
+        portalName="Founder & Executive Studio"
+        requiredRole="Founder / Executive or System Administrator"
+        userRole={role}
+        redirectTo="/dashboard"
+      />
+    );
+  }
   const [activeTab, setActiveTab] = useState<"kpi_overview" | "financials_burn" | "valuation_sandbox" | "investor_studio" | "initiatives">("kpi_overview");
 
   // State

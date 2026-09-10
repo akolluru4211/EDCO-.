@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireRole } from "@/lib/server-role-guard";
 
 export interface ProvisionedEmployee {
   id: string;
@@ -74,6 +75,14 @@ let provisionedEmployeesStore: ProvisionedEmployee[] = [
 ];
 
 export async function GET(req: NextRequest) {
+  const roleCheck = await requireRole(req, ["HR", "FOUNDER", "ADMIN", "SUPER_ADMIN"]);
+  if (!roleCheck.authorized) {
+    return NextResponse.json(
+      { error: roleCheck.error || "Forbidden: HR clearance required." },
+      { status: roleCheck.statusCode || 403 }
+    );
+  }
+
   return NextResponse.json({
     success: true,
     employees: provisionedEmployeesStore,
@@ -83,6 +92,14 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const roleCheck = await requireRole(req, ["HR", "FOUNDER", "ADMIN", "SUPER_ADMIN"]);
+    if (!roleCheck.authorized) {
+      return NextResponse.json(
+        { error: roleCheck.error || "Forbidden: HR clearance required." },
+        { status: roleCheck.statusCode || 403 }
+      );
+    }
+
     const body = await req.json();
     const { 
       fullName, 

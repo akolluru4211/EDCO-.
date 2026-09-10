@@ -33,9 +33,21 @@ import Button from "@/components/ui/Button";
 import { UserRole, StaffAccountStatus, OnboardingRecord } from "@/lib/types";
 import { getOnboardingRecords, saveOnboardingRecord } from "@/lib/db-service";
 import { recordAuditLog } from "@/lib/audit-logger";
+import AccessDeniedPortal from "@/components/ui/AccessDeniedPortal";
 
 export default function HrProvisionAccountPage() {
-  const { user } = useAuth();
+  const { user, role, isHR, isAdmin, isFounder } = useAuth();
+
+  if (user && !isHR && !isAdmin && !isFounder) {
+    return (
+      <AccessDeniedPortal
+        portalName="Staff Account Provisioning"
+        requiredRole="Human Resources / Admin"
+        userRole={role}
+        redirectTo="/dashboard"
+      />
+    );
+  }
 
   // Form State
   const [fullName, setFullName] = useState("");
