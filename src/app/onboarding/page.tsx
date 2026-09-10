@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { AVAILABLE_CATEGORIES } from "@/lib/mock-data";
@@ -26,6 +26,32 @@ import EdworldLogo from "@/components/ui/EdworldLogo";
 export default function OnboardingPage() {
   const router = useRouter();
   const { user, profile, isMinor, updateUserProfile, submitGuardianConsent } = useAuth();
+
+  // Auto-route to dedicated stage onboarding if known
+  useEffect(() => {
+    if (user?.careerStage === "JUNIOR") {
+      router.replace("/onboarding/junior");
+      return;
+    } else if (user?.careerStage === "PROFESSIONAL") {
+      router.replace("/onboarding/professional");
+      return;
+    } else if (user?.careerStage === "STUDENT") {
+      router.replace("/onboarding/student");
+      return;
+    }
+
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("edworld_pending_stage_profile");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed.stage === "junior") router.replace("/onboarding/junior");
+          else if (parsed.stage === "pro") router.replace("/onboarding/professional");
+          else if (parsed.stage === "student") router.replace("/onboarding/student");
+        }
+      } catch {}
+    }
+  }, [user?.careerStage, router]);
 
   // Active DOB State for Google Sign-In or users with missing DOB
   const hasRegisteredDob = Boolean(user?.dob);

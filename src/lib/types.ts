@@ -1,3 +1,5 @@
+export type CareerStage = "JUNIOR" | "STUDENT" | "PROFESSIONAL";
+
 export type AgeBand = "13-15" | "16-18" | "18+";
 
 export type SkillLevel = 0 | 1 | 2; // 0: Foundational/Beginner, 1: Intermediate, 2: Advanced
@@ -30,7 +32,7 @@ export interface UserProfile {
   isMentor: boolean;           // Always false for minors (under-18 accounts, enforced server-side)
   mentorTags: string[];        // Career Track only, empty for minors
   targetRole?: string;
-  careerStage?: "college" | "working_professional";
+  careerStage?: CareerStage | "college" | "working_professional";
   isTeacher?: boolean;         // Educator role
   isSchoolAdmin?: boolean;     // Institutional Admin role
   updatedAt?: string;
@@ -68,6 +70,7 @@ export interface AppUser {
   gradeLevel?: string;         // Secondary content-targeting field ("Class 9", "Class 10", "Class 11", "Class 12/Inter", "College", "Working Professional")
   grade?: string;              // Normalized grade field
   visualMode?: VisualMode;     // "career" for 18+, "maximalist" for 13-17
+  careerStage?: CareerStage;   // "JUNIOR" | "STUDENT" | "PROFESSIONAL"
   isEmployer: boolean;         // Default false
   isAdmin: boolean;            // Default false
   isTeacher?: boolean;         // Educator role

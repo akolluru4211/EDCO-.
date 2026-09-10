@@ -7,6 +7,7 @@ import {
   AppUser, 
   UserProfile, 
   AgeBand, 
+  CareerStage,
   UserInterest, 
   SkillLevel, 
   UserSubscription, 
@@ -36,7 +37,7 @@ interface AuthContextType {
   isSuperAdmin: boolean;
   isPro: boolean;
   loginWithEmail: (emailOrPhone: string, pass: string) => Promise<{ role: UserRole; redirectUrl: string }>;
-  signupWithEmail: (name: string, email: string, pass: string, dob: string, gradeLevel?: string, phone?: string) => Promise<void>;
+  signupWithEmail: (name: string, email: string, pass: string, dob: string, gradeLevel?: string, phone?: string, careerStage?: CareerStage) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   submitGuardianConsent: (guardianName: string, guardianEmail: string, relationship?: "parent" | "legal_guardian") => Promise<{ success: boolean; token?: string }>;
   logout: () => Promise<void>;
@@ -100,6 +101,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setActiveRole(determinedRole);
 
+      const rawStage = profileData?.career_stage || userMeta.career_stage;
+      const computedCareerStage: CareerStage = rawStage === "JUNIOR" || rawStage === "junior" 
+        ? "JUNIOR" 
+        : rawStage === "STUDENT" || rawStage === "student" || rawStage === "college" 
+        ? "STUDENT" 
+        : derivedBand === "13-15" 
+        ? "JUNIOR" 
+        : derivedBand === "16-18" 
+        ? "STUDENT" 
+        : "PROFESSIONAL";
+
       const appUser: AppUser = {
         uid: supabaseUser.id,
         name: profileData?.name || userMeta.full_name || userMeta.name || "Candidate",
@@ -109,6 +121,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         dob: userDob || undefined,
         ageBand: derivedBand,
         gradeLevel: profileData?.grade_level || userMeta.grade_level || "College",
+        careerStage: computedCareerStage,
         isEmployer: Boolean(profileData?.is_employer),
         isAdmin: Boolean(profileData?.is_admin || determinedRole === "ADMIN" || determinedRole === "SUPER_ADMIN"),
         isTeacher: Boolean(profileData?.is_teacher || userMeta.is_teacher || determinedRole === "TEACHER"),
@@ -128,6 +141,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           headline: profileData.headline,
           bio: profileData.bio,
           gradeLevel: profileData.grade_level,
+          careerStage: computedCareerStage,
           primaryGoal: profileData.primary_goal || "EdWorld Internal Organization Workspace",
           interests: profileData.interests || [
             { id: "swe", name: "Software Engineering", category: "Tech", selfLevel: 0, effectiveLevel: 0 },
@@ -293,7 +307,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     pass: string,
     dob: string,
     gradeLevel?: string,
-    phone?: string
+    phone?: string,
+    careerStage?: CareerStage
   ) => {
     // Client-side Password Strength Enforcement
     if (!pass || pass.length < 8) {
@@ -308,6 +323,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const ageBand = calculateAgeBandFromDob(dob) || "18+";
       const cleanPhone = phone?.trim() || null;
       const cleanEmail = email.trim().toLowerCase();
+      const resolvedStage: CareerStage = careerStage || (ageBand === "13-15" ? "JUNIOR" : ageBand === "16-18" ? "STUDENT" : "PROFESSIONAL");
       let userId = `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
       // Attempt Supabase signUp with 4-second timeout race to prevent 504 blocking
@@ -323,6 +339,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               phone: cleanPhone,
               age_band: ageBand,
               grade_level: gradeLevel || "College",
+              career_stage: resolvedStage,
             },
           },
         });
@@ -366,6 +383,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         dob,
         ageBand,
         gradeLevel: gradeLevel || "College",
+        careerStage: resolvedStage,
         isEmployer: false,
         isAdmin: false,
         createdAt: new Date().toISOString(),
@@ -375,9 +393,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const userProfile: UserProfile = {
         name,
         phone: cleanPhone || undefined,
-        primaryGoal: ageBand === "13-15"
+        careerStage: resolvedStage,
+        primaryGoal: resolvedStage === "JUNIOR"
           ? "Explore technology concepts and beginner STEM discovery quests."
-          : ageBand === "16-18"
+          : resolvedStage === "STUDENT"
           ? "Build foundational coding projects and prepare for upcoming college tracks."
           : "Prepare for competitive full-time industry interviews and optimize ATS resume keyword alignment.",
         interests: [
@@ -406,6 +425,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           phone: cleanPhone,
           age_band: ageBand,
           grade: gradeLevel || "College",
+          career_stage: resolvedStage,
           is_employer: false,
           is_admin: false,
           is_mentor: false,
@@ -419,6 +439,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           phone: cleanPhone,
           dob,
           age_band: ageBand,
+          career_stage: resolvedStage,
           grade_level: gradeLevel || "College",
           username: name.toLowerCase().replace(/\s+/g, "_") + "_" + userId.substring(0, 4),
           primary_goal: userProfile.primaryGoal,
