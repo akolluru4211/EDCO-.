@@ -53,14 +53,6 @@ export default function SchoolTrackPage() {
   // Mode state: Default to user age band or allow manual sector switching
   const [selectedSector, setSelectedSector] = useState<"junior" | "explorer">("junior");
 
-  useEffect(() => {
-    if (user?.ageBand === "16-18") {
-      setSelectedSector("explorer");
-    } else if (user?.ageBand === "13-15") {
-      setSelectedSector("junior");
-    }
-  }, [user]);
-
   // Tab State
   const [juniorTab, setJuniorTab] = useState<
     "ai_literacy" | "stream_guidance" | "quests" | "talent_showcase" | "career_simulator" | "journal" | "study_groups" | "guardian_digest" | "extracurricular" | "financial_literacy" | "problem_board"
@@ -69,6 +61,35 @@ export default function SchoolTrackPage() {
   const [explorerTab, setExplorerTab] = useState<
     "comm_trainer" | "scholarships" | "exam_tracker" | "college_compare" | "micro_projects" | "sop_assistant" | "alumni_connection" | "internships" | "problem_board"
   >("comm_trainer");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const urlTab = params.get("tab");
+      const urlSector = params.get("sector");
+
+      if (urlSector === "explorer" || urlSector === "junior") {
+        setSelectedSector(urlSector);
+      } else if (user?.ageBand === "16-18") {
+        setSelectedSector("explorer");
+      } else if (user?.ageBand === "13-15") {
+        setSelectedSector("junior");
+      }
+
+      if (urlTab) {
+        const validJuniorTabs = ["ai_literacy", "stream_guidance", "quests", "talent_showcase", "career_simulator", "journal", "study_groups", "guardian_digest", "extracurricular", "financial_literacy", "problem_board"];
+        const validExplorerTabs = ["comm_trainer", "scholarships", "exam_tracker", "college_compare", "micro_projects", "sop_assistant", "alumni_connection", "internships", "problem_board"];
+
+        if (validJuniorTabs.includes(urlTab)) {
+          setJuniorTab(urlTab as any);
+          if (!urlSector) setSelectedSector("junior");
+        } else if (validExplorerTabs.includes(urlTab)) {
+          setExplorerTab(urlTab as any);
+          if (!urlSector) setSelectedSector("explorer");
+        }
+      }
+    }
+  }, [user]);
 
   // ==========================================
   // JUNIOR INTERACTIVE STATES
