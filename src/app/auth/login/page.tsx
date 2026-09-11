@@ -18,7 +18,7 @@ import {
 import EdworldLogo from "@/components/ui/EdworldLogo";
 import Button from "@/components/ui/Button";
 
-type TrackType = "junior" | "student" | "pro" | "staff";
+type TrackType = "junior" | "student" | "pro";
 
 interface TrackConfig {
   id: TrackType;
@@ -74,19 +74,6 @@ const TRACKS: Record<TrackType, TrackConfig> = {
     targetDashboard: "/dashboard",
     signupHref: "/auth/signup?track=pro&stage=professional",
   },
-  staff: {
-    id: "staff",
-    title: "Internal Staff Gateway",
-    badge: "Corporate SSO",
-    badgeColor: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
-    accentColor: "#10B981",
-    icon: ShieldCheck,
-    welcomeSubtitle: "EdWorld internal organization single sign-on",
-    description: "Authorized workspace access for EdWorld corporate team members.",
-    emailPlaceholder: "name@edworld.co.in",
-    targetDashboard: "/employee",
-    signupHref: "/hr/provision-account",
-  },
 };
 
 const STAGE_CONFIGS = TRACKS;
@@ -117,7 +104,6 @@ function LoginForm() {
     if (stage === "junior" || track === "junior") setSelectedTrack("junior");
     else if (stage === "student" || track === "student") setSelectedTrack("student");
     else if (stage === "professional" || track === "pro") setSelectedTrack("pro");
-    else if (track === "staff") setSelectedTrack("staff");
   }, [searchParams]);
 
   const currentTrack = TRACKS[selectedTrack];
@@ -187,7 +173,7 @@ function LoginForm() {
         </div>
         <div>
           <h1 className="text-2xl font-black font-sans text-slate-900 tracking-tight">
-            {selectedTrack === "staff" ? "Corporate Sign In" : "Welcome Back"}
+            Welcome Back
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
             {currentTrack.welcomeSubtitle}
@@ -199,89 +185,57 @@ function LoginForm() {
       <div className="space-y-1.5">
         <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 px-1 uppercase tracking-wider">
           <span>Career Stage</span>
-          {selectedTrack !== "staff" && (
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedTrack("staff");
-                setError(null);
-              }}
-              className="text-[10px] text-slate-500 hover:text-slate-900 transition-colors flex items-center gap-1 font-medium lowercase"
-            >
-              <Lock className="w-3 h-3" />
-              <span>staff gateway</span>
-            </button>
-          )}
         </div>
 
-        {selectedTrack !== "staff" ? (
-          <div className="grid grid-cols-3 gap-1.5 p-1 rounded-2xl bg-slate-100 border border-slate-200">
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedTrack("junior");
-                setError(null);
-              }}
-              className={`py-2 px-1 rounded-xl text-[11px] font-bold transition-all flex flex-col items-center justify-center gap-1 min-h-[44px] ${
-                selectedTrack === "junior"
-                  ? "bg-violet-600 text-white shadow-sm font-black"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              <Compass className="w-3.5 h-3.5" />
-              <span className="truncate">Junior (13-15)</span>
-            </button>
+        <div className="grid grid-cols-3 gap-1.5 p-1 rounded-2xl bg-slate-100 border border-slate-200">
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedTrack("junior");
+              setError(null);
+            }}
+            className={`py-2 px-1 rounded-xl text-[11px] font-bold transition-all flex flex-col items-center justify-center gap-1 min-h-[44px] ${
+              selectedTrack === "junior"
+                ? "bg-violet-600 text-white shadow-sm font-black"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <Compass className="w-3.5 h-3.5" />
+            <span className="truncate">Junior (13-15)</span>
+          </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedTrack("student");
-                setError(null);
-              }}
-              className={`py-2 px-1 rounded-xl text-[11px] font-bold transition-all flex flex-col items-center justify-center gap-1 min-h-[44px] ${
-                selectedTrack === "student"
-                  ? "bg-emerald-600 text-white shadow-sm font-black"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              <GraduationCap className="w-3.5 h-3.5" />
-              <span className="truncate">Student (16-18)</span>
-            </button>
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedTrack("student");
+              setError(null);
+            }}
+            className={`py-2 px-1 rounded-xl text-[11px] font-bold transition-all flex flex-col items-center justify-center gap-1 min-h-[44px] ${
+              selectedTrack === "student"
+                ? "bg-emerald-600 text-white shadow-sm font-black"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <GraduationCap className="w-3.5 h-3.5" />
+            <span className="truncate">Student (16-18)</span>
+          </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedTrack("pro");
-                setError(null);
-              }}
-              className={`py-2 px-1 rounded-xl text-[11px] font-bold transition-all flex flex-col items-center justify-center gap-1 min-h-[44px] ${
-                selectedTrack === "pro"
-                  ? "bg-slate-900 text-white shadow-sm font-black"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              <Briefcase className="w-3.5 h-3.5" />
-              <span className="truncate">Career (18+)</span>
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center justify-between p-2 rounded-2xl bg-slate-50 border border-emerald-300">
-            <div className="flex items-center gap-2 text-xs font-bold text-emerald-800">
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <span>Staff Portal Active (@edworld.co.in)</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedTrack("pro");
-                setError(null);
-              }}
-              className="text-[10px] text-slate-600 hover:text-slate-900 px-2 py-1 rounded-lg bg-white border border-slate-200"
-            >
-              Back to Learner
-            </button>
-          </div>
-        )}
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedTrack("pro");
+              setError(null);
+            }}
+            className={`py-2 px-1 rounded-xl text-[11px] font-bold transition-all flex flex-col items-center justify-center gap-1 min-h-[44px] ${
+              selectedTrack === "pro"
+                ? "bg-slate-900 text-white shadow-sm font-black"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <Briefcase className="w-3.5 h-3.5" />
+            <span className="truncate">Career (18+)</span>
+          </button>
+        </div>
       </div>
 
       {/* Selected Track Banner */}
@@ -313,7 +267,7 @@ function LoginForm() {
       <form onSubmit={handleSubmit} className="space-y-3.5">
         <div className="space-y-1.5">
           <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">
-            {selectedTrack === "staff" ? "Corporate Email (@edworld.co.in)" : "Email Address"}
+            Email Address
           </label>
           <input
             type="email"
@@ -366,7 +320,7 @@ function LoginForm() {
           className="w-full justify-center bg-slate-900 text-white hover:bg-black font-black rounded-2xl shadow-md transition-transform active:scale-95 min-h-[48px]"
           icon={<ArrowRight className="w-4 h-4" />}
         >
-          <span>{loading ? "Authenticating..." : `Enter ${selectedTrack === "staff" ? "Staff OS" : "Workspace"}`}</span>
+          <span>{loading ? "Authenticating..." : "Enter Workspace"}</span>
         </Button>
       </form>
 
@@ -424,18 +378,12 @@ function LoginForm() {
 
       {/* Footer link to tailored signup */}
       <div className="pt-2 border-t border-slate-100 text-center text-xs text-slate-600">
-        {selectedTrack !== "staff" ? (
-          <p>
-            Don&apos;t have an account?{" "}
-            <Link href={currentTrack.signupHref} className="text-slate-900 font-bold hover:underline">
-              Sign Up for {currentTrack.title} &rarr;
-            </Link>
-          </p>
-        ) : (
-          <p className="text-[11px] text-slate-500">
-            New staff accounts are provisioned by <Link href="/hr/provision-account" className="text-slate-900 font-bold hover:underline">HR Operations</Link>.
-          </p>
-        )}
+        <p>
+          Don&apos;t have an account?{" "}
+          <Link href={currentTrack.signupHref} className="text-slate-900 font-bold hover:underline">
+            Sign Up for {currentTrack.title} &rarr;
+          </Link>
+        </p>
       </div>
     </div>
   );

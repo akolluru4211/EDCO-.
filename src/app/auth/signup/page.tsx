@@ -328,20 +328,6 @@ function SignupForm() {
           </div>
         </div>
 
-        {/* Corporate Notice */}
-        <div className="p-3 rounded-2xl bg-paper-soft border border-line text-[11px] text-ink-muted flex items-start gap-2.5">
-          <KeyRound className="w-4 h-4 text-forest shrink-0 mt-0.5" />
-          <div>
-            <span className="font-bold text-ink block">Hired Employee or HR Staff?</span>
-            <p>
-              Your corporate account is provisioned by People Operations with your <code>@edworld.co.in</code> email.{" "}
-              <Link href="/auth/login" className="text-forest font-bold hover:underline">
-                Sign in directly &rarr;
-              </Link>
-            </p>
-          </div>
-        </div>
-
         {error && (
           <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
