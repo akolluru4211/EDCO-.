@@ -679,4 +679,61 @@
   box-shadow: 0 20px 40px -10px rgba(18, 20, 30, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.02);
 }
 
+/* 3D Transform & Perspective Utilities */
+.perspective-1000 {
+  perspective: 1000px;
+}
 
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+/* Warm Humanized Glassmorphism */
+.glass-warm {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 20px 40px -15px rgba(24, 24, 38, 0.06), 0 0 0 1px rgba(24, 24, 38, 0.03);
+}
+
+.glass-warm-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.82) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(228, 232, 242, 0.8);
+  box-shadow: 0 16px 36px -10px rgba(19, 20, 27, 0.07), 0 2px 6px rgba(19, 20, 27, 0.02);
+}
+
+/* Floating 3D Micro-Physics */
+@keyframes float-subtle {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(0.5deg);
+  }
+}
+
+.animate-float-subtle {
+  animation: float-subtle 6s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 4s ease-in-out infinite;
+}
