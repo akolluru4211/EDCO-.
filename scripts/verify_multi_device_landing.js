@@ -1,4 +1,4 @@
-﻿const fs = require('fs');
+const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 
@@ -53,11 +53,9 @@ runTest('3. TabletLandingView provides dual-pane stage explorer and responsive t
 });
 
 // Test 4: Desktop Landing View Verification
-runTest('4. DesktopLandingView delivers enterprise-grade cockpit with ATS telemetry, STAR radar, and 3-pillar deep dive', () => {
+runTest('4. DesktopLandingView delivers high-authority stage showcase and 3-pillar deep dive', () => {
   const desktopContent = fs.readFileSync(path.join(rootDir, 'src/components/landing/DesktopLandingView.tsx'), 'utf8');
   assert(desktopContent.includes('DESKTOP_STAGES'), 'Desktop view must define desktop stage matrix');
-  assert(desktopContent.includes('ATS Resume Radar') || desktopContent.includes('Resume Calibration'), 'Desktop view must showcase ATS Resume telemetry');
-  assert(desktopContent.includes('STAR Mock Drills') || desktopContent.includes('STAR Simulation') || desktopContent.includes('STAR AI Radar'), 'Desktop view must showcase STAR drill telemetry');
   assert(desktopContent.includes('Junior School Curiosity Lab'), 'Desktop view must feature Junior pillar');
   assert(desktopContent.includes('Student & Campus Enterprise') || desktopContent.includes('Student &amp; Campus Enterprise'), 'Desktop view must feature Student pillar');
   assert(desktopContent.includes('Working Professional Acceleration'), 'Desktop view must feature Pro pillar');

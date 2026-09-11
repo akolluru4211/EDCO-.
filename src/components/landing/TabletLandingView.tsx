@@ -215,11 +215,11 @@ export default function TabletLandingView() {
             </div>
           </div>
 
-          {/* Right Pane: Live Telemetry & Growth Ring */}
-          <div className="md:col-span-5 bg-[#13141B] text-white rounded-2xl p-5 space-y-4 flex flex-col items-center text-center justify-between">
-            <div className="w-full flex items-center justify-between text-[10px] font-mono text-white/50 border-b border-white/10 pb-2">
-              <span>Telemetry Unit</span>
-              <span className="text-[#D7FC51] font-bold">ONLINE</span>
+          {/* Right Pane: Clean Stage Summary & Growth Ring */}
+          <div className="md:col-span-5 bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-4 flex flex-col items-center text-center justify-between">
+            <div className="w-full flex items-center justify-between text-[10px] font-mono font-bold text-slate-500 border-b border-slate-200/70 pb-2">
+              <span>Stage Identity</span>
+              <span className="text-emerald-700 font-bold uppercase">{activeStage}</span>
             </div>
 
             <GrowthRing
@@ -229,20 +229,20 @@ export default function TabletLandingView() {
             />
 
             <div className="space-y-1">
-              <span className="text-xs font-bold text-white">Proven Skill Index</span>
-              <p className="text-[10px] text-white/60 font-mono">
+              <span className="text-xs font-bold text-slate-900">Proven Skill Index</span>
+              <p className="text-[10px] text-slate-600 font-mono">
                 {activeStage === "junior" ? "Level 1 • Curious Explorer" : activeStage === "student" ? "Level 2 • Applied Builder" : "Level 3 • Industry Master"}
               </p>
             </div>
 
-            <div className="w-full grid grid-cols-2 gap-2 text-[10px] font-mono pt-2 border-t border-white/10">
-              <div className="bg-white/5 rounded-lg p-1.5">
-                <span className="block text-white/40">ATS Target</span>
-                <strong className="text-[#00D2B4]">90%+</strong>
+            <div className="w-full grid grid-cols-2 gap-2 text-[10px] font-mono pt-2 border-t border-slate-200/70">
+              <div className="bg-white border border-slate-200/60 rounded-xl p-2 text-left">
+                <span className="block text-slate-400">ATS Target</span>
+                <strong className="text-emerald-700 font-black">90%+ Pass</strong>
               </div>
-              <div className="bg-white/5 rounded-lg p-1.5">
-                <span className="block text-white/40">STAR Drills</span>
-                <strong className="text-[#7B57FF]">Adaptive</strong>
+              <div className="bg-white border border-slate-200/60 rounded-xl p-2 text-left">
+                <span className="block text-slate-400">STAR Drills</span>
+                <strong className="text-violet-700 font-black">Adaptive</strong>
               </div>
             </div>
           </div>

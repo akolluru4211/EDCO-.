@@ -325,107 +325,77 @@ export default function DesktopLandingView() {
 
             </div>
 
-            {/* Right Column: Live Interactive Career-Tech Cockpit */}
+            {/* Right Column: Clean Premium Stage Overview Card */}
             <div className="col-span-6">
-              <div className="bg-[#13141B] text-white rounded-4xl p-6 sm:p-8 shadow-2xl border border-white/10 relative space-y-6">
+              <div className="bg-white rounded-3xl p-8 shadow-xl border border-slate-200/90 relative space-y-6 animate-in fade-in zoom-in-95 duration-200">
                 
-                {/* Cockpit Top Bar */}
-                <div className="flex items-center justify-between pb-4 border-b border-white/10">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-3 h-3 rounded-full bg-rose-500" />
-                    <div className="w-3 h-3 rounded-full bg-amber-500" />
-                    <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                    <span className="text-xs font-mono text-white/50 pl-2">edworld-calibration-node://v2026.1</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="inline-block w-2 h-2 rounded-full bg-[#D7FC51] animate-ping" />
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#D7FC51]">
-                      Live Telemetry
+                {/* Header with Stage Identity */}
+                <div className="flex items-start justify-between pb-4 border-b border-slate-100">
+                  <div className="space-y-1">
+                    <span className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${stage.badgeColor}`}>
+                      {stage.badge}
                     </span>
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tight pt-1">
+                      {stage.title}
+                    </h3>
+                    <p className="text-xs text-slate-500 font-medium">
+                      {stage.subtitle}
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-800 shrink-0 shadow-xs">
+                    <StageIcon className="w-6 h-6" />
                   </div>
                 </div>
 
-                {/* Telemetry Widgets Grid */}
-                <div className="grid grid-cols-2 gap-4">
-                  
-                  {/* Widget 1: ATS Scoring Engine Gauge */}
-                  <div className="bg-white/5 rounded-3xl p-5 border border-white/10 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-[#00D2B4]" />
-                        <span className="text-xs font-bold text-white/90">ATS Resume Radar</span>
-                      </div>
-                      <span className="text-[10px] font-mono text-[#00D2B4] font-bold">94 / 100</span>
-                    </div>
-                    <div className="w-full bg-white/10 h-2.5 rounded-full overflow-hidden">
-                      <div className="bg-gradient-to-r from-[#00D2B4] to-[#D7FC51] h-full rounded-full w-[94%]" />
-                    </div>
-                    <p className="text-[11px] text-white/60 leading-relaxed font-mono">
-                      Single-column format &bull; 14 Action Verbs &bull; Zero tables
-                    </p>
-                  </div>
+                {/* Description */}
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
+                  {stage.description}
+                </p>
 
-                  {/* Widget 2: STAR Interview Clarity Metric */}
-                  <div className="bg-white/5 rounded-3xl p-5 border border-white/10 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Video className="w-4 h-4 text-[#7B57FF]" />
-                        <span className="text-xs font-bold text-white/90">STAR Mock Drills Radar</span>
-                      </div>
-                      <span className="text-[10px] font-mono text-[#7B57FF] font-bold">132 WPM</span>
-                    </div>
-                    <div className="w-full bg-white/10 h-2.5 rounded-full overflow-hidden">
-                      <div className="bg-gradient-to-r from-[#7B57FF] to-[#00D2B4] h-full rounded-full w-[88%]" />
-                    </div>
-                    <p className="text-[11px] text-white/60 leading-relaxed font-mono">
-                      Ideal vocal pace &bull; STAR structure verified &bull; 0 fillers
-                    </p>
-                  </div>
-
-                </div>
-
-                {/* Live Growth Ring Telemetry & Stage Insights */}
-                <div className="bg-white/5 rounded-3xl p-6 border border-white/10 flex items-center justify-between gap-6">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-bold uppercase text-[#D7FC51]">
-                        {stage.title}
+                {/* Stats Matrix */}
+                <div className="grid grid-cols-3 gap-3">
+                  {stage.stats.map((s, idx) => (
+                    <div key={idx} className="p-3 rounded-2xl bg-slate-50 border border-slate-200/70 text-left space-y-1">
+                      <span className="block text-[10px] font-mono font-bold uppercase text-slate-400">
+                        {s.label}
                       </span>
-                    </div>
-                    <h4 className="text-lg font-black text-white">Proven Skill Calibration</h4>
-                    <p className="text-xs text-white/70 leading-relaxed max-w-xs">
-                      {stage.description}
-                    </p>
-                    <div className="pt-2 flex items-center gap-4 text-xs font-mono">
-                      {stage.stats.map((s, idx) => (
-                        <div key={idx}>
-                          <span className="block text-white/40 text-[10px] uppercase">{s.label}</span>
-                          <strong className="text-white font-bold">{s.value}</strong>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="shrink-0 flex flex-col items-center">
-                    <GrowthRing 
-                      level={activeStage === "junior" ? 1 : activeStage === "student" ? 2 : 3} 
-                      size={110} 
-                      streakDays={14} 
-                    />
-                    <span className="text-[10px] font-mono font-bold text-[#D7FC51] mt-2 uppercase tracking-wider">
-                      Level {activeStage === "junior" ? "1 Explorer" : activeStage === "student" ? "2 Applied" : "3 Mastery"}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Live Feature Checkmarks */}
-                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/10 text-xs text-white/80 font-medium">
-                  {stage.features.map((feat, idx) => (
-                    <div key={idx} className="flex items-start gap-2">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-[#00D2B4] shrink-0 mt-0.5" />
-                      <span className="text-[11px] leading-tight">{feat}</span>
+                      <strong className="text-sm font-black text-slate-900">
+                        {s.value}
+                      </strong>
                     </div>
                   ))}
+                </div>
+
+                {/* Key Deliverables & Features */}
+                <div className="space-y-2.5 pt-2 border-t border-slate-100">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
+                    Core Capabilities &amp; Features:
+                  </span>
+                  <div className="grid grid-cols-1 gap-2 text-xs text-slate-700 font-medium">
+                    {stage.features.map((feat, idx) => (
+                      <div key={idx} className="flex items-center gap-2.5">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span className="leading-tight">{feat}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-3 pt-2">
+                  <Link
+                    href={stage.ctaUrl}
+                    className="flex-1 py-3.5 px-5 rounded-2xl bg-slate-900 hover:bg-black text-white text-xs font-black tracking-wide flex items-center justify-center gap-2 shadow-md hover:shadow-xl transition-all active:scale-98"
+                  >
+                    <span>Get Started ({activeStage === "junior" ? "Junior Lab" : activeStage === "student" ? "Student OS" : "Professional OS"})</span>
+                    <ArrowRight className="w-4 h-4 text-[#D7FC51]" />
+                  </Link>
+                  <Link
+                    href={stage.loginUrl}
+                    className="px-5 py-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-colors"
+                  >
+                    Sign In
+                  </Link>
                 </div>
 
               </div>
