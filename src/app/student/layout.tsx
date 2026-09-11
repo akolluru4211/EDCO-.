@@ -3,6 +3,7 @@
 import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import AuthGuard from "@/components/auth/AuthGuard";
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
   const { user, isMinor, loading } = useAuth();
@@ -17,13 +18,9 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
     }
   }, [user, isMinor, loading, router]);
 
-  if (loading) {
-    return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-slate-50">
-        <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  return <>{children}</>;
+  return (
+    <AuthGuard requireAuth={true}>
+      {children}
+    </AuthGuard>
+  );
 }
