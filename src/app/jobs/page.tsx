@@ -25,6 +25,7 @@ import {
   Flag
 } from "lucide-react";
 import Input from "@/components/ui/Input";
+import AuthGuard from "@/components/auth/AuthGuard";
 
 export default function JobBoardPage() {
   const { user, profile, isEmployer, isPro } = useAuth();
@@ -133,36 +134,39 @@ export default function JobBoardPage() {
 
   if (!isAdult && user) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-6 bg-paper">
-        <div className="max-w-md w-full bg-paper-raised rounded-3xl border border-line shadow-xl p-8 text-center space-y-6">
-          <div className="w-16 h-16 rounded-2xl bg-gold/15 border border-gold/30 text-gold-dark flex items-center justify-center mx-auto shadow-sm">
-            <Briefcase className="w-8 h-8 text-gold" />
+      <AuthGuard>
+        <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-6 bg-paper">
+          <div className="max-w-md w-full bg-paper-raised rounded-3xl border border-line shadow-xl p-8 text-center space-y-6">
+            <div className="w-16 h-16 rounded-2xl bg-gold/15 border border-gold/30 text-gold-dark flex items-center justify-center mx-auto shadow-sm">
+              <Briefcase className="w-8 h-8 text-gold" />
+            </div>
+            <div className="space-y-2">
+              <span className="px-3 py-1 rounded-full bg-gold-light text-gold-dark text-xs font-mono font-bold uppercase tracking-wider border border-gold/30">
+                {user.ageBand === "13-15" ? "Junior Track" : "Explorer Track"}
+              </span>
+              <h1 className="text-3xl font-bold font-display text-ink tracking-tight">
+                Job Placement Board is for Verified Adults (18+)
+              </h1>
+              <p className="text-sm text-ink-soft leading-relaxed">
+                In compliance with labor safety regulations and child protection laws, minors are not permitted to view or apply for full-time jobs.
+              </p>
+            </div>
+            <Link
+              href="/dashboard"
+              className="w-full py-3.5 px-4 rounded-xl bg-forest hover:bg-forest-light text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-all flex items-center justify-center gap-2"
+            >
+              <span>Return to Workspace</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
-          <div className="space-y-2">
-            <span className="px-3 py-1 rounded-full bg-gold-light text-gold-dark text-xs font-mono font-bold uppercase tracking-wider border border-gold/30">
-              {user.ageBand === "13-15" ? "Junior Track" : "Explorer Track"}
-            </span>
-            <h1 className="text-3xl font-bold font-display text-ink tracking-tight">
-              Job Board is Restricted to 18+
-            </h1>
-            <p className="text-sm text-ink-soft leading-relaxed">
-              Job and internship applications involve formal agreements and employer outreach, available to Career Track members (18+).
-            </p>
-          </div>
-          <Link
-            href="/dashboard"
-            className="w-full py-3.5 px-4 rounded-xl bg-forest hover:bg-forest-light text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-all flex items-center justify-center gap-2"
-          >
-            <span>Return to Workspace</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
         </div>
-      </div>
+      </AuthGuard>
     );
   }
 
   return (
-    <div className="min-h-[calc(100vh-5rem)] bg-[#F4F6FB] text-[#181920] pb-16">
+    <AuthGuard>
+      <div className="min-h-[calc(100vh-5rem)] bg-[#F4F6FB] text-[#181920] pb-16">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-8 animate-in fade-in duration-300">
         
         {/* Header Bar */}
@@ -337,7 +341,8 @@ export default function JobBoardPage() {
             </p>
           </div>
         )}
+        </div>
       </div>
-    </div>
+    </AuthGuard>
   );
 }

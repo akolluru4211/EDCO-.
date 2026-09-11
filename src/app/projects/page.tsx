@@ -11,6 +11,7 @@ import GitHubImportModal from "@/components/project/GitHubImportModal";
 import StarterKitStudio from "@/components/project/StarterKitStudio";
 import ClaudeAnalysisModal from "@/components/ai/ClaudeAnalysisModal";
 import { ClaudeAnalysisType } from "@/app/api/claude/analyze/route";
+import AuthGuard from "@/components/auth/AuthGuard";
 import { 
   FolderGit2, 
   Plus, 
@@ -162,85 +163,54 @@ export default function ProjectStudioPage() {
     setDeleteTargetId(null);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-paper">
-        <div className="text-center space-y-3 font-mono text-xs text-ink-soft">
-          <div className="w-6 h-6 border-2 border-forest border-t-transparent rounded-full animate-spin mx-auto" />
-          <p>Loading project studios...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-6 bg-paper">
-        <div className="max-w-md w-full bg-paper-raised rounded-3xl border border-line shadow-xl p-8 text-center space-y-6">
-          <div className="w-16 h-16 rounded-2xl bg-paper border border-line text-forest flex items-center justify-center mx-auto shadow-sm">
-            <Lock className="w-8 h-8" />
-          </div>
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold font-display text-ink tracking-tight">Sign In Required</h1>
-            <p className="text-sm text-ink-soft leading-relaxed">
-              Please sign in to access your Project Studio showcases and manage verified repositories.
-            </p>
-          </div>
-          <Link
-            href="/auth/login"
-            className="w-full py-3.5 px-4 rounded-xl bg-forest hover:bg-forest-light active:bg-forest-dark text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-all flex items-center justify-center gap-2"
-          >
-            <span>Sign In to Workspace</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   // Junior Track (13-15) Guidance Gate
   if (isJuniorTrack) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-6 bg-paper">
-        <div className="max-w-md w-full bg-paper-raised rounded-3xl border border-line shadow-xl p-8 text-center space-y-6">
-          <div className="w-16 h-16 rounded-2xl bg-gold/15 border border-gold/30 text-gold-dark flex items-center justify-center mx-auto shadow-sm">
-            <Lock className="w-8 h-8 text-gold" />
+      <AuthGuard>
+        <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-6 bg-paper">
+          <div className="max-w-md w-full bg-paper-raised rounded-3xl border border-line shadow-xl p-8 text-center space-y-6">
+            <div className="w-16 h-16 rounded-2xl bg-gold/15 border border-gold/30 text-gold-dark flex items-center justify-center mx-auto shadow-sm">
+              <Lock className="w-8 h-8 text-gold" />
+            </div>
+            <div className="space-y-2">
+              <span className="px-3 py-1 rounded-full bg-gold-light text-gold-dark text-xs font-mono font-bold uppercase tracking-wider border border-gold/30">
+                Junior Track (13-15)
+              </span>
+              <h1 className="text-3xl font-bold font-display text-ink tracking-tight">Project Studio Unlocks in Explorer Track</h1>
+              <p className="text-sm text-ink-soft leading-relaxed">
+                As a Class 9-10 learner, your focus is on curiosity exploration and guided beginner quests in the Quest Hub.
+              </p>
+            </div>
+            <Link
+              href="/dashboard"
+              className="w-full py-3.5 px-4 rounded-xl bg-forest hover:bg-forest-light active:bg-forest-dark text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-all flex items-center justify-center gap-2"
+            >
+              <span>Return to Dashboard</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
-          <div className="space-y-2">
-            <span className="px-3 py-1 rounded-full bg-gold-light text-gold-dark text-xs font-mono font-bold uppercase tracking-wider border border-gold/30">
-              Junior Track (13-15)
-            </span>
-            <h1 className="text-3xl font-bold font-display text-ink tracking-tight">Project Studio Unlocks in Explorer Track</h1>
-            <p className="text-sm text-ink-soft leading-relaxed">
-              As a Class 9-10 learner, your focus is on curiosity exploration and guided beginner quests in the Quest Hub.
-            </p>
-          </div>
-          <Link
-            href="/dashboard"
-            className="w-full py-3.5 px-4 rounded-xl bg-forest hover:bg-forest-light active:bg-forest-dark text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-all flex items-center justify-center gap-2"
-          >
-            <span>Return to Dashboard</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
         </div>
-      </div>
+      </AuthGuard>
     );
   }
 
   // Explorer Track (16-18) Guided Starter-Kit Studio
   if (isExplorerTrack) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] bg-paper py-8 px-4 sm:px-6 lg:px-8 text-ink">
-        <div className="max-w-6xl mx-auto">
-          <StarterKitStudio userName={user.name || "Explorer Learner"} />
+      <AuthGuard>
+        <div className="min-h-[calc(100vh-4rem)] bg-paper py-8 px-4 sm:px-6 lg:px-8 text-ink">
+          <div className="max-w-6xl mx-auto">
+            <StarterKitStudio userName={user?.name || "Explorer Learner"} />
+          </div>
         </div>
-      </div>
+      </AuthGuard>
     );
   }
 
   // Career Track (18+) Full Project Studio
   return (
-    <div className="min-h-[calc(100vh-5rem)] bg-[#F4F6FB] text-[#181920] pb-16">
+    <AuthGuard>
+      <div className="min-h-[calc(100vh-5rem)] bg-[#F4F6FB] text-[#181920] pb-16">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-8 animate-in fade-in duration-300">
         
         {/* Header Bar */}
@@ -450,7 +420,8 @@ export default function ProjectStudioPage() {
             </div>
           </div>
         )}
+        </div>
       </div>
-    </div>
+    </AuthGuard>
   );
 }

@@ -4,12 +4,16 @@ import { supabase } from "@/lib/supabase";
 
 export async function GET(req: NextRequest) {
   try {
-    const sessionCookie = req.cookies.get("edworld_session")?.value;
-    if (!sessionCookie) {
+    const token = 
+      req.cookies.get("edworld_session")?.value ||
+      req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ||
+      req.headers.get("x-session-token");
+
+    if (!token) {
       return NextResponse.json({ authenticated: false }, { status: 401 });
     }
 
-    const { valid, userId, role } = validateSession(sessionCookie);
+    const { valid, userId, role } = validateSession(token);
     if (!valid || !userId) {
       return NextResponse.json({ authenticated: false }, { status: 401 });
     }

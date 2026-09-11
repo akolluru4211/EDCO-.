@@ -45,6 +45,7 @@ import {
 } from "@/lib/db-service";
 import { runSchoolOperationsAgent, AgentInsight } from "@/lib/ai-agents";
 import AccessDeniedPortal from "@/components/ui/AccessDeniedPortal";
+import AuthGuard from "@/components/auth/AuthGuard";
 
 export default function SchoolTeacherStudioPage() {
   const { user, role, isTeacher, isAdmin } = useAuth();
@@ -210,7 +211,8 @@ export default function SchoolTeacherStudioPage() {
   const minScore = grades.length > 0 ? Math.min(...grades.map(g => g.marksObtained)) : "N/A";
 
   return (
-    <div className="min-h-screen bg-[#0E0F15] text-white p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1440px] mx-auto">
+    <AuthGuard allowedRoles={["TEACHER", "FOUNDER", "EXECUTIVE", "ADMIN", "SUPER_ADMIN"]}>
+      <div className="min-h-screen bg-[#0E0F15] text-white p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1440px] mx-auto">
       
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#13141B] p-6 rounded-3xl border border-white/10 shadow-xl">
@@ -660,7 +662,7 @@ export default function SchoolTeacherStudioPage() {
           </form>
         </div>
       )}
-
-    </div>
+      </div>
+    </AuthGuard>
   );
 }

@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
+import AuthGuard from "@/components/auth/AuthGuard";
 
 export const dynamic = "force-dynamic";
 
@@ -152,30 +153,32 @@ export default function NetworkingHubPage() {
   };
 
   // Strict 18+ Access Guard (Youth Safety)
-  if (!isAdult) {
+  if (!isAdult && user) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-6 bg-[#F4F6FB]">
-        <div className="max-w-md w-full card-quixel rounded-3xl p-8 text-center space-y-6 shadow-sm border border-[#E8ECF2]">
-          <div className="w-16 h-16 rounded-2xl bg-[#FFF6DC] border border-[#FFE8A3] text-[#D97706] flex items-center justify-center mx-auto shadow-sm">
-            <Lock className="w-8 h-8" />
+      <AuthGuard>
+        <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-6 bg-[#F4F6FB]">
+          <div className="max-w-md w-full card-quixel rounded-3xl p-8 text-center space-y-6 shadow-sm border border-[#E8ECF2]">
+            <div className="w-16 h-16 rounded-2xl bg-[#FFF6DC] border border-[#FFE8A3] text-[#D97706] flex items-center justify-center mx-auto shadow-sm">
+              <Lock className="w-8 h-8" />
+            </div>
+            <div className="space-y-2">
+              <span className="px-3 py-1 rounded-full bg-[#13141B]/5 text-[#13141B] text-xs font-mono font-bold uppercase tracking-wider border border-[#13141B]/10">
+                Career Track (18+) Only
+              </span>
+              <h1 className="text-2xl font-black font-display text-[#13141B] tracking-tight">Access Restricted</h1>
+              <p className="text-xs text-[#5E6573] leading-relaxed">
+                Open peer networking and direct messaging are strictly restricted to verified Career Track adult accounts under Edworld youth protection standards.
+              </p>
+            </div>
+            <Link
+              href="/dashboard"
+              className="inline-block px-6 py-2.5 rounded-2xl bg-[#13141B] hover:bg-black text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-transform active:scale-95"
+            >
+              Go to Dashboard
+            </Link>
           </div>
-          <div className="space-y-2">
-            <span className="px-3 py-1 rounded-full bg-[#13141B]/5 text-[#13141B] text-xs font-mono font-bold uppercase tracking-wider border border-[#13141B]/10">
-              Career Track (18+) Only
-            </span>
-            <h1 className="text-2xl font-black font-display text-[#13141B] tracking-tight">Access Restricted</h1>
-            <p className="text-xs text-[#5E6573] leading-relaxed">
-              Open peer networking and direct messaging are strictly restricted to verified Career Track adult accounts under Edworld youth protection standards.
-            </p>
-          </div>
-          <Link
-            href="/dashboard"
-            className="inline-block px-6 py-2.5 rounded-2xl bg-[#13141B] hover:bg-black text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-transform active:scale-95"
-          >
-            Go to Dashboard
-          </Link>
         </div>
-      </div>
+      </AuthGuard>
     );
   }
 
@@ -197,8 +200,9 @@ export default function NetworkingHubPage() {
   const mentorsList = discoverableUsers.filter((p) => p.isMentor);
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-[#F4F6FB] py-8 px-4 sm:px-6 lg:px-8 text-[#13141B]">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <AuthGuard>
+      <div className="min-h-[calc(100vh-4rem)] bg-[#F4F6FB] py-8 px-4 sm:px-6 lg:px-8 text-[#13141B]">
+        <div className="max-w-7xl mx-auto space-y-8">
         {/* Hero Header */}
         <div className="card-quixel rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden border border-[#E8ECF2]">
           <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-[#D7FC51]/20 via-[#7B57FF]/10 to-transparent rounded-bl-full pointer-events-none" />
@@ -609,7 +613,8 @@ export default function NetworkingHubPage() {
           isMentor={selectedUserForConnect?.isMentor}
           onSendRequest={handleSendConnection}
         />
+        </div>
       </div>
-    </div>
+    </AuthGuard>
   );
 }

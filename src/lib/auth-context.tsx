@@ -63,6 +63,89 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const [activeRole, setActiveRole] = useState<UserRole>("CLIENT");
 
+  // Initial session hydration from HTTP-only cookie, Supabase, or local storage
+  useEffect(() => {
+    let isMounted = true;
+
+    const checkSession = async () => {
+      try {
+        // 1. Check server-side HTTP-only session cookie
+        const res = await fetch("/api/auth/session", { method: "GET" });
+        if (res.ok) {
+          const sessionData = await res.json();
+          if (sessionData.authenticated && sessionData.user && isMounted) {
+            setUser(sessionData.user);
+            const userRole: UserRole = sessionData.role || "CLIENT";
+            setActiveRole(userRole);
+            setProfile({
+              name: sessionData.user.name,
+              phone: sessionData.user.phone,
+              careerStage: sessionData.user.careerStage,
+              primaryGoal: "EdWorld Skills & Career OS",
+              interests: [
+                { id: "swe", name: "Software Engineering", category: "Tech", selfLevel: 0, effectiveLevel: 0 },
+                { id: "behavioral", name: "Behavioral & Communication", category: "Career", selfLevel: 0, effectiveLevel: 0 },
+              ],
+              isPublic: sessionData.user.ageBand === "18+",
+              isMentor: false,
+              mentorTags: [],
+            });
+            setLoading(false);
+            return;
+          }
+        }
+
+        // 2. Check Supabase auth session fallback
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user && isMounted) {
+          await syncUserData(session.user);
+          setLoading(false);
+          return;
+        }
+
+        // 3. Check cached local session fallback
+        if (typeof window !== "undefined") {
+          const cachedSession = localStorage.getItem("edworld_auth_session");
+          if (cachedSession && isMounted) {
+            try {
+              const parsedUser: AppUser = JSON.parse(cachedSession);
+              setUser(parsedUser);
+              const storedRole = localStorage.getItem(`edworld_active_role_${parsedUser.uid}`) as UserRole | null;
+              if (storedRole) setActiveRole(storedRole);
+              setLoading(false);
+              return;
+            } catch {}
+          }
+        }
+
+        if (isMounted) {
+          setUser(null);
+          setProfile(null);
+          setLoading(false);
+        }
+      } catch (err) {
+        console.warn("[Auth Initialization Warning]:", err);
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    checkSession();
+
+    // Listen for Supabase auth state changes
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user && isMounted) {
+        await syncUserData(session.user);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      authListener?.subscription?.unsubscribe();
+    };
+  }, []);
+
   // Sync profile & subscription from Supabase PostgreSQL in parallel
   const syncUserData = async (supabaseUser: SupabaseUser) => {
     try {
@@ -532,17 +615,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
+    setLoading(true);
     try {
       await fetch("/api/auth/logout", { method: "POST" });
     } catch {}
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch {}
     setUser(null);
     setProfile(null);
     setSubscription(null);
     if (typeof window !== "undefined") {
       localStorage.removeItem("edworld_auth_session");
       localStorage.removeItem("edworld_user_profile");
+      sessionStorage.clear();
+      // Clear active role keys
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith("edworld_active_role_")) {
+          localStorage.removeItem(key);
+        }
+      });
+      // Replace window location to prevent browser back navigation cache
+      window.location.replace("/auth/login");
     }
+    setLoading(false);
   };
 
   const updateUserProfile = async (data: Partial<UserProfile>) => {

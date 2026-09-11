@@ -3,9 +3,13 @@ import { invalidateSession, logSecurityEvent } from "@/lib/otp-service";
 
 export async function POST(req: NextRequest) {
   try {
-    const sessionCookie = req.cookies.get("edworld_session")?.value;
-    if (sessionCookie) {
-      invalidateSession(sessionCookie);
+    const sessionToken = 
+      req.cookies.get("edworld_session")?.value ||
+      req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ||
+      req.headers.get("x-session-token");
+
+    if (sessionToken) {
+      invalidateSession(sessionToken);
     }
 
     logSecurityEvent({

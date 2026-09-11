@@ -50,6 +50,7 @@ import {
 } from "@/lib/db-service";
 import { runFounderInsightAgent, AgentInsight } from "@/lib/ai-agents";
 import AccessDeniedPortal from "@/components/ui/AccessDeniedPortal";
+import AuthGuard from "@/components/auth/AuthGuard";
 
 export default function FounderExecutivePage() {
   const { user, role, isFounder, isAdmin } = useAuth();
@@ -201,7 +202,8 @@ export default function FounderExecutivePage() {
   const calculatedValuation = valArr * valMultiple * (1 + (valGrowth / 200));
 
   return (
-    <div className="min-h-screen bg-[#0E0F15] text-white p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1440px] mx-auto">
+    <AuthGuard allowedRoles={["FOUNDER", "EXECUTIVE", "ADMIN", "SUPER_ADMIN"]}>
+      <div className="min-h-screen bg-[#0E0F15] text-white p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1440px] mx-auto">
       
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#13141B] p-6 rounded-3xl border border-white/10 shadow-xl">
@@ -715,7 +717,7 @@ export default function FounderExecutivePage() {
           </div>
         </div>
       )}
-
-    </div>
+      </div>
+    </AuthGuard>
   );
 }

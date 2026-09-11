@@ -23,6 +23,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import EdworldLogo from "@/components/ui/EdworldLogo";
+import AuthGuard from "@/components/auth/AuthGuard";
 
 export const dynamic = "force-dynamic";
 
@@ -64,16 +65,19 @@ export default function ResumesListPage() {
           return;
         }
       } catch (err) {
-        console.warn("[Supabase Resumes Load Note]", err);
+        console.warn("Supabase resume fetch note:", err);
       }
 
-      // 2. Check user-scoped local cache
+      // 2. Local storage or default fallback
       const cached = localStorage.getItem(`edworld_${user.uid}_resumes`);
       if (cached) {
         try {
-          setResumes(JSON.parse(cached));
-          return;
-        } catch (e) {}
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setResumes(parsed);
+            return;
+          }
+        } catch {}
       }
 
       // 3. If no resumes exist, initialize one for this user
@@ -140,28 +144,30 @@ export default function ResumesListPage() {
       await supabase
         .from("resumes")
         .insert({
+          id: newResume.id,
           user_id: user.uid,
           title: newResume.title,
           content: newResume.content,
           created_at: newResume.createdAt,
           updated_at: newResume.updatedAt,
         });
-    } catch (e) {
-      console.warn("Supabase resume insert note:", e);
+    } catch (err) {
+      console.warn("Supabase resume insert note:", err);
     }
 
     const updated = [newResume, ...resumes];
     await saveResumes(updated);
-    router.push(`/resumes/${newResume.id}?isNew=true`);
+    router.push(`/resumes/${newResume.id}`);
   };
 
-  const handleDuplicate = async (resumeToDup: Resume) => {
+  const handleDuplicate = async (res: Resume, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     if (!user) return;
     const duplicated: Resume = {
-      ...resumeToDup,
+      ...res,
       id: `resume-${user.uid}-${Date.now()}`,
       userId: user.uid,
-      title: `${resumeToDup.title} (Copy)`,
+      title: `${res.title} (Copy)`,
       updatedAt: new Date().toISOString(),
       createdAt: new Date().toISOString(),
     };
@@ -170,22 +176,28 @@ export default function ResumesListPage() {
       await supabase
         .from("resumes")
         .insert({
+          id: duplicated.id,
           user_id: user.uid,
           title: duplicated.title,
           content: duplicated.content,
           created_at: duplicated.createdAt,
           updated_at: duplicated.updatedAt,
         });
-    } catch (e) {
-      console.warn("Supabase resume duplicate note:", e);
+    } catch (err) {
+      console.warn("Supabase resume copy note:", err);
     }
 
     const updated = [duplicated, ...resumes];
     await saveResumes(updated);
   };
 
+  const handleDeleteClick = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDeleteTargetId(id);
+  };
+
   const confirmDelete = async () => {
-    if (!user || !deleteTargetId) return;
+    if (!deleteTargetId || !user) return;
     if (resumes.length === 1) {
       alert("You must keep at least one active resume draft.");
       setDeleteTargetId(null);
@@ -196,7 +208,8 @@ export default function ResumesListPage() {
       await supabase
         .from("resumes")
         .delete()
-        .eq("id", deleteTargetId);
+        .eq("id", deleteTargetId)
+        .eq("user_id", user.uid);
     } catch (e) {
       console.warn("Supabase resume delete note:", e);
     }
@@ -206,73 +219,40 @@ export default function ResumesListPage() {
     setDeleteTargetId(null);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-paper">
-        <div className="text-center space-y-3 font-mono text-xs text-ink-soft">
-          <div className="w-6 h-6 border-2 border-forest border-t-transparent rounded-full animate-spin mx-auto" />
-          <p>Loading your verified resumes...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-6 bg-paper">
-        <div className="max-w-md w-full bg-paper-raised rounded-3xl border border-line shadow-xl p-8 text-center space-y-6">
-          <div className="w-16 h-16 rounded-2xl bg-paper border border-line text-forest flex items-center justify-center mx-auto shadow-sm">
-            <Lock className="w-8 h-8" />
-          </div>
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold font-display text-ink tracking-tight">Sign In Required</h1>
-            <p className="text-sm text-ink-soft leading-relaxed">
-              Please sign in to access and manage your personalized ATS resumes.
-            </p>
-          </div>
-          <Link
-            href="/auth/login"
-            className="w-full py-3.5 px-4 rounded-xl bg-forest hover:bg-forest-light active:bg-forest-dark text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-all flex items-center justify-center gap-2"
-          >
-            <span>Sign In to Workspace</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   // If user is in Junior Track (13-15), render Junior Guidance Gate
   if (isJuniorTrack) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-6 bg-paper">
-        <div className="max-w-md w-full bg-paper-raised rounded-3xl border border-line shadow-xl p-8 text-center space-y-6">
-          <div className="w-16 h-16 rounded-2xl bg-gold/15 border border-gold/30 text-gold-dark flex items-center justify-center mx-auto shadow-sm">
-            <Lock className="w-8 h-8 text-gold" />
+      <AuthGuard>
+        <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-6 bg-paper">
+          <div className="max-w-md w-full bg-paper-raised rounded-3xl border border-line shadow-xl p-8 text-center space-y-6">
+            <div className="w-16 h-16 rounded-2xl bg-gold/15 border border-gold/30 text-gold-dark flex items-center justify-center mx-auto shadow-sm">
+              <Lock className="w-8 h-8 text-gold" />
+            </div>
+            <div className="space-y-2">
+              <span className="px-3 py-1 rounded-full bg-gold-light text-gold-dark text-xs font-mono font-bold uppercase tracking-wider border border-gold/30">
+                Junior Track (13-15)
+              </span>
+              <h1 className="text-3xl font-bold font-display text-ink tracking-tight">Resume Maker is for Explorer &amp; Career Tracks</h1>
+              <p className="text-sm text-ink-soft leading-relaxed">
+                As a Class 9-10 learner, your focus is on curious exploration, building hands-on creative projects, and learning core concepts. Resume building unlocks in the 16-18 Explorer Track.
+              </p>
+            </div>
+            <Link
+              href="/dashboard"
+              className="w-full py-3.5 px-4 rounded-xl bg-forest hover:bg-forest-light active:bg-forest-dark text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-all flex items-center justify-center gap-2"
+            >
+              <span>Return to Dashboard</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
-          <div className="space-y-2">
-            <span className="px-3 py-1 rounded-full bg-gold-light text-gold-dark text-xs font-mono font-bold uppercase tracking-wider border border-gold/30">
-              Junior Track (13-15)
-            </span>
-            <h1 className="text-3xl font-bold font-display text-ink tracking-tight">Resume Maker is for Explorer &amp; Career Tracks</h1>
-            <p className="text-sm text-ink-soft leading-relaxed">
-              As a Class 9-10 learner, your focus is on curious exploration, building hands-on creative projects, and learning core concepts. Resume building unlocks in the 16-18 Explorer Track.
-            </p>
-          </div>
-          <Link
-            href="/dashboard"
-            className="w-full py-3.5 px-4 rounded-xl bg-forest hover:bg-forest-light active:bg-forest-dark text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-all flex items-center justify-center gap-2"
-          >
-            <span>Return to Dashboard</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
         </div>
-      </div>
+      </AuthGuard>
     );
   }
 
   return (
-    <div className="min-h-[calc(100vh-5rem)] bg-[#F4F6FB] text-[#181920] pb-16">
+    <AuthGuard>
+      <div className="min-h-[calc(100vh-5rem)] bg-[#F4F6FB] text-[#181920] pb-16">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-8 animate-in fade-in duration-300">
         
         {/* Header */}
@@ -399,7 +379,8 @@ export default function ResumesListPage() {
             </div>
           </div>
         )}
+        </div>
       </div>
-    </div>
+    </AuthGuard>
   );
 }

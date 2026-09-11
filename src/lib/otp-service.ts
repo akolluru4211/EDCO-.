@@ -36,11 +36,18 @@ export interface SecurityEvent {
   metadata?: Record<string, any>;
 }
 
-// In-memory resilient OTP & Rate-Limit store
-const otpStore = new Map<string, OtpRecord>();
-const requestHistory = new Map<string, number[]>(); // identifier -> array of request timestamps
-const activeSessions = new Map<string, { userId: string; role: UserRole; expiresAt: number }>();
-const securityLogs: SecurityEvent[] = [];
+// In-memory resilient OTP & Rate-Limit store (persisted on globalThis for Next.js route chunks)
+const globalForAuth = globalThis as unknown as {
+  edworldOtpStore?: Map<string, OtpRecord>;
+  edworldRequestHistory?: Map<string, number[]>;
+  edworldActiveSessions?: Map<string, { userId: string; role: UserRole; expiresAt: number }>;
+  edworldSecurityLogs?: SecurityEvent[];
+};
+
+const otpStore = globalForAuth.edworldOtpStore || (globalForAuth.edworldOtpStore = new Map<string, OtpRecord>());
+const requestHistory = globalForAuth.edworldRequestHistory || (globalForAuth.edworldRequestHistory = new Map<string, number[]>());
+const activeSessions = globalForAuth.edworldActiveSessions || (globalForAuth.edworldActiveSessions = new Map<string, { userId: string; role: UserRole; expiresAt: number }>());
+const securityLogs = globalForAuth.edworldSecurityLogs || (globalForAuth.edworldSecurityLogs = []);
 
 // Seed known internal provisioned staff for deterministic server role verification
 const PROVISIONED_INTERNAL_ACCOUNTS: Record<string, { role: UserRole; status: AccountStatus; name: string; orgId: string }> = {

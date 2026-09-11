@@ -57,6 +57,7 @@ import {
 } from "@/lib/db-service";
 import { runEmployeeProductivityAgent, AgentInsight } from "@/lib/ai-agents";
 import AccessDeniedPortal from "@/components/ui/AccessDeniedPortal";
+import AuthGuard from "@/components/auth/AuthGuard";
 
 export default function EmployeeWorkspacePage() {
   const { user, profile, role, isEmployee, isHR, isFounder, isAdmin } = useAuth();
@@ -281,7 +282,8 @@ export default function EmployeeWorkspacePage() {
   const filteredTasks = taskFilter === "ALL" ? tasks : tasks.filter(t => t.status === taskFilter);
 
   return (
-    <div className="min-h-screen bg-[#0E0F15] text-white p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1440px] mx-auto">
+    <AuthGuard allowedRoles={["EMPLOYEE", "HR", "FOUNDER", "EXECUTIVE", "ADMIN", "SUPER_ADMIN"]}>
+      <div className="min-h-screen bg-[#0E0F15] text-white p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1440px] mx-auto">
       
       {/* Workspace Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#13141B] p-6 rounded-3xl border border-white/10 shadow-xl">
@@ -948,7 +950,7 @@ export default function EmployeeWorkspacePage() {
           </div>
         </div>
       )}
-
-    </div>
+      </div>
+    </AuthGuard>
   );
 }

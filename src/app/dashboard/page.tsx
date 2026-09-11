@@ -36,6 +36,7 @@ import {
 import { supabase } from "@/lib/supabase";
 import GrowthRing from "@/components/ui/GrowthRing";
 import GamificationHUD from "@/components/dashboard/GamificationHUD";
+import AuthGuard from "@/components/auth/AuthGuard";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -282,25 +283,28 @@ export default function DashboardPage() {
 
   if (isJuniorTrack) {
     return (
-      <div className="min-h-[calc(100vh-5rem)] flex items-center justify-center p-6 bg-[#F4F6FB]">
-        <div className="max-w-md w-full bg-white rounded-4xl p-8 border border-[#E8ECF2] shadow-quixel text-center space-y-4">
-          <div className="w-14 h-14 rounded-3xl bg-[#D7FC51]/30 text-[#13141B] flex items-center justify-center mx-auto">
-            <Lock className="w-6 h-6" />
+      <AuthGuard>
+        <div className="min-h-[calc(100vh-5rem)] flex items-center justify-center p-6 bg-[#F4F6FB]">
+          <div className="max-w-md w-full bg-white rounded-4xl p-8 border border-[#E8ECF2] shadow-quixel text-center space-y-4">
+            <div className="w-14 h-14 rounded-3xl bg-[#D7FC51]/30 text-[#13141B] flex items-center justify-center mx-auto">
+              <Lock className="w-6 h-6" />
+            </div>
+            <h1 className="text-2xl font-black text-[#181920]">Junior Explorer Studio</h1>
+            <p className="text-xs text-[#8E95A5] leading-relaxed">
+              Junior learners (13-15) practice digital literacy, curiosity quests, and private growth reflection in the School Learning Studio.
+            </p>
+            <Link href="/school" className="inline-block px-6 py-3 rounded-2xl bg-[#13141B] hover:bg-[#252632] text-white text-xs font-bold shadow-md transition-all">
+              Enter School Learning Studio &rarr;
+            </Link>
           </div>
-          <h1 className="text-2xl font-black text-[#181920]">Junior Explorer Studio</h1>
-          <p className="text-xs text-[#8E95A5] leading-relaxed">
-            Junior learners (13-15) practice digital literacy, curiosity quests, and private growth reflection in the School Learning Studio.
-          </p>
-          <Link href="/school" className="inline-block px-6 py-3 rounded-2xl bg-[#13141B] hover:bg-[#252632] text-white text-xs font-bold shadow-md transition-all">
-            Enter School Learning Studio &rarr;
-          </Link>
         </div>
-      </div>
+      </AuthGuard>
     );
   }
 
   return (
-    <div className="min-h-[calc(100vh-5rem)] bg-[#F4F6FB] text-[#181920] pb-16">
+    <AuthGuard>
+      <div className="min-h-[calc(100vh-5rem)] bg-[#F4F6FB] text-[#181920] pb-16">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-8 animate-in fade-in duration-300">
         
         {/* ========================================================================= */}
@@ -901,7 +905,8 @@ export default function DashboardPage() {
           </div>
         )}
 
+        </div>
       </div>
-    </div>
+    </AuthGuard>
   );
 }

@@ -22,6 +22,7 @@ import {
 import Button from "@/components/ui/Button";
 import { supabase } from "@/lib/supabase";
 import { recordAuditLog } from "@/lib/audit-logger";
+import AuthGuard from "@/components/auth/AuthGuard";
 
 export default function ProfilePage() {
   const { user, profile, role, updateUserProfile } = useAuth();
@@ -122,7 +123,8 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0E0F15] text-white p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1280px] mx-auto">
+    <AuthGuard>
+      <div className="min-h-screen bg-[#0E0F15] text-white p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1280px] mx-auto">
       
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#13141B] p-6 rounded-3xl border border-white/10 shadow-xl">
@@ -355,5 +357,6 @@ export default function ProfilePage() {
       </div>
 
     </div>
+    </AuthGuard>
   );
 }
