@@ -105,35 +105,9 @@ export default function FounderExecutivePage() {
     ]);
 
     setKpis(k);
-    setInitiatives(initList.length > 0 ? initList : [
-      {
-        id: "init-1",
-        title: "Phase 19 Internal OS Enterprise Rollout",
-        owner: "Sunita Rao",
-        priority: "CRITICAL",
-        deadline: "2026-03-31",
-        status: "ACTIVE",
-        budget: 450000,
-        expectedOutcome: "All 18 employees, 14 schools, and 8 colleges migrated to internal portals.",
-        progressPercentage: 90,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: "init-2",
-        title: "Tier-1 College Placement Network Expansion",
-        owner: "Placement Team",
-        priority: "HIGH",
-        deadline: "2026-06-30",
-        status: "PLANNED",
-        budget: 600000,
-        expectedOutcome: "Sign MOUs with 25 engineering universities for campus recruitment.",
-        progressPercentage: 35,
-        createdAt: new Date().toISOString(),
-      }
-    ]);
-
-    setInvestorUpdates(invList);
-    setAlerts(alertList);
+    setInitiatives(initList || []);
+    setInvestorUpdates(invList || []);
+    setAlerts(alertList || []);
 
     try {
       const insights = await runFounderInsightAgent("FOUNDER");

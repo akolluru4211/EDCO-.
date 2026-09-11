@@ -88,57 +88,9 @@ export default function HrCommandCenterPage() {
       getLeaveRequests(),
     ]);
 
-    if (c.length === 0) {
-      const initialC = await saveCandidate({
-        fullName: "Aditya Verma",
-        email: "aditya.v@example.com",
-        phone: "+91 98765 11223",
-        appliedRole: "Senior Backend Systems Engineer",
-        department: "Engineering",
-        experienceYears: 5,
-        currentStage: "Interview",
-        notes: [{ author: "Tech Lead", text: "Strong distributed systems knowledge.", date: "2026-03-08" }],
-      });
-      setCandidates([initialC]);
-    } else {
-      setCandidates(c);
-    }
-
-    if (o.length === 0) {
-      setOnboardings([
-        {
-          id: "onb-1",
-          employeeId: "emp-101",
-          employeeName: "Sneha Mukherjee",
-          corporateEmail: "sneha.m@edworld.co.in",
-          department: "Frontend Architecture",
-          designation: "Staff UI Engineer",
-          joiningDate: "2026-03-15",
-          managerName: "Sunita Rao",
-          checklist: {
-            personalDetails: true,
-            documents: true,
-            offer: true,
-            contract: true,
-            bankDetails: true,
-            departmentAssigned: true,
-            managerAssigned: true,
-            equipmentDispatched: false,
-            emailAccountCreated: true,
-            accessPermissionsSet: true,
-            orientationCompleted: false,
-            completionPercentage: 82,
-          },
-          status: "ACCOUNT_ACTIVATED",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        }
-      ]);
-    } else {
-      setOnboardings(o);
-    }
-
-    setLeaves(l);
+    setCandidates(c || []);
+    setOnboardings(o || []);
+    setLeaves(l || []);
 
     try {
       const insights = await runHRInsightAgent("HR");

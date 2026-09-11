@@ -649,6 +649,7 @@ export interface PublicUserProfile {
 // ============================================================
 
 export type UserRole =
+  | "STUDENT"
   | "CLIENT"
   | "EMPLOYEE"
   | "HR"

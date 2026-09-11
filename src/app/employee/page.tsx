@@ -124,77 +124,13 @@ export default function EmployeeWorkspacePage() {
       getEmployeeDocuments(currentEmployeeId),
     ]);
 
-    // Initial fallbacks if empty so employee sees structured interface
-    if (t.length === 0) {
-      const initialTask = await saveEmployeeTask({
-        title: "Migrate internal auth to dual-track RBAC tokens",
-        description: "Implement server-side role verifications and sanitize authorization endpoints.",
-        project: "Security & Auth Infrastructure",
-        priority: "HIGH",
-        assigneeId: currentEmployeeId,
-        assigneeName: currentEmployeeName,
-        assigneeEmail: currentEmployeeEmail,
-        assignedById: "mgr_1",
-        dueDate: "2026-03-18",
-        status: "IN_PROGRESS",
-        comments: [],
-      });
-      setTasks([initialTask]);
-    } else {
-      setTasks(t);
-    }
-
-    if (o.length === 0) {
-      const initialOkr = await saveEmployeeOKR({
-        objective: "Increase EdWorld Platform Organization Adoption",
-        keyResults: [
-          { id: "kr-1", title: "Deploy Phase 19 Internal OS to production", target: 100, current: 75, unit: "%", progressPercentage: 75 },
-          { id: "kr-2", title: "Achieve 99.9% uptime on corporate staff gateways", target: 99.9, current: 99.9, unit: "%", progressPercentage: 100 },
-          { id: "kr-3", title: "Complete zero-leak RBAC security audit", target: 100, current: 80, unit: "%", progressPercentage: 80 },
-        ],
-        overallProgress: 85,
-        ownerId: currentEmployeeId,
-        ownerName: currentEmployeeName,
-        quarter: "Q1 2026",
-        deadline: "2026-03-31",
-        status: "ON_TRACK",
-      });
-      setOkrs([initialOkr]);
-    } else {
-      setOkrs(o);
-    }
-
-    if (p.length === 0) {
-      const mockPay: PayrollRecord = {
-        id: `pay_${Date.now()}`,
-        employeeId: currentEmployeeId,
-        employeeName: currentEmployeeName,
-        employeeEmail: currentEmployeeEmail,
-        designation: "Senior Software Engineer (L5)",
-        department: "Engineering & Core Platform",
-        payPeriod: "March 2026",
-        paymentStatus: "PAID",
-        baseSalary: 145000,
-        allowances: { hra: 40000, special: 25000, transport: 5000 },
-        deductions: { pf: 12000, tax: 28000, other: 0 },
-        netPay: 175000,
-        disbursedAt: "2026-03-01T00:00:00.000Z",
-        bankAccountMasked: "HDFC •••• 8842",
-      };
-      setPayrolls([mockPay]);
-    } else {
-      setPayrolls(p);
-    }
-
-    setCheckIns(c);
-    setLeaves(l);
-    setTeamMembers(tm.length > 0 ? tm : [
-      { id: "tm-1", name: "Sunita Rao", department: "Engineering", designation: "VP of Engineering", workEmail: "sunita@edworld.co.in", availabilityStatus: "AVAILABLE" },
-      { id: "tm-2", name: "Arjun Verma", department: "People Operations", designation: "HR Lead", workEmail: "arjun.hr@edworld.co.in", availabilityStatus: "AVAILABLE" },
-      { id: "tm-3", name: "Priya Sharma", department: "Design & Product", designation: "Staff Product Designer", workEmail: "priya@edworld.co.in", availabilityStatus: "FOCUS_MODE" },
-      { id: "tm-4", name: "Rohan Nair", department: "Engineering", designation: "Lead Platform Engineer", workEmail: "rohan@edworld.co.in", availabilityStatus: "IN_A_MEETING" },
-    ]);
-    setDocuments(d);
+    setTasks(t || []);
+    setOkrs(o || []);
+    setPayrolls(p || []);
+    setCheckIns(c || []);
+    setLeaves(l || []);
+    setTeamMembers(tm || []);
+    setDocuments(d || []);
 
     const insights = await runEmployeeProductivityAgent(currentEmployeeId);
     setAiInsights(insights);
