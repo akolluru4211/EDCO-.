@@ -218,6 +218,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setUser(appUser);
 
+      if (typeof document !== "undefined") {
+        document.cookie = `edworld_session=${supabaseUser.id}; path=/; max-age=2592000; SameSite=Lax`;
+      }
+
       if (profileData) {
         setProfile({
           name: profileData.name || appUser.name,
@@ -499,6 +503,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (typeof window !== "undefined") {
         localStorage.setItem("edworld_auth_session", JSON.stringify(appUser));
         localStorage.setItem("edworld_user_profile", JSON.stringify(userProfile));
+        document.cookie = `edworld_session=${userId}; path=/; max-age=2592000; SameSite=Lax`;
       }
 
       // Non-blocking background sync across relational tables
@@ -635,6 +640,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           localStorage.removeItem(key);
         }
       });
+
+      // Clear cookies
+      document.cookie = "edworld_session=; path=/; max-age=0; SameSite=Lax";
+      document.cookie = "sb-access-token=; path=/; max-age=0; SameSite=Lax";
+      document.cookie = "edworld_auth=; path=/; max-age=0; SameSite=Lax";
+      
       // Replace window location to prevent browser back navigation cache
       window.location.replace("/auth/login");
     }
