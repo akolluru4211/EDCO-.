@@ -38,7 +38,7 @@ interface AuthContextType {
   isPro: boolean;
   sendOtp: (identifier: string, purpose?: "login" | "signup") => Promise<{ success: boolean; maskedIdentifier: string; cooldownSeconds: number; devOtp?: string }>;
   verifyOtp: (identifier: string, otp: string, purpose?: "login" | "signup", metaData?: any) => Promise<{ role: UserRole; redirectUrl: string }>;
-  loginWithEmail: (emailOrPhone: string, pass: string) => Promise<{ role: UserRole; redirectUrl: string }>;
+  loginWithEmail: (emailOrPhone: string, pass: string) => Promise<{ role: UserRole; redirectUrl: string; careerStage?: CareerStage }>;
   signupWithEmail: (name: string, email: string, pass: string, dob: string, gradeLevel?: string, phone?: string, careerStage?: CareerStage) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   submitGuardianConsent: (guardianName: string, guardianEmail: string, relationship?: "parent" | "legal_guardian") => Promise<{ success: boolean; token?: string }>;
@@ -296,12 +296,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           resumesCreated: 0,
         });
       }
+
+      return appUser;
     } catch (err) {
       console.warn("[Supabase Auth Sync Error]:", err);
+      return null;
     }
   };
 
-  const getRedirectForRole = (userRole: UserRole): string => {
+  const getRedirectForRole = (userRole: UserRole, stage?: CareerStage): string => {
     switch (userRole) {
       case "HR":
         return "/hr";
@@ -320,11 +323,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return "/employee";
       case "CLIENT":
       default:
-        return "/dashboard";
+        if (stage === "JUNIOR") return "/student/junior/dashboard";
+        if (stage === "STUDENT") return "/dashboard";
+        return "/career/dashboard";
     }
   };
 
-  const loginWithEmail = async (emailOrPhone: string, pass: string): Promise<{ role: UserRole; redirectUrl: string }> => {
+  const loginWithEmail = async (emailOrPhone: string, pass: string): Promise<{ role: UserRole; redirectUrl: string; careerStage?: CareerStage }> => {
     setLoading(true);
     try {
       const credential = emailOrPhone.trim();
@@ -354,12 +359,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data, error } = await Promise.race([loginPromise, timeoutPromise]);
         if (error) throw error;
         if (data?.user) {
-          await syncUserData(data.user);
+          const syncedUser = await syncUserData(data.user);
           setActiveRole(targetRole);
           if (typeof window !== "undefined") {
             localStorage.setItem(`edworld_active_role_${data.user.id}`, targetRole);
           }
-          return { role: targetRole, redirectUrl: getRedirectForRole(targetRole) };
+          const userStage: CareerStage = syncedUser?.careerStage || (syncedUser?.ageBand === "13-15" ? "JUNIOR" : syncedUser?.ageBand === "16-18" ? "STUDENT" : "PROFESSIONAL");
+          return { role: targetRole, redirectUrl: getRedirectForRole(targetRole, userStage), careerStage: userStage };
         }
       } catch (remoteErr: any) {
         // Fallback for 504 / timeout / network disruption
@@ -375,7 +381,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               if (cachedProfile) {
                 setProfile(JSON.parse(cachedProfile));
               }
-              return { role: targetRole, redirectUrl: getRedirectForRole(targetRole) };
+              const userStage: CareerStage = parsedUser.careerStage || (parsedUser.ageBand === "13-15" ? "JUNIOR" : parsedUser.ageBand === "16-18" ? "STUDENT" : "PROFESSIONAL");
+              return { role: targetRole, redirectUrl: getRedirectForRole(targetRole, userStage), careerStage: userStage };
             }
           }
         }
@@ -384,7 +391,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
 
-      return { role: targetRole, redirectUrl: getRedirectForRole(targetRole) };
+      return { role: targetRole, redirectUrl: getRedirectForRole(targetRole, "PROFESSIONAL"), careerStage: "PROFESSIONAL" };
     } finally {
       setLoading(false);
     }

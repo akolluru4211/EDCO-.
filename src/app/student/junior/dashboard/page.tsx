@@ -24,8 +24,21 @@ import {
 } from "lucide-react";
 import Button from "@/components/ui/Button";
 
+import { useRouter } from "next/navigation";
+
 export default function JuniorDashboardPage() {
-  const { user } = useAuth();
+  const router = useRouter();
+  const { user, loading } = useAuth();
+
+  React.useEffect(() => {
+    if (!loading && user) {
+      if (user.careerStage === "PROFESSIONAL") {
+        router.replace("/career/dashboard");
+      } else if (user.careerStage === "STUDENT") {
+        router.replace("/dashboard");
+      }
+    }
+  }, [user, loading, router]);
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-[#F4F6FB] py-8 px-4 sm:px-6 lg:px-8 text-[#13141B]">

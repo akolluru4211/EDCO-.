@@ -42,14 +42,22 @@ export default function DashboardPage() {
   const router = useRouter();
   const { user, profile, loading } = useAuth();
 
-  const isJuniorTrack = user?.ageBand === "13-15";
-  const isExplorerTrack = user?.ageBand === "16-18";
-  const isCareerTrack = user?.ageBand === "18+";
+  const isJuniorTrack = user?.careerStage === "JUNIOR" || user?.ageBand === "13-15";
+  const isExplorerTrack = user?.careerStage === "STUDENT" || user?.ageBand === "16-18";
+  const isCareerTrack = user?.careerStage === "PROFESSIONAL" || user?.ageBand === "18+";
 
   // Career Stage (college vs working_professional)
   const [careerStage, setCareerStage] = useState<"college" | "working_professional">(
-    (profile?.careerStage as any) || "working_professional"
+    profile?.careerStage === "STUDENT" || user?.careerStage === "STUDENT" ? "college" : "working_professional"
   );
+
+  useEffect(() => {
+    if (user?.careerStage === "STUDENT" || profile?.careerStage === "STUDENT") {
+      setCareerStage("college");
+    } else if (user?.careerStage === "PROFESSIONAL" || profile?.careerStage === "PROFESSIONAL") {
+      setCareerStage("working_professional");
+    }
+  }, [user?.careerStage, profile?.careerStage]);
 
   // Filter for Recommended modules
   const [selectedDifficulty, setSelectedDifficulty] = useState<"All" | "Beginner" | "Intermediate" | "Advanced">("All");

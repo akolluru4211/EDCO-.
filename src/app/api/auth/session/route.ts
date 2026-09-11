@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     // Fetch fresh profile
     const { data: profile } = await supabase
       .from("profiles")
-      .select("id, email, name, role, age_band, is_suspended")
+      .select("id, email, name, role, age_band, career_stage, grade_level, phone, is_suspended")
       .eq("id", userId)
       .maybeSingle();
 
@@ -34,6 +34,15 @@ export async function GET(req: NextRequest) {
       userId,
       role: role || profile?.role || "CLIENT",
       profile,
+      user: {
+        uid: userId,
+        email: profile?.email || "",
+        name: profile?.name || "Learner",
+        phone: profile?.phone,
+        ageBand: profile?.age_band || "18+",
+        careerStage: profile?.career_stage || (profile?.age_band === "13-15" ? "JUNIOR" : profile?.age_band === "16-18" ? "STUDENT" : "PROFESSIONAL"),
+        gradeLevel: profile?.grade_level || "College",
+      }
     });
   } catch (err) {
     return NextResponse.json({ authenticated: false }, { status: 500 });

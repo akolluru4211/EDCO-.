@@ -112,13 +112,15 @@ function hashOtp(identifier: string, otp: string): string {
 }
 
 /**
- * Maps UserRole to authorized portal URL
+ * Maps UserRole and CareerStage to authorized portal URL
  */
-export function getRedirectForRole(role: UserRole | string): string {
+export function getRedirectForRole(role: UserRole | string, careerStage?: string): string {
   switch (role) {
     case "STUDENT":
     case "CLIENT":
-      return "/dashboard";
+      if (careerStage === "JUNIOR") return "/student/junior/dashboard";
+      if (careerStage === "STUDENT") return "/dashboard";
+      return "/career/dashboard";
     case "EMPLOYEE":
       return "/employee";
     case "HR":
@@ -135,7 +137,9 @@ export function getRedirectForRole(role: UserRole | string): string {
     case "SUPER_ADMIN":
       return "/admin";
     default:
-      return "/dashboard";
+      if (careerStage === "JUNIOR") return "/student/junior/dashboard";
+      if (careerStage === "STUDENT") return "/dashboard";
+      return "/career/dashboard";
   }
 }
 
@@ -349,7 +353,7 @@ export async function verifyOtp(
     expiresAt: now + 30 * 24 * 60 * 60 * 1000, // 30 days
   });
 
-  const redirectUrl = getRedirectForRole(role);
+  const redirectUrl = getRedirectForRole(role, user.careerStage);
 
   logSecurityEvent({
     type: "OTP_VERIFY_SUCCESS",

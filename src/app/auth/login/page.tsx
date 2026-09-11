@@ -115,7 +115,7 @@ function LoginForm() {
     setLoading(true);
     setError(null);
     try {
-      const { role, redirectUrl } = await loginWithEmail(email, password);
+      const { role, redirectUrl, careerStage } = await loginWithEmail(email, password);
       
       // If there is an explicit redirectUrl query param, navigate to it
       const explicitRedirect = searchParams?.get("redirectUrl");
@@ -128,11 +128,13 @@ function LoginForm() {
       if (role && role !== "CLIENT") {
         router.push(redirectUrl);
       } else {
-        // For client learners, route to their track dashboard if specified, else redirectUrl
-        if (selectedTrack === "junior") {
+        // Strictly route based on the account's registered career stage
+        if (careerStage === "JUNIOR") {
           router.push("/student/junior/dashboard");
-        } else if (selectedTrack === "student") {
-          router.push("/student/explorer/dashboard");
+        } else if (careerStage === "STUDENT") {
+          router.push("/dashboard");
+        } else if (careerStage === "PROFESSIONAL") {
+          router.push("/career/dashboard");
         } else {
           router.push(redirectUrl || "/dashboard");
         }

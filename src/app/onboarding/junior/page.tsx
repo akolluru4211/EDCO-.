@@ -50,18 +50,32 @@ export default function JuniorOnboardingPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (user) {
+      if (user.careerStage === "PROFESSIONAL") {
+        router.replace("/onboarding/professional");
+        return;
+      } else if (user.careerStage === "STUDENT") {
+        router.replace("/onboarding/student");
+        return;
+      }
+    }
+
     if (typeof window !== "undefined") {
       try {
         const stored = localStorage.getItem("edworld_pending_stage_profile");
         if (stored) {
           const parsed = JSON.parse(stored);
-          if (parsed.stage === "junior") {
-            // Available if prefilled
+          if (parsed.stage === "pro") {
+            router.replace("/onboarding/professional");
+            return;
+          } else if (parsed.stage === "student") {
+            router.replace("/onboarding/student");
+            return;
           }
         }
       } catch {}
     }
-  }, []);
+  }, [user, router]);
 
   const toggleQuest = (id: string) => {
     setSelectedQuests((prev) =>
