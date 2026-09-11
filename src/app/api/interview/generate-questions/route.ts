@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { SEED_INTERVIEW_QUESTIONS } from "@/lib/mock-data";
+import { executeMCPTool } from "@/lib/mcp/engine";
+import { supabase } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
@@ -28,119 +29,67 @@ const FIXED_OPENING_QUESTION: GeneratedQuestion = {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
-    const { jobDescription, category = "Software Engineering", effectiveLevel = 0 } = body;
+    const { jobDescription, category = "Software Engineering", effectiveLevel = 0, userId = "learner-user" } = body;
 
-    const questions: GeneratedQuestion[] = [FIXED_OPENING_QUESTION];
-
-    // If JD is provided, generate role-specific tailored questions tagged with difficulty_level (0-2)
-    if (jobDescription && typeof jobDescription === "string" && jobDescription.trim().length > 20) {
-      try {
-        const jdLower = jobDescription.toLowerCase();
-        
-        // Extract key focus areas from JD
-        const hasBackend = jdLower.includes("api") || jdLower.includes("database") || jdLower.includes("sql") || jdLower.includes("node") || jdLower.includes("python") || jdLower.includes("backend");
-        const hasFrontend = jdLower.includes("react") || jdLower.includes("ui") || jdLower.includes("ux") || jdLower.includes("frontend") || jdLower.includes("css") || jdLower.includes("web");
-        const hasSystemDesign = jdLower.includes("scalable") || jdLower.includes("architecture") || jdLower.includes("microservices") || jdLower.includes("distributed") || jdLower.includes("system design");
-        const hasLeadership = jdLower.includes("lead") || jdLower.includes("cross-functional") || jdLower.includes("mentor") || jdLower.includes("stakeholder");
-
-        // Question 2: Technical tailored question
-        if (hasBackend) {
-          questions.push({
-            id: `jd-tech-${Date.now()}-1`,
-            text: "Based on the role's backend requirements, how do you design RESTful APIs and handle database query optimization under high load?",
-            category,
-            difficultyLevel: Math.min(2, Math.max(0, effectiveLevel)) as 0 | 1 | 2,
-            keyPoints: ["Endpoint design", "Indexing & caching", "Error handling"],
-            suggestedDurationSeconds: 150,
-            type: "technical"
-          });
-        } else if (hasFrontend) {
-          questions.push({
-            id: `jd-tech-${Date.now()}-1`,
-            text: "Looking at the frontend focus of this position, describe how you optimize web rendering performance, state management, and component reusability.",
-            category,
-            difficultyLevel: Math.min(2, Math.max(0, effectiveLevel)) as 0 | 1 | 2,
-            keyPoints: ["Core Web Vitals", "State architecture", "Component modularity"],
-            suggestedDurationSeconds: 150,
-            type: "technical"
-          });
-        } else {
-          questions.push({
-            id: `jd-tech-${Date.now()}-1`,
-            text: `In relation to the responsibilities described in this job posting, walk me through your technical workflow when diagnosing and resolving complex issues in ${category}.`,
-            category,
-            difficultyLevel: Math.min(2, Math.max(0, effectiveLevel)) as 0 | 1 | 2,
-            keyPoints: ["Root cause analysis", "Systematic debugging", "Verification"],
-            suggestedDurationSeconds: 150,
-            type: "technical"
-          });
-        }
-
-        // Question 3: Behavioral / Architecture question
-        if (hasLeadership || hasSystemDesign) {
-          questions.push({
-            id: `jd-behav-${Date.now()}-2`,
-            text: "Describe a situation from your past experience where you had to balance trade-offs between delivery speed, technical debt, and team alignment.",
-            category,
-            difficultyLevel: Math.min(2, Math.max(0, effectiveLevel + 1)) as 0 | 1 | 2,
-            keyPoints: ["STAR format", "Stakeholder communication", "Long-term maintainability"],
-            suggestedDurationSeconds: 150,
-            type: "behavioral"
-          });
-        } else {
-          questions.push({
-            id: `jd-behav-${Date.now()}-2`,
-            text: "Tell me about a challenging project requirement you encountered and how you broke it down into achievable milestones.",
-            category,
-            difficultyLevel: Math.min(2, Math.max(0, effectiveLevel)) as 0 | 1 | 2,
-            keyPoints: ["Problem breakdown", "Action steps", "Measured result"],
-            suggestedDurationSeconds: 150,
-            type: "behavioral"
-          });
-        }
-
-        return NextResponse.json({
-          success: true,
-          source: "jd_tailored",
-          questions
-        });
-      } catch (genErr) {
-        console.warn("[JD Generation Fallback to Static Bank]:", genErr);
+    // Execute via Central MCP Engine
+    const mcpResult = await executeMCPTool(
+      "generate_interview_questions",
+      { category, effectiveLevel, jobDescription },
+      {
+        userId: req.headers.get("x-user-id") || userId,
+        role: "CLIENT",
+        timestamp: new Date().toISOString()
       }
-    }
-
-    // Fallback cleanly to Static Question Bank
-    const matchingStatic = SEED_INTERVIEW_QUESTIONS.filter(
-      q => q.category.toLowerCase().includes(category.toLowerCase()) && q.difficultyLevel === effectiveLevel
     );
 
-    if (matchingStatic.length > 0) {
-      matchingStatic.slice(0, 2).forEach(sq => {
+    if (mcpResult.success && mcpResult.data?.questions) {
+      return NextResponse.json({
+        success: true,
+        source: mcpResult.data.source || "mcp_engine",
+        questions: mcpResult.data.questions
+      });
+    }
+
+    // Direct Live Supabase Query Fallback
+    const questions: GeneratedQuestion[] = [FIXED_OPENING_QUESTION];
+    try {
+      const { data: dbQuestions } = await supabase
+        .from("interview_questions")
+        .select("*")
+        .eq("is_active", true)
+        .ilike("category", `%${category}%`)
+        .eq("difficulty_level", effectiveLevel);
+
+      if (dbQuestions && dbQuestions.length > 0) {
+        dbQuestions.slice(0, 2).forEach((dq: any) => {
+          questions.push({
+            id: dq.id,
+            text: dq.text,
+            category: dq.category,
+            difficultyLevel: dq.difficulty_level as 0 | 1 | 2,
+            keyPoints: dq.key_points || [],
+            suggestedDurationSeconds: dq.suggested_duration_seconds || 120,
+            type: "technical"
+          });
+        });
+      } else {
         questions.push({
-          id: sq.id,
-          text: sq.text,
-          category: sq.category,
-          difficultyLevel: sq.difficultyLevel as 0 | 1 | 2,
-          keyPoints: sq.keyPoints,
-          suggestedDurationSeconds: sq.suggestedDurationSeconds || 120,
+          id: `live-q-${Date.now()}`,
+          text: `In relation to your practical experience in ${category}, walk me through your technical approach to diagnosing, building, and deploying reliable solutions.`,
+          category,
+          difficultyLevel: effectiveLevel as 0 | 1 | 2,
+          keyPoints: ["Problem breakdown", "Architecture decisions", "Measurable outcome"],
+          suggestedDurationSeconds: 120,
           type: "technical"
         });
-      });
-    } else {
-      questions.push({
-        id: `static-fallback-${effectiveLevel}`,
-        text: `Can you describe your technical approach and problem-solving methodology when building solutions in ${category}?`,
-        category,
-        difficultyLevel: effectiveLevel as 0 | 1 | 2,
-        keyPoints: ["Methodology", "Decomposition", "Measurable outcome"],
-        suggestedDurationSeconds: 120,
-        type: "technical"
-      });
+      }
+    } catch (err) {
+      console.warn("[Live Question Fetch Note]:", err);
     }
 
     return NextResponse.json({
       success: true,
-      source: "static_bank",
+      source: "supabase_live_query",
       questions
     });
   } catch (error: any) {
@@ -151,3 +100,4 @@ export async function POST(req: NextRequest) {
     }, { status: 500 });
   }
 }
+

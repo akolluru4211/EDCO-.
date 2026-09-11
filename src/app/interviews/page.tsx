@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { AVAILABLE_CATEGORIES, SEED_INTERVIEW_QUESTIONS } from "@/lib/mock-data";
+import { AVAILABLE_CATEGORIES } from "@/lib/constants";
 import { InterviewSession, SkillLevel } from "@/lib/types";
 import { getDifficultyBadgeColor, getDifficultyLabel } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
@@ -367,7 +367,7 @@ export default function InterviewsHubPage() {
                       <h3 className="font-black text-[#181920] text-lg group-hover:text-[#7B57FF] transition-colors">
                         {cat.name}
                       </h3>
-                      <p className="text-xs text-[#767E94] mt-1 leading-relaxed">{cat.desc}</p>
+                      <p className="text-xs text-[#767E94] mt-1 leading-relaxed">{cat.description}</p>
                     </div>
                   </div>
 
