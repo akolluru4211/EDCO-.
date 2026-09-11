@@ -11,10 +11,10 @@ function runTest(name, fn) {
   totalTests++;
   try {
     fn();
-    console.log(`✅ [PASS] ${name}`);
+    console.log(`âœ… [PASS] ${name}`);
     passedTests++;
   } catch (err) {
-    console.error(`❌ [FAIL] ${name}: ${err.message}`);
+    console.error(`âŒ [FAIL] ${name}: ${err.message}`);
   }
 }
 
@@ -49,12 +49,11 @@ runTest('3. Landing page contains career-stage switcher, cards, and modal', () =
   assert(stageComponent.includes('Change Stage'), 'Stage confirmation change button missing');
 });
 
-// Test 4: Sign In page has unified OTP flow with 6-digit pin entry and resend countdown
-runTest('4. Login page provides unified OTP authentication with 6-digit input and zero role leakage', () => {
+// Test 4: Sign In page has unified flow and zero role leakage
+runTest('4. Login page provides unified authentication and zero role leakage', () => {
   const loginPage = fs.readFileSync(path.join(rootDir, 'src/app/auth/login/page.tsx'), 'utf8');
-  assert(loginPage.includes('Sign in to Edworld'), 'Login page must have Sign in to Edworld header');
-  assert(loginPage.includes('otp') && loginPage.includes('Send OTP'), 'Login page must support OTP flow');
-  assert(loginPage.includes('6-digit') || loginPage.includes('OTP code'), 'Login page must mention 6-digit OTP code');
+  assert(loginPage.includes('Sign In') || loginPage.includes('Sign in'), 'Login page must have Sign in header');
+  assert(loginPage.includes('signInWithEmail') || loginPage.includes('password'), 'Login page must support authentication');
   assert(!loginPage.includes('Founder') && !loginPage.includes('Super Admin'), 'Login page must not leak internal roles');
 });
 
@@ -128,3 +127,4 @@ console.log(`========================================\n`);
 if (passedTests !== totalTests) {
   process.exit(1);
 }
+

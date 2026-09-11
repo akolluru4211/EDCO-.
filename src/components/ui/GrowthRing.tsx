@@ -3,11 +3,12 @@
 import React, { useEffect, useState } from "react";
 
 export interface GrowthRingProps {
-  level?: 0 | 1 | 2;
+  level?: number;
   progress?: number; // 0 to 100
   size?: number;     // px dimension
   strokeWidth?: number;
   animated?: boolean;
+  streakDays?: number;
   label?: string;
   className?: string;
 }
@@ -18,6 +19,7 @@ export const GrowthRing: React.FC<GrowthRingProps> = ({
   size = 96,
   strokeWidth = 8,
   animated = true,
+  streakDays,
   label,
   className = ""
 }) => {
@@ -51,9 +53,10 @@ export const GrowthRing: React.FC<GrowthRingProps> = ({
   // Level Colors
   const levelColors = {
     0: { stroke: "#0d9488", text: "text-teal-600", bg: "stroke-teal-100", label: "Foundational" },
-    1: { stroke: "#1b4332", text: "text-forest", bg: "stroke-forest/10", label: "Intermediate" },
-    2: { stroke: "#d97706", text: "text-gold-dark", bg: "stroke-gold-light", label: "Advanced" }
-  }[level] || { stroke: "#1b4332", text: "text-forest", bg: "stroke-forest/10", label: "Intermediate" };
+    1: { stroke: "#7B57FF", text: "text-violet-600", bg: "stroke-violet-100", label: "Junior Explorer" },
+    2: { stroke: "#00D2B4", text: "text-emerald-600", bg: "stroke-emerald-100", label: "Student Applied" },
+    3: { stroke: "#D7FC51", text: "text-[#D7FC51]", bg: "stroke-amber-100/30", label: "Industry Master" }
+  }[level as 0 | 1 | 2 | 3] || { stroke: "#00D2B4", text: "text-[#00D2B4]", bg: "stroke-slate-100", label: "Master" };
 
   return (
     <div className={`relative inline-flex flex-col items-center justify-center ${className}`}>
