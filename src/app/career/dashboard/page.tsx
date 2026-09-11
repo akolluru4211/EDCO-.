@@ -40,14 +40,6 @@ export default function CareerDashboardPage() {
   // Track Mode: Default based on user profile or toggle between College & Working Professional
   const [selectedTrack, setSelectedTrack] = useState<"college" | "professional">("professional");
 
-  useEffect(() => {
-    if (profile?.careerStage === "college" || profile?.gradeLevel === "College") {
-      setSelectedTrack("college");
-    } else {
-      setSelectedTrack("professional");
-    }
-  }, [profile, user]);
-
   // College Tabs
   const [collegeTab, setCollegeTab] = useState<
     "placements" | "internships" | "hackathons" | "peer_review" | "micro_certs" | "problem_board"
@@ -57,6 +49,35 @@ export default function CareerDashboardPage() {
   const [proTab, setProTab] = useState<
     "career_switch" | "job_pipeline" | "referrals" | "salary_intel" | "self_appraisal" | "cert_tracker"
   >("career_switch");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const urlTrack = params.get("track");
+      const urlTab = params.get("tab");
+
+      if (urlTrack === "college" || urlTrack === "professional") {
+        setSelectedTrack(urlTrack);
+      } else if (profile?.careerStage === "college" || profile?.gradeLevel === "College") {
+        setSelectedTrack("college");
+      } else {
+        setSelectedTrack("professional");
+      }
+
+      if (urlTab) {
+        const validCollegeTabs = ["placements", "internships", "hackathons", "peer_review", "micro_certs", "problem_board"];
+        const validProTabs = ["career_switch", "job_pipeline", "referrals", "salary_intel", "self_appraisal", "cert_tracker"];
+
+        if (validCollegeTabs.includes(urlTab)) {
+          setCollegeTab(urlTab as any);
+          if (!urlTrack) setSelectedTrack("college");
+        } else if (validProTabs.includes(urlTab)) {
+          setProTab(urlTab as any);
+          if (!urlTrack) setSelectedTrack("professional");
+        }
+      }
+    }
+  }, [profile, user]);
 
   // ==========================================
   // COLLEGE INTERACTIVE STATES
@@ -201,6 +222,62 @@ Thanks so much for your time!`);
                 Professional (22+)
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* 1-Click Career Velocity Action Bar */}
+        <div className="p-6 rounded-3xl bg-white border border-slate-200/90 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-slate-950 text-[#D7FC51] flex items-center justify-center font-black text-xs">
+                ⚡
+              </div>
+              <div>
+                <h2 className="text-sm font-black text-slate-900">Career Acceleration Quick-Launch</h2>
+                <p className="text-xs text-slate-500">Instant shortcuts to ATS optimization, AI mock screens, and verified jobs.</p>
+              </div>
+            </div>
+            <span className="text-[10px] font-mono font-bold uppercase text-slate-700 bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200">
+              1-Click Velocity
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+            <Link
+              href="/resumes"
+              className="p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-900 hover:text-white group border border-slate-200 transition-all text-left"
+            >
+              <FileText className="w-5 h-5 text-emerald-600 group-hover:text-[#D7FC51] mb-2" />
+              <div className="text-xs font-bold text-slate-900 group-hover:text-white">ATS Resume Maker</div>
+              <div className="text-[11px] text-slate-500 group-hover:text-slate-300">Single-column ATS scorer</div>
+            </Link>
+
+            <Link
+              href="/interviews"
+              className="p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-900 hover:text-white group border border-slate-200 transition-all text-left"
+            >
+              <Video className="w-5 h-5 text-rose-600 group-hover:text-[#D7FC51] mb-2" />
+              <div className="text-xs font-bold text-slate-900 group-hover:text-white">AI STAR Simulator</div>
+              <div className="text-[11px] text-slate-500 group-hover:text-slate-300">Audio/video mock feedback</div>
+            </Link>
+
+            <Link
+              href="/jobs"
+              className="p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-900 hover:text-white group border border-slate-200 transition-all text-left"
+            >
+              <Briefcase className="w-5 h-5 text-indigo-600 group-hover:text-[#D7FC51] mb-2" />
+              <div className="text-xs font-bold text-slate-900 group-hover:text-white">High-Growth Tech Jobs</div>
+              <div className="text-[11px] text-slate-500 group-hover:text-slate-300">Curated &amp; verified roles</div>
+            </Link>
+
+            <Link
+              href="/networking"
+              className="p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-900 hover:text-white group border border-slate-200 transition-all text-left"
+            >
+              <Users className="w-5 h-5 text-amber-600 group-hover:text-[#D7FC51] mb-2" />
+              <div className="text-xs font-bold text-slate-900 group-hover:text-white">1:1 Mentorship Hub</div>
+              <div className="text-[11px] text-slate-500 group-hover:text-slate-300">Verified peer referrals</div>
+            </Link>
           </div>
         </div>
 
