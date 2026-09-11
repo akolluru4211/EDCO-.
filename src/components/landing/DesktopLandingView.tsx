@@ -1,33 +1,15 @@
-"use client";
-
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import { 
-  Sparkles, 
   GraduationCap, 
   Briefcase, 
   Compass, 
   ArrowRight, 
   ShieldCheck, 
   CheckCircle2, 
-  Zap, 
-  Lock, 
-  ExternalLink,
-  Code2,
-  Cpu,
-  BarChart3,
-  Layers,
-  ChevronRight,
-  TrendingUp,
-  Award,
-  Video,
-  FileText,
-  UserCheck
+  Award
 } from "lucide-react";
 import EdworldLogo from "@/components/ui/EdworldLogo";
-import GrowthRing from "@/components/ui/GrowthRing";
-import Button from "@/components/ui/Button";
-
 import Interactive3DCard from "@/components/ui/Interactive3DCard";
 
 type StageKey = "junior" | "student" | "pro";
@@ -128,10 +110,6 @@ const DESKTOP_STAGES: Record<StageKey, DesktopStageInfo> = {
 };
 
 export default function DesktopLandingView() {
-  const [activeStage, setActiveStage] = useState<StageKey>("pro");
-  const stage = DESKTOP_STAGES[activeStage];
-  const StageIcon = stage.icon;
-
   return (
     <div className="hidden lg:block w-full bg-[#FAFAF8] text-[#13141B] min-h-screen selection:bg-[#D7FC51] selection:text-[#13141B]">
       
@@ -152,31 +130,25 @@ export default function DesktopLandingView() {
               </div>
             </Link>
 
-            <nav className="hidden xl:flex items-center gap-1.5 pl-6 border-l border-slate-200">
-              <button
-                onClick={() => setActiveStage("junior")}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                  activeStage === "junior" ? "bg-violet-100 text-violet-800 shadow-xs" : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                }`}
+            <nav className="hidden xl:flex items-center gap-2 pl-6 border-l border-slate-200">
+              <a
+                href="#junior-lab"
+                className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all"
               >
                 Junior Lab (13–15)
-              </button>
-              <button
-                onClick={() => setActiveStage("student")}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                  activeStage === "student" ? "bg-emerald-100 text-emerald-800 shadow-xs" : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                }`}
+              </a>
+              <a
+                href="#student-campus"
+                className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all"
               >
                 Student &amp; Campus (16–18)
-              </button>
-              <button
-                onClick={() => setActiveStage("pro")}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                  activeStage === "pro" ? "bg-amber-100 text-amber-900 shadow-xs" : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                }`}
+              </a>
+              <a
+                href="#pro-acceleration"
+                className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all"
               >
                 Working Professional (18+)
-              </button>
+              </a>
             </nav>
           </div>
 
@@ -202,7 +174,7 @@ export default function DesktopLandingView() {
             </Link>
             <Link
               href="/auth/signup"
-              className="px-5 py-2 rounded-xl text-xs font-black uppercase tracking-wider bg-slate-950 hover:bg-black text-[#D7FC51] shadow-md transition-all hover:scale-105 active:scale-95"
+              className="px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-slate-950 hover:bg-black text-[#D7FC51] shadow-md transition-all hover:scale-105 active:scale-95"
             >
               Get Started
             </Link>
@@ -210,342 +182,316 @@ export default function DesktopLandingView() {
         </div>
       </header>
 
-      {/* 2. Hero Section: Humanized Storytelling & 3D Interactive Showcase */}
-      <section className="relative overflow-hidden pt-14 pb-20 border-b border-slate-200/80">
+      {/* 2. Full-Screen Cinematic Hero Section with Massive Typography */}
+      <section className="relative overflow-hidden pt-20 pb-28 border-b border-slate-200/80">
         
-        {/* Soft Organic Background Glow */}
-        <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-gradient-to-bl from-[#00D2B4]/10 via-[#7B57FF]/8 to-transparent rounded-full blur-3xl pointer-events-none -z-10 animate-float-subtle" />
-        <div className="absolute bottom-0 left-10 w-[500px] h-[500px] bg-gradient-to-tr from-[#D7FC51]/15 via-emerald-500/5 to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
+        {/* Soft Organic Ambient Lighting */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[1000px] h-[450px] bg-gradient-to-b from-[#00D2B4]/10 via-[#7B57FF]/8 to-transparent rounded-full blur-3xl pointer-events-none -z-10 animate-float-subtle" />
+        <div className="absolute -bottom-20 right-10 w-[600px] h-[600px] bg-gradient-to-tr from-[#D7FC51]/15 via-emerald-500/5 to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
 
-        <div className="max-w-7xl mx-auto px-8">
-          <div className="grid grid-cols-12 gap-12 items-center">
-            
-            {/* Left Column: High-Impact Human-Centric Messaging */}
-            <div className="col-span-6 space-y-6">
-              
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-slate-200 shadow-xs">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-800">
-                  Human-First Skills &amp; Career Operating System
-                </span>
-              </div>
+        <div className="max-w-6xl mx-auto px-8 text-center space-y-8">
+          
+          {/* Top Pill */}
+          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white border border-slate-200 shadow-xs backdrop-blur-sm">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-800">
+              Human-First Skills &amp; Career Operating System
+            </span>
+          </div>
 
-              <div className="space-y-3">
-                <h1 className="text-5xl xl:text-6xl font-black font-display text-slate-950 tracking-tight leading-[1.08]">
-                  Real adaptability <br />
-                  <span className="text-slate-900">for every career stage.</span>
-                </h1>
-                <p className="text-base text-slate-600 leading-relaxed max-w-xl font-medium">
-                  Edworld Co. meets you exactly where you are today. Whether you are discovering early STEM passions, stepping from campus into tech, or breaking through senior career milestones, your journey is personalized with zero generic rubrics.
-                </p>
-              </div>
+          {/* Screen-Filling Giant Heading */}
+          <h1 className="text-6xl sm:text-7xl lg:text-8xl xl:text-[92px] font-black font-display text-slate-950 tracking-[-0.035em] leading-[0.98] mx-auto">
+            Real adaptability <br />
+            <span className="text-slate-900 bg-gradient-to-r from-slate-950 via-slate-800 to-slate-700 bg-clip-text">
+              for every career stage.
+            </span>
+          </h1>
 
-              {/* Stage Switcher Pills */}
-              <div className="space-y-2 pt-2">
-                <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-400">
-                  Select Your Career Stage:
-                </span>
-                <div className="grid grid-cols-3 gap-2 p-1.5 bg-white rounded-2xl border border-slate-200 shadow-xs">
-                  <button
-                    onClick={() => setActiveStage("junior")}
-                    className={`py-3 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
-                      activeStage === "junior"
-                        ? "bg-violet-600 text-white shadow-sm font-black"
-                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                    }`}
-                  >
-                    <Compass className="w-4 h-4" />
-                    <span>Junior (13–15)</span>
-                  </button>
+          {/* Subtitle */}
+          <p className="text-lg lg:text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed font-medium">
+            Edworld Co. meets you exactly where you are today. Whether you are discovering early STEM passions, stepping from campus into tech, or breaking through senior career milestones, your journey is personalized with zero generic rubrics.
+          </p>
 
-                  <button
-                    onClick={() => setActiveStage("student")}
-                    className={`py-3 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
-                      activeStage === "student"
-                        ? "bg-emerald-600 text-white shadow-sm font-black"
-                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                    }`}
-                  >
-                    <GraduationCap className="w-4 h-4" />
-                    <span>Student (16–18)</span>
-                  </button>
+          {/* Primary Action Row */}
+          <div className="flex items-center justify-center gap-4 pt-4">
+            <Link
+              href="/auth/signup"
+              className="px-8 py-4 rounded-2xl bg-slate-950 hover:bg-black text-[#D7FC51] text-sm font-black uppercase tracking-wider flex items-center gap-3 shadow-xl hover:shadow-2xl transition-all hover:scale-105 active:scale-95"
+            >
+              <span>Get Started Free</span>
+              <ArrowRight className="w-5 h-5" />
+            </Link>
+            <Link
+              href="/auth/login"
+              className="px-8 py-4 rounded-2xl bg-white hover:bg-slate-50 text-slate-800 text-sm font-bold border border-slate-200/90 shadow-xs transition-all hover:border-slate-300"
+            >
+              Sign In to Workspace
+            </Link>
+          </div>
 
-                  <button
-                    onClick={() => setActiveStage("pro")}
-                    className={`py-3 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
-                      activeStage === "pro"
-                        ? "bg-slate-950 text-[#D7FC51] shadow-sm font-black"
-                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                    }`}
-                  >
-                    <Briefcase className="w-4 h-4" />
-                    <span>Professional (18+)</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Active Stage Launch Card */}
-              <div className="p-5 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-900">
-                      <StageIcon className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-bold text-slate-900">{stage.title}</h3>
-                      <p className="text-xs text-slate-500">{stage.subtitle}</p>
-                    </div>
-                  </div>
-                  <span className={`text-[10px] font-mono font-black uppercase px-2.5 py-1 rounded-full border ${stage.badgeColor}`}>
-                    {stage.badge}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-3 pt-1">
-                  <Link
-                    href={stage.ctaUrl}
-                    className="flex-1 py-3.5 px-5 rounded-2xl bg-slate-900 hover:bg-black text-[#D7FC51] text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-transform active:scale-95"
-                  >
-                    <span>Launch {activeStage === "junior" ? "Junior Lab" : activeStage === "student" ? "Student OS" : "Professional OS"}</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
-                  <Link
-                    href={stage.loginUrl}
-                    className="px-5 py-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-colors"
-                  >
-                    Sign In
-                  </Link>
-                </div>
-              </div>
-
-              {/* Trust & Compliance Badges */}
-              <div className="flex items-center gap-6 text-[11px] font-mono text-slate-500 pt-2">
-                <div className="flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                  <span>DPDP Act Minor Protection</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-[#00D2B4]" />
-                  <span>Real ATS Calibration</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Award className="w-4 h-4 text-amber-500" />
-                  <span>STAR Interview Metrics</span>
-                </div>
-              </div>
-
+          {/* Trust & Compliance Bar */}
+          <div className="flex items-center justify-center gap-8 text-xs font-mono text-slate-500 pt-6">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <span>DPDP Act Minor Protection</span>
             </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-[#00D2B4]" />
+              <span>Real ATS Calibration</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Award className="w-4 h-4 text-amber-500" />
+              <span>STAR Interview Metrics</span>
+            </div>
+          </div>
 
-            {/* Right Column: 3D Interactive Showcase Card */}
-            <div className="col-span-6">
-              <Interactive3DCard maxTilt={6} depth={18} className="shadow-2xl">
-                <div className="bg-white rounded-3xl p-8 border border-slate-200/90 relative space-y-6">
-                  
-                  {/* Top Badge & Header */}
-                  <div className="flex items-start justify-between pb-4 border-b border-slate-100">
-                    <div className="space-y-1">
-                      <span className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${stage.badgeColor}`}>
-                        {stage.badge}
-                      </span>
-                      <h3 className="text-2xl font-black text-slate-900 tracking-tight pt-1">
-                        {stage.title}
-                      </h3>
-                      <p className="text-xs text-slate-500 font-medium">
-                        {stage.subtitle}
-                      </p>
-                    </div>
-                    <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-800 shrink-0 shadow-xs">
-                      <StageIcon className="w-6 h-6" />
-                    </div>
-                  </div>
+        </div>
+      </section>
 
-                  {/* Human Learner Quote & Proof */}
-                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/70 space-y-2">
-                    <p className="text-xs text-slate-700 italic leading-relaxed">
-                      {stage.humanQuote}
-                    </p>
-                    <span className="text-[10px] font-mono font-bold uppercase text-slate-500 block">
-                      — {stage.humanAuthor}
+      {/* 3. Three-Pillar Architecture Section with Full-Width 3D Depth Cards */}
+      <section className="py-24 max-w-7xl mx-auto px-8 space-y-16">
+        
+        <div className="text-center space-y-4 max-w-3xl mx-auto">
+          <span className="text-xs font-mono font-bold uppercase tracking-widest text-[#7B57FF]">
+            Purpose-Built For Every Generation
+          </span>
+          <h2 className="text-4xl lg:text-5xl font-black font-display text-slate-950 tracking-tight">
+            One platform. Three dedicated career operating systems.
+          </h2>
+          <p className="text-base text-slate-600 leading-relaxed font-medium">
+            Edworld strictly segments user experiences to ensure age-appropriate safety, calibrated rigor, and lifelong career progression.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* Pillar 1: Junior */}
+          <div id="junior-lab" className="scroll-mt-24">
+            <Interactive3DCard maxTilt={6} depth={14} className="h-full">
+              <div className="bg-white rounded-3xl p-8 border border-slate-200/90 shadow-sm hover:shadow-xl flex flex-col justify-between h-full space-y-6 transition-all">
+                <div className="space-y-5">
+                  <div className="flex items-center justify-between">
+                    <div className="w-12 h-12 rounded-2xl bg-violet-100 text-violet-700 flex items-center justify-center shadow-xs">
+                      <Compass className="w-6 h-6" />
+                    </div>
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-violet-50 text-violet-700 border border-violet-200">
+                      Ages 13–15 • Junior Lab
                     </span>
                   </div>
 
-                  {/* Stats Matrix */}
-                  <div className="grid grid-cols-3 gap-3">
-                    {stage.stats.map((s, idx) => (
-                      <div key={idx} className="p-3 rounded-2xl bg-white border border-slate-200/80 shadow-2xs text-left space-y-1">
-                        <span className="block text-[10px] font-mono font-bold uppercase text-slate-400">
+                  <div className="space-y-2">
+                    <h3 className="text-2xl font-black text-slate-900">Junior School Curiosity Lab</h3>
+                    <p className="text-xs text-slate-500 font-semibold">{DESKTOP_STAGES.junior.subtitle}</p>
+                    <p className="text-xs text-slate-600 leading-relaxed font-medium pt-1">
+                      {DESKTOP_STAGES.junior.description}
+                    </p>
+                  </div>
+
+                  {/* Learner Quote */}
+                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
+                    <p className="text-xs text-slate-700 italic leading-relaxed">
+                      {DESKTOP_STAGES.junior.humanQuote}
+                    </p>
+                    <span className="text-[10px] font-mono font-bold uppercase text-slate-400 block">
+                      — {DESKTOP_STAGES.junior.humanAuthor}
+                    </span>
+                  </div>
+
+                  {/* Stats */}
+                  <div className="grid grid-cols-3 gap-2 pt-1">
+                    {DESKTOP_STAGES.junior.stats.map((s, idx) => (
+                      <div key={idx} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/60 text-center">
+                        <span className="block text-[9px] font-mono font-bold uppercase text-slate-400">
                           {s.label}
                         </span>
-                        <strong className="text-sm font-black text-slate-900">
+                        <strong className="text-xs font-black text-slate-900">
                           {s.value}
                         </strong>
                       </div>
                     ))}
                   </div>
 
-                  {/* Core Deliverables */}
-                  <div className="space-y-2 pt-1">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
-                      Included in Workspace:
-                    </span>
-                    <div className="grid grid-cols-1 gap-2 text-xs text-slate-700 font-medium">
-                      {stage.features.map((feat, idx) => (
-                        <div key={idx} className="flex items-center gap-2.5">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                          <span className="leading-tight">{feat}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Action Link */}
-                  <div className="pt-2">
-                    <Link
-                      href={stage.ctaUrl}
-                      className="w-full py-3.5 px-5 rounded-2xl bg-slate-950 hover:bg-black text-[#D7FC51] text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-md hover:shadow-xl transition-all active:scale-98"
-                    >
-                      <span>Explore {stage.title}</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-
+                  {/* Feature Checklist */}
+                  <ul className="space-y-2 text-xs text-slate-800 font-medium pt-2 border-t border-slate-100">
+                    {DESKTOP_STAGES.junior.features.map((f, idx) => (
+                      <li key={idx} className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-violet-600 shrink-0" />
+                        <span className="leading-tight">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              </Interactive3DCard>
-            </div>
 
-          </div>
-        </div>
-      </section>
-
-      {/* 3. Three-Pillar Architecture Section with 3D Depth Cards */}
-      <section className="py-20 max-w-7xl mx-auto px-8 space-y-12">
-        <div className="text-center space-y-3 max-w-2xl mx-auto">
-          <span className="text-xs font-mono font-bold uppercase tracking-widest text-[#7B57FF]">
-            Purpose-Built For Every Generation
-          </span>
-          <h2 className="text-4xl font-black font-display text-slate-950 tracking-tight">
-            One platform. Three dedicated career operating systems.
-          </h2>
-          <p className="text-sm text-slate-600 leading-relaxed font-medium">
-            Edworld strictly segments user experiences to ensure age-appropriate safety, calibrated rigor, and lifelong career progression.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-3 gap-8">
-          
-          {/* Pillar 1: Junior */}
-          <Interactive3DCard maxTilt={5} depth={10} className="h-full">
-            <div className="bg-white rounded-3xl p-8 border border-slate-200/90 shadow-sm flex flex-col justify-between h-full space-y-6 hover:shadow-md transition-shadow">
-              <div className="space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-violet-100 text-violet-700 flex items-center justify-center">
-                  <Compass className="w-6 h-6" />
+                <div className="pt-4 border-t border-slate-100 space-y-2">
+                  <Link
+                    href={DESKTOP_STAGES.junior.ctaUrl}
+                    className="w-full py-3.5 rounded-2xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-black uppercase tracking-wider text-center transition-all shadow-md flex items-center justify-center gap-2"
+                  >
+                    <span>Launch Junior Lab</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                  <Link
+                    href={DESKTOP_STAGES.junior.loginUrl}
+                    className="w-full py-2.5 rounded-xl text-center text-xs font-bold text-slate-600 hover:text-slate-900 block transition-colors"
+                  >
+                    Sign In to Junior Track
+                  </Link>
                 </div>
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-violet-50 text-violet-700 border border-violet-200">
-                  Ages 13–15
-                </span>
-                <h3 className="text-2xl font-black text-slate-900">Junior School Curiosity Lab</h3>
-                <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                  Nurtures natural curiosity with hands-on STEM quest labs, communication trainers, and private digital reflection.
-                </p>
-                <ul className="space-y-2.5 text-xs text-slate-800 font-medium pt-2 border-t border-slate-100">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-violet-600" />
-                    <span>Curiosity Quest Labs</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-violet-600" />
-                    <span>School Communication Trainer</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-violet-600" />
-                    <span>Guardian Consent Protection</span>
-                  </li>
-                </ul>
               </div>
-              <Link
-                href="/auth/signup?track=junior&stage=junior"
-                className="w-full py-3 rounded-2xl bg-violet-50 hover:bg-violet-600 hover:text-white text-violet-800 text-xs font-bold text-center transition-all border border-violet-200"
-              >
-                Start Junior Track &rarr;
-              </Link>
-            </div>
-          </Interactive3DCard>
+            </Interactive3DCard>
+          </div>
 
           {/* Pillar 2: Student */}
-          <Interactive3DCard maxTilt={5} depth={10} className="h-full">
-            <div className="bg-white rounded-3xl p-8 border border-slate-200/90 shadow-sm flex flex-col justify-between h-full space-y-6 hover:shadow-md transition-shadow">
-              <div className="space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
-                  <GraduationCap className="w-6 h-6" />
+          <div id="student-campus" className="scroll-mt-24">
+            <Interactive3DCard maxTilt={6} depth={14} className="h-full">
+              <div className="bg-white rounded-3xl p-8 border border-slate-200/90 shadow-sm hover:shadow-xl flex flex-col justify-between h-full space-y-6 transition-all">
+                <div className="space-y-5">
+                  <div className="flex items-center justify-between">
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center shadow-xs">
+                      <GraduationCap className="w-6 h-6" />
+                    </div>
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                      Ages 16–18 • College &amp; Campus
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h3 className="text-2xl font-black text-slate-900">Student &amp; Campus Enterprise</h3>
+                    <p className="text-xs text-slate-500 font-semibold">{DESKTOP_STAGES.student.subtitle}</p>
+                    <p className="text-xs text-slate-600 leading-relaxed font-medium pt-1">
+                      {DESKTOP_STAGES.student.description}
+                    </p>
+                  </div>
+
+                  {/* Learner Quote */}
+                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
+                    <p className="text-xs text-slate-700 italic leading-relaxed">
+                      {DESKTOP_STAGES.student.humanQuote}
+                    </p>
+                    <span className="text-[10px] font-mono font-bold uppercase text-slate-400 block">
+                      — {DESKTOP_STAGES.student.humanAuthor}
+                    </span>
+                  </div>
+
+                  {/* Stats */}
+                  <div className="grid grid-cols-3 gap-2 pt-1">
+                    {DESKTOP_STAGES.student.stats.map((s, idx) => (
+                      <div key={idx} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/60 text-center">
+                        <span className="block text-[9px] font-mono font-bold uppercase text-slate-400">
+                          {s.label}
+                        </span>
+                        <strong className="text-xs font-black text-slate-900">
+                          {s.value}
+                        </strong>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Feature Checklist */}
+                  <ul className="space-y-2 text-xs text-slate-800 font-medium pt-2 border-t border-slate-100">
+                    {DESKTOP_STAGES.student.features.map((f, idx) => (
+                      <li key={idx} className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span className="leading-tight">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-                  Ages 16–18 • College
-                </span>
-                <h3 className="text-2xl font-black text-slate-900">Student &amp; Campus Enterprise</h3>
-                <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                  Connects academic learning to career outcomes with project portfolios, technical mock interviews, and university insights.
-                </p>
-                <ul className="space-y-2.5 text-xs text-slate-800 font-medium pt-2 border-t border-slate-100">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <span>Micro-Project Studio</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <span>Live Coding IDE Drills</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <span>College Placement Telemetry</span>
-                  </li>
-                </ul>
+
+                <div className="pt-4 border-t border-slate-100 space-y-2">
+                  <Link
+                    href={DESKTOP_STAGES.student.ctaUrl}
+                    className="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider text-center transition-all shadow-md flex items-center justify-center gap-2"
+                  >
+                    <span>Launch Student Track</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                  <Link
+                    href={DESKTOP_STAGES.student.loginUrl}
+                    className="w-full py-2.5 rounded-xl text-center text-xs font-bold text-slate-600 hover:text-slate-900 block transition-colors"
+                  >
+                    Sign In to Student Track
+                  </Link>
+                </div>
               </div>
-              <Link
-                href="/auth/signup?track=student&stage=student"
-                className="w-full py-3 rounded-2xl bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-800 text-xs font-bold text-center transition-all border border-emerald-200"
-              >
-                Start Student Track &rarr;
-              </Link>
-            </div>
-          </Interactive3DCard>
+            </Interactive3DCard>
+          </div>
 
           {/* Pillar 3: Professional */}
-          <Interactive3DCard maxTilt={5} depth={10} className="h-full">
-            <div className="bg-slate-950 text-white rounded-3xl p-8 border border-slate-800 shadow-xl flex flex-col justify-between h-full space-y-6">
-              <div className="space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-white/10 text-[#D7FC51] flex items-center justify-center">
-                  <Briefcase className="w-6 h-6" />
+          <div id="pro-acceleration" className="scroll-mt-24">
+            <Interactive3DCard maxTilt={6} depth={14} className="h-full">
+              <div className="bg-slate-950 text-white rounded-3xl p-8 border border-slate-800 shadow-xl hover:shadow-2xl flex flex-col justify-between h-full space-y-6 transition-all">
+                <div className="space-y-5">
+                  <div className="flex items-center justify-between">
+                    <div className="w-12 h-12 rounded-2xl bg-white/10 text-[#D7FC51] flex items-center justify-center shadow-xs">
+                      <Briefcase className="w-6 h-6" />
+                    </div>
+                    <span className="text-[10px] font-mono font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-400/20 text-[#D7FC51] border border-amber-400/30">
+                      Ages 18+ • Career OS
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h3 className="text-2xl font-black text-white">Working Professional Acceleration</h3>
+                    <p className="text-xs text-[#D7FC51] font-semibold">{DESKTOP_STAGES.pro.subtitle}</p>
+                    <p className="text-xs text-slate-300 leading-relaxed font-medium pt-1">
+                      {DESKTOP_STAGES.pro.description}
+                    </p>
+                  </div>
+
+                  {/* Learner Quote */}
+                  <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-1">
+                    <p className="text-xs text-slate-300 italic leading-relaxed">
+                      {DESKTOP_STAGES.pro.humanQuote}
+                    </p>
+                    <span className="text-[10px] font-mono font-bold uppercase text-slate-400 block">
+                      — {DESKTOP_STAGES.pro.humanAuthor}
+                    </span>
+                  </div>
+
+                  {/* Stats */}
+                  <div className="grid grid-cols-3 gap-2 pt-1">
+                    {DESKTOP_STAGES.pro.stats.map((s, idx) => (
+                      <div key={idx} className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-center">
+                        <span className="block text-[9px] font-mono font-bold uppercase text-slate-400">
+                          {s.label}
+                        </span>
+                        <strong className="text-xs font-black text-[#D7FC51]">
+                          {s.value}
+                        </strong>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Feature Checklist */}
+                  <ul className="space-y-2 text-xs text-slate-200 font-medium pt-2 border-t border-white/10">
+                    {DESKTOP_STAGES.pro.features.map((f, idx) => (
+                      <li key={idx} className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-[#00D2B4] shrink-0" />
+                        <span className="leading-tight">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <span className="text-[10px] font-mono font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-400/20 text-[#D7FC51] border border-amber-400/30">
-                  Ages 18+ • Career OS
-                </span>
-                <h3 className="text-2xl font-black text-white">Working Professional Acceleration</h3>
-                <p className="text-xs text-slate-300 leading-relaxed font-medium">
-                  The ultimate career command center for engineers and knowledge workers. Single-column ATS optimization, STAR mock drills, and salary telemetry.
-                </p>
-                <ul className="space-y-2.5 text-xs text-slate-200 font-medium pt-2 border-t border-white/10">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-[#00D2B4]" />
-                    <span>Single-Column ATS Resume Maker</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-[#00D2B4]" />
-                    <span>Multimodal STAR AI Interview Studio</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-[#00D2B4]" />
-                    <span>1:1 Verified Peer Network</span>
-                  </li>
-                </ul>
+
+                <div className="pt-4 border-t border-slate-800 space-y-2">
+                  <Link
+                    href={DESKTOP_STAGES.pro.ctaUrl}
+                    className="w-full py-3.5 rounded-2xl bg-[#D7FC51] hover:bg-[#E9FFA4] text-slate-950 text-xs font-black uppercase tracking-wider text-center transition-all shadow-md flex items-center justify-center gap-2"
+                  >
+                    <span>Start Professional OS</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                  <Link
+                    href={DESKTOP_STAGES.pro.loginUrl}
+                    className="w-full py-2.5 rounded-xl text-center text-xs font-bold text-slate-400 hover:text-white block transition-colors"
+                  >
+                    Sign In to Pro Track
+                  </Link>
+                </div>
               </div>
-              <Link
-                href="/auth/signup?track=pro&stage=professional"
-                className="w-full py-3.5 rounded-2xl bg-[#D7FC51] hover:bg-[#E9FFA4] text-slate-950 text-xs font-black uppercase tracking-wider text-center transition-all shadow-md"
-              >
-                Start Professional OS &rarr;
-              </Link>
-            </div>
-          </Interactive3DCard>
+            </Interactive3DCard>
+          </div>
 
         </div>
       </section>
