@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import EdworldLogo from "@/components/ui/EdworldLogo";
 import AuthGuard from "@/components/auth/AuthGuard";
+import { getResumeProfileDefaults, normalizeDisplayName } from "@/lib/services/user-profile";
+import UserGreeting from "@/components/ui/UserGreeting";
 
 export const dynamic = "force-dynamic";
 
@@ -82,6 +84,7 @@ export default function ResumesListPage() {
 
       // 3. If no resumes exist, initialize one for this user
       const initialSkills = profile?.interests?.map((i) => i.name) || ["TypeScript", "React", "Node.js", "REST APIs"];
+      const defaultContact = getResumeProfileDefaults(user, profile);
       const defaultResume: Resume = {
         id: `resume-${user.uid}-default`,
         userId: user.uid,
@@ -89,11 +92,7 @@ export default function ResumesListPage() {
         templateId: "classic",
         content: {
           ...DEFAULT_RESUME_CONTENT,
-          contact: {
-            ...DEFAULT_RESUME_CONTENT.contact,
-            fullName: user.name || "Candidate Name",
-            email: user.email || "candidate@example.com",
-          },
+          contact: defaultContact,
           skills: {
             ...DEFAULT_RESUME_CONTENT.skills,
             technical: initialSkills,
@@ -119,6 +118,7 @@ export default function ResumesListPage() {
   const handleCreateNew = async () => {
     if (!user) return;
     const interestSkills = profile?.interests?.map((i) => i.name) || ["Python", "SQL", "Git"];
+    const contactDefaults = getResumeProfileDefaults(user, profile);
     const newResume: Resume = {
       id: `resume-${user.uid}-${Date.now()}`,
       userId: user.uid,
@@ -126,11 +126,7 @@ export default function ResumesListPage() {
       templateId: "classic",
       content: {
         ...DEFAULT_RESUME_CONTENT,
-        contact: {
-          ...DEFAULT_RESUME_CONTENT.contact,
-          fullName: user.name || "",
-          email: user.email || "",
-        },
+        contact: contactDefaults,
         skills: {
           ...DEFAULT_RESUME_CONTENT.skills,
           technical: interestSkills,
@@ -262,12 +258,10 @@ export default function ResumesListPage() {
               <Sparkles className="w-3.5 h-3.5" />
               <span>ATS Optimization Studio &bull; Single-Column Formats</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-black text-[#181920] tracking-tight">
-              My ATS Resumes
-            </h1>
-            <p className="text-sm text-[#767E94] mt-1 font-medium">
-              Create and tailor job-specific single-column resumes designed to pass Applicant Tracking Systems.
-            </p>
+            <UserGreeting
+              context="resume"
+              subtitle="Create and tailor job-specific single-column resumes designed to pass Applicant Tracking Systems."
+            />
           </div>
 
           <button

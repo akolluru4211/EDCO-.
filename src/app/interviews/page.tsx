@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import EventTicket from "@/components/ui/EventTicket";
 import AuthGuard from "@/components/auth/AuthGuard";
+import UserGreeting from "@/components/ui/UserGreeting";
 
 export const dynamic = "force-dynamic";
 
@@ -162,13 +163,10 @@ export default function InterviewsHubPage() {
               </span>
               <span className="text-xs font-mono text-[#8E95A5]">Adaptive Mock Interviews</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-black text-[#181920] tracking-tight">
-              Adaptive Interview Studio
-            </h1>
-            <p className="text-sm text-[#767E94] max-w-2xl leading-relaxed font-medium">
-              Questions are tagged with difficulties (Level 0–2) and selected dynamically matching your demonstrated{" "}
-              <strong className="text-[#181920] font-bold">Effective Level</strong>. Scoring &ge; 80% advances your level.
-            </p>
+            <UserGreeting
+              context="interview"
+              subtitle="Questions are dynamically selected to match your demonstrated Effective Level. Scoring ≥ 80% advances your level."
+            />
           </div>
 
           <div className="p-5 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] flex items-start gap-3 max-w-sm text-xs text-[#181920] shadow-sm">

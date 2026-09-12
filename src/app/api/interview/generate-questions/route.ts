@@ -29,12 +29,20 @@ const FIXED_OPENING_QUESTION: GeneratedQuestion = {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
-    const { jobDescription, category = "Software Engineering", effectiveLevel = 0, userId = "learner-user" } = body;
+    const { jobDescription, category = "Software Engineering", effectiveLevel = 0, userId = "learner-user", candidateName = "" } = body;
+
+    const firstName = candidateName ? candidateName.trim().split(" ")[0] : "";
+    const personalizedWarmup = {
+      ...FIXED_OPENING_QUESTION,
+      text: firstName 
+        ? `Hi ${firstName}, welcome to your mock interview. Let's begin by having you tell me about yourself, your background, and what drives your passion for this domain.`
+        : FIXED_OPENING_QUESTION.text,
+    };
 
     // Execute via Central MCP Engine
     const mcpResult = await executeMCPTool(
       "generate_interview_questions",
-      { category, effectiveLevel, jobDescription },
+      { category, effectiveLevel, jobDescription, candidateName },
       {
         userId: req.headers.get("x-user-id") || userId,
         role: "CLIENT",
@@ -43,15 +51,23 @@ export async function POST(req: NextRequest) {
     );
 
     if (mcpResult.success && mcpResult.data?.questions) {
+      // Ensure the warmup has the personalized opening
+      const returnedQuestions = mcpResult.data.questions.map((q: any, idx: number) => {
+        if (idx === 0 && q.isWarmup && firstName && !q.text.includes(firstName)) {
+          return { ...q, text: `Hi ${firstName}, welcome to your mock interview. ${q.text}` };
+        }
+        return q;
+      });
+
       return NextResponse.json({
         success: true,
         source: mcpResult.data.source || "mcp_engine",
-        questions: mcpResult.data.questions
+        questions: returnedQuestions
       });
     }
 
     // Direct Live Supabase Query Fallback
-    const questions: GeneratedQuestion[] = [FIXED_OPENING_QUESTION];
+    const questions: GeneratedQuestion[] = [personalizedWarmup];
     try {
       const { data: dbQuestions } = await supabase
         .from("interview_questions")

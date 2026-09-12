@@ -26,6 +26,9 @@ import {
   ArrowRight
 } from "lucide-react";
 
+import { supabase } from "@/lib/supabase";
+import { normalizeDisplayName } from "@/lib/services/user-profile";
+
 export const dynamic = "force-dynamic";
 
 // Seeded directory of public demo profiles for instant discovery & testing
@@ -125,79 +128,114 @@ export default function PublicProfileViewPage() {
   const isCurrentUserAdult = user?.ageBand === "18+";
 
   useEffect(() => {
-    // 1. Look up profile in demo profiles or localStorage
-    let foundProfile: PublicUserProfile | null = DEMO_PUBLIC_PROFILES[usernameParam.toLowerCase()] || null;
+    const loadProfile = async () => {
+      // 1. Check live database first
+      try {
+        const { data: dbProfile } = await supabase
+          .from("profiles")
+          .select("*")
+          .or(`username.eq.${usernameParam},id.eq.${usernameParam}`)
+          .maybeSingle();
 
-    if (!foundProfile && typeof window !== "undefined") {
-      // Check local user data
-      const localUsersKey = "edworld_all_registered_profiles";
-      const cached = localStorage.getItem(localUsersKey);
-      if (cached) {
-        try {
-          const parsed = JSON.parse(cached);
-          if (parsed[usernameParam]) {
-            foundProfile = parsed[usernameParam];
-          }
-        } catch (e) {}
+        if (dbProfile) {
+          const { displayName } = normalizeDisplayName(dbProfile.first_name, dbProfile.last_name, dbProfile.name || dbProfile.display_name);
+          const found: PublicUserProfile = {
+            userId: dbProfile.id || dbProfile.user_id,
+            username: dbProfile.username || usernameParam,
+            name: displayName || dbProfile.name || "EdWorld Member",
+            headline: dbProfile.headline || "EdWorld Verified Learner",
+            bio: dbProfile.bio || "Building verifiable technical capabilities on EdWorld.",
+            skills: (dbProfile.interests || []).map((i: any) => typeof i === "string" ? i : i.name),
+            projects: [],
+            isPublic: Boolean(dbProfile.is_public),
+            isMentor: Boolean(dbProfile.is_mentor),
+            mentorTags: dbProfile.mentor_tags || [],
+            ageBand: dbProfile.age_band || "18+",
+          };
+          setProfileData(found);
+          return;
+        }
+      } catch (err) {
+        console.warn("[Portfolio Load Note]", err);
       }
 
-      // Check current user if matching username
-      if (!foundProfile && user) {
-        const storedProfileKey = `edworld_profile_${user.uid}`;
-        const userProf = localStorage.getItem(storedProfileKey);
-        if (userProf) {
+      // 2. Look up profile in demo profiles or localStorage
+      let foundProfile: PublicUserProfile | null = DEMO_PUBLIC_PROFILES[usernameParam.toLowerCase()] || null;
+
+      if (!foundProfile && typeof window !== "undefined") {
+        // Check local user data
+        const localUsersKey = "edworld_all_registered_profiles";
+        const cached = localStorage.getItem(localUsersKey);
+        if (cached) {
           try {
-            const p = JSON.parse(userProf);
-            const userRaw = JSON.parse(localStorage.getItem(`edworld_user_${user.uid}`) || "{}");
-            if (p.username === usernameParam || user.name.toLowerCase().replace(/\s+/g, "_") === usernameParam) {
-              foundProfile = {
-                userId: user.uid,
-                username: p.username || user.name.toLowerCase().replace(/\s+/g, "_"),
-                name: user.name,
-                headline: p.headline,
-                bio: p.bio,
-                skills: (p.interests || []).map((i: any) => i.name),
-                projects: [
-                  {
-                    id: "local-proj-1",
-                    title: "Full-Stack Portfolio Project",
-                    description: "End-to-end full stack web application with authentication and database persistence.",
-                    technologies: ["Next.js", "TypeScript", "Tailwind CSS"],
-                    verificationStatus: "verified",
-                  },
-                ],
-                isPublic: p.isPublic || false,
-                isMentor: p.isMentor || false,
-                mentorTags: p.mentorTags || [],
-                ageBand: userRaw.ageBand || "18+",
-              };
+            const parsed = JSON.parse(cached);
+            if (parsed[usernameParam]) {
+              foundProfile = parsed[usernameParam];
             }
           } catch (e) {}
         }
+
+        // Check current user if matching username
+        if (!foundProfile && user) {
+          const storedProfileKey = `edworld_profile_${user.uid}`;
+          const userProf = localStorage.getItem(storedProfileKey);
+          if (userProf) {
+            try {
+              const p = JSON.parse(userProf);
+              const userRaw = JSON.parse(localStorage.getItem(`edworld_user_${user.uid}`) || "{}");
+              if (p.username === usernameParam || user.name.toLowerCase().replace(/\s+/g, "_") === usernameParam) {
+                const { displayName } = normalizeDisplayName(undefined, undefined, user.name);
+                foundProfile = {
+                  userId: user.uid,
+                  username: p.username || user.name.toLowerCase().replace(/\s+/g, "_"),
+                  name: displayName || user.name,
+                  headline: p.headline,
+                  bio: p.bio,
+                  skills: (p.interests || []).map((i: any) => i.name),
+                  projects: [
+                    {
+                      id: "local-proj-1",
+                      title: "Full-Stack Portfolio Project",
+                      description: "End-to-end full stack web application with authentication and database persistence.",
+                      technologies: ["Next.js", "TypeScript", "Tailwind CSS"],
+                      verificationStatus: "verified",
+                    },
+                  ],
+                  isPublic: p.isPublic || false,
+                  isMentor: p.isMentor || false,
+                  mentorTags: p.mentorTags || [],
+                  ageBand: userRaw.ageBand || "18+",
+                };
+              }
+            } catch (e) {}
+          }
+        }
       }
-    }
 
-    setProfileData(foundProfile);
+      setProfileData(foundProfile);
 
-    // Check connection and block status
-    if (user && foundProfile) {
-      const connections = JSON.parse(localStorage.getItem(`edworld_${user.uid}_connections`) || "[]");
-      const match = connections.find(
-        (c: any) =>
-          (c.requesterId === user.uid && c.recipientId === foundProfile?.userId) ||
-          (c.recipientId === user.uid && c.requesterId === foundProfile?.userId)
-      );
-      if (match) {
-        setConnectionStatus(match.status);
+      // Check connection and block status
+      if (user && foundProfile) {
+        const connections = JSON.parse(localStorage.getItem(`edworld_${user.uid}_connections`) || "[]");
+        const match = connections.find(
+          (c: any) =>
+            (c.requesterId === user.uid && c.recipientId === foundProfile?.userId) ||
+            (c.recipientId === user.uid && c.requesterId === foundProfile?.userId)
+        );
+        if (match) {
+          setConnectionStatus(match.status);
+        }
+
+        const blocks = JSON.parse(localStorage.getItem(`edworld_${user.uid}_blocks`) || "[]");
+        if (blocks.includes(foundProfile.userId)) {
+          setIsBlocked(true);
+        }
       }
 
-      const blocks = JSON.parse(localStorage.getItem(`edworld_${user.uid}_blocks`) || "[]");
-      if (blocks.includes(foundProfile.userId)) {
-        setIsBlocked(true);
-      }
-    }
+      setLoading(false);
+    };
 
-    setLoading(false);
+    loadProfile();
   }, [usernameParam, user]);
 
   const handleSendConnection = async (data: any) => {

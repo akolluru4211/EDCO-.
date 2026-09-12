@@ -15,6 +15,7 @@ import {
   UserRole
 } from "./types";
 import { calculateAgeBandFromDob } from "./utils";
+import { normalizeDisplayName, updateCanonicalUserProfile } from "./services/user-profile";
 
 interface AuthContextType {
   user: AppUser | null;
@@ -197,9 +198,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ? "STUDENT" 
         : "PROFESSIONAL";
 
+      const rawNameCandidate = profileData?.name || profileData?.display_name || userMeta.full_name || userMeta.name || userMeta.displayName || (supabaseUser.email ? supabaseUser.email.split("@")[0] : "");
+      const { displayName: normalizedName } = normalizeDisplayName(
+        profileData?.first_name || userMeta.first_name,
+        profileData?.last_name || userMeta.last_name,
+        rawNameCandidate
+      );
+
       const appUser: AppUser = {
         uid: supabaseUser.id,
-        name: profileData?.name || userMeta.full_name || userMeta.name || "Candidate",
+        name: normalizedName,
         email: supabaseUser.email || "",
         phone: userPhone,
         createdAt: supabaseUser.created_at,
@@ -224,7 +232,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (profileData) {
         setProfile({
-          name: profileData.name || appUser.name,
+          name: normalizedName,
           phone: userPhone,
           username: profileData.username,
           headline: profileData.headline,
@@ -470,10 +478,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.warn("[Auth Resilience Active]: Remote auth gateway timed out. Establishing local authenticated session.");
       }
 
+      const { displayName: cleanName, firstName, lastName } = normalizeDisplayName(undefined, undefined, name);
+
       // Optimistic instant state update & persistent cache
       const appUser: AppUser = {
         uid: userId,
-        name,
+        name: cleanName,
         email: cleanEmail,
         phone: cleanPhone || undefined,
         dob,
@@ -487,7 +497,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
 
       const userProfile: UserProfile = {
-        name,
+        name: cleanName,
         phone: cleanPhone || undefined,
         careerStage: resolvedStage,
         primaryGoal: resolvedStage === "JUNIOR"
@@ -517,7 +527,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       Promise.allSettled([
         supabase.from("users").upsert({
           id: userId,
-          name,
+          name: cleanName,
           email: cleanEmail,
           phone: cleanPhone,
           age_band: ageBand,
@@ -531,14 +541,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         supabase.from("profiles").upsert({
           id: userId,
           user_id: userId,
-          name,
+          name: cleanName,
+          display_name: cleanName,
+          first_name: firstName,
+          last_name: lastName,
           email: cleanEmail,
           phone: cleanPhone,
           dob,
           age_band: ageBand,
           career_stage: resolvedStage,
           grade_level: gradeLevel || "College",
-          username: name.toLowerCase().replace(/\s+/g, "_") + "_" + userId.substring(0, 4),
+          username: cleanName.toLowerCase().replace(/\s+/g, "_") + "_" + userId.substring(0, 4),
           primary_goal: userProfile.primaryGoal,
           is_public: false,
         }),
@@ -662,12 +675,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateUserProfile = async (data: Partial<UserProfile>) => {
     if (!user) return;
 
+    let normalizedName = data.name;
+    let firstName: string | undefined;
+    let lastName: string | undefined;
+
+    if (data.name !== undefined) {
+      const normalized = normalizeDisplayName(undefined, undefined, data.name);
+      normalizedName = normalized.displayName;
+      firstName = normalized.firstName;
+      lastName = normalized.lastName;
+    }
+
     // Convert camelCase to snake_case for Supabase PostgreSQL
     const updatePayload: Record<string, any> = {
       updated_at: new Date().toISOString(),
     };
 
-    if (data.name !== undefined) updatePayload.name = data.name;
+    if (normalizedName !== undefined) {
+      updatePayload.name = normalizedName;
+      updatePayload.display_name = normalizedName;
+      if (firstName) updatePayload.first_name = firstName;
+      if (lastName) updatePayload.last_name = lastName;
+    }
+    if (data.phone !== undefined) updatePayload.phone = data.phone;
     if (data.dob !== undefined) updatePayload.dob = data.dob;
     if (data.ageBand !== undefined) updatePayload.age_band = data.ageBand;
     if (data.gradeLevel !== undefined) updatePayload.grade_level = data.gradeLevel;
@@ -682,12 +712,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (data.targetRole !== undefined) updatePayload.target_role = data.targetRole;
 
     await supabase.from("profiles").update(updatePayload).eq("id", user.uid);
-
-    // Update local state
-    setProfile((prev) => (prev ? { ...prev, ...data } : null));
-    if (data.dob || data.ageBand) {
-      setUser((prev) => (prev ? { ...prev, dob: data.dob || prev.dob, ageBand: data.ageBand || prev.ageBand } : null));
+    if (normalizedName !== undefined || data.phone !== undefined) {
+      const userUpdate: Record<string, any> = {};
+      if (normalizedName !== undefined) userUpdate.name = normalizedName;
+      if (data.phone !== undefined) userUpdate.phone = data.phone;
+      await supabase.from("users").update(userUpdate).eq("id", user.uid);
     }
+
+    // Update local state and caches
+    const updatedProfileData = { ...data, ...(normalizedName !== undefined ? { name: normalizedName } : {}) };
+    setProfile((prev) => {
+      const nextProfile = prev ? { ...prev, ...updatedProfileData } : null;
+      if (typeof window !== "undefined" && nextProfile) {
+        localStorage.setItem("edworld_user_profile", JSON.stringify(nextProfile));
+      }
+      return nextProfile;
+    });
+
+    setUser((prev) => {
+      if (!prev) return null;
+      const nextUser = {
+        ...prev,
+        ...(normalizedName !== undefined ? { name: normalizedName } : {}),
+        ...(data.phone !== undefined ? { phone: data.phone } : {}),
+        ...(data.dob ? { dob: data.dob } : {}),
+        ...(data.ageBand ? { ageBand: data.ageBand } : {}),
+        ...(data.gradeLevel ? { gradeLevel: data.gradeLevel } : {}),
+      };
+      if (typeof window !== "undefined") {
+        localStorage.setItem("edworld_auth_session", JSON.stringify(nextUser));
+      }
+      return nextUser;
+    });
   };
 
   const updateInterestLevel = async (interestId: string, newEffectiveLevel: SkillLevel) => {

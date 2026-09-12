@@ -37,6 +37,7 @@ import { supabase } from "@/lib/supabase";
 import GrowthRing from "@/components/ui/GrowthRing";
 import GamificationHUD from "@/components/dashboard/GamificationHUD";
 import AuthGuard from "@/components/auth/AuthGuard";
+import UserGreeting from "@/components/ui/UserGreeting";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -320,17 +321,10 @@ export default function DashboardPage() {
         {/* ========================================================================= */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           {/* Greeting Header */}
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-[#181920]">
-                Good Morning, {userName}!
-              </h1>
-            </div>
-            <p className="text-sm font-medium text-[#767E94] flex items-center gap-1.5">
-              You&apos;re <span className="font-bold text-[#181920]">37% closer</span> to your career goal. 
-              <span className="text-[#FFB800] text-base">⚡</span>
-            </p>
-          </div>
+          <UserGreeting
+            context="dashboard"
+            subtitle="You're 37% closer to your career goal. ⚡"
+          />
 
           {/* Top 4 Metric Capsule Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

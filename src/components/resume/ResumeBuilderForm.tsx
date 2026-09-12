@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { ResumeContent, ResumeExperience, ResumeEducation, ResumeProject, ResumeCertification } from "@/lib/types";
 import { useAuth } from "@/lib/auth-context";
 import { ProjectItem } from "@/lib/types";
+import { getResumeProfileDefaults } from "@/lib/services/user-profile";
 import { 
   User, 
   Briefcase, 
@@ -18,7 +19,8 @@ import {
   ChevronDown,
   RefreshCw,
   ShieldCheck,
-  ExternalLink
+  ExternalLink,
+  CheckCircle2
 } from "lucide-react";
 
 interface ResumeBuilderFormProps {
@@ -27,9 +29,10 @@ interface ResumeBuilderFormProps {
 }
 
 export default function ResumeBuilderForm({ content, onChange }: ResumeBuilderFormProps) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [showProjectPicker, setShowProjectPicker] = useState(false);
   const [availableProjects, setAvailableProjects] = useState<ProjectItem[]>([]);
+  const [profileSyncMsg, setProfileSyncMsg] = useState<string | null>(null);
 
   React.useEffect(() => {
     if (user) {
@@ -41,6 +44,33 @@ export default function ResumeBuilderForm({ content, onChange }: ResumeBuilderFo
       }
     }
   }, [user, showProjectPicker]);
+
+  const handleSyncFromProfile = () => {
+    if (!user) return;
+    const defaults = getResumeProfileDefaults(user, profile);
+    const initialSkills = profile?.interests?.map((i) => i.name) || [];
+
+    onChange({
+      ...content,
+      contact: {
+        ...content.contact,
+        fullName: defaults.fullName || content.contact.fullName,
+        email: defaults.email || content.contact.email,
+        phone: defaults.phone || content.contact.phone,
+        location: defaults.location || content.contact.location,
+        linkedin: defaults.linkedin || content.contact.linkedin,
+        github: defaults.github || content.contact.github,
+        portfolio: defaults.portfolio || content.contact.portfolio,
+      },
+      skills: {
+        ...content.skills,
+        technical: content.skills.technical.length > 0 ? content.skills.technical : initialSkills,
+      },
+    });
+
+    setProfileSyncMsg("✓ Synced name and contact from global profile!");
+    setTimeout(() => setProfileSyncMsg(null), 3000);
+  };
   const [showLinkedInModal, setShowLinkedInModal] = useState(false);
   const [linkedInUrlInput, setLinkedInUrlInput] = useState("");
   const [linkedInPersona, setLinkedInPersona] = useState<"college" | "working_professional">("working_professional");
@@ -270,14 +300,34 @@ export default function ResumeBuilderForm({ content, onChange }: ResumeBuilderFo
           })}
         </div>
 
-        <button
-          onClick={() => setShowLinkedInModal(true)}
-          className="px-3 py-1.5 rounded-lg bg-[#0077B5] hover:bg-[#005E93] text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all shrink-0 mr-1"
-        >
-          <Sparkles className="w-3.5 h-3.5 text-[#D7FC51]" />
-          <span>Sync LinkedIn</span>
-        </button>
+        <div className="flex items-center gap-1.5 shrink-0 mr-1">
+          <button
+            type="button"
+            onClick={handleSyncFromProfile}
+            className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
+            title="Update contact and skills from your central EdWorld profile"
+          >
+            <RefreshCw className="w-3.5 h-3.5 text-[#D7FC51]" />
+            <span>Sync from Profile</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowLinkedInModal(true)}
+            className="px-3 py-1.5 rounded-lg bg-[#0077B5] hover:bg-[#005E93] text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-[#D7FC51]" />
+            <span>Sync LinkedIn</span>
+          </button>
+        </div>
       </div>
+
+      {profileSyncMsg && (
+        <div className="mx-4 mt-3 p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-800 flex items-center gap-2 animate-in fade-in">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>{profileSyncMsg}</span>
+        </div>
+      )}
 
       {/* LinkedIn Import Modal */}
       {showLinkedInModal && (
@@ -355,7 +405,17 @@ export default function ResumeBuilderForm({ content, onChange }: ResumeBuilderFo
         {/* CONTACT */}
         {activeTab === "contact" && (
           <div className="space-y-4">
-            <h3 className="text-sm font-bold text-slate-900 border-b pb-2">Personal & Contact Info</h3>
+            <div className="flex items-center justify-between border-b pb-2">
+              <h3 className="text-sm font-bold text-slate-900">Personal & Contact Info</h3>
+              <button
+                type="button"
+                onClick={handleSyncFromProfile}
+                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer"
+              >
+                <RefreshCw className="w-3 h-3" />
+                <span>Sync from Profile</span>
+              </button>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">Full Name</label>
@@ -363,7 +423,7 @@ export default function ResumeBuilderForm({ content, onChange }: ResumeBuilderFo
                   type="text"
                   value={content.contact.fullName}
                   onChange={(e) => updateContact("fullName", e.target.value)}
-                  placeholder="e.g. Alex Rivera"
+                  placeholder={user?.name ? `e.g. ${user.name}` : "e.g. Adarsh Kolluru"}
                   className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500"
                 />
               </div>
@@ -373,7 +433,7 @@ export default function ResumeBuilderForm({ content, onChange }: ResumeBuilderFo
                   type="email"
                   value={content.contact.email}
                   onChange={(e) => updateContact("email", e.target.value)}
-                  placeholder="alex@example.com"
+                  placeholder={user?.email || "name@example.com"}
                   className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500"
                 />
               </div>
@@ -383,7 +443,7 @@ export default function ResumeBuilderForm({ content, onChange }: ResumeBuilderFo
                   type="text"
                   value={content.contact.phone}
                   onChange={(e) => updateContact("phone", e.target.value)}
-                  placeholder="+1 (555) 000-0000"
+                  placeholder={profile?.phone || user?.phone || "+91 98765 43210"}
                   className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500"
                 />
               </div>
@@ -403,7 +463,7 @@ export default function ResumeBuilderForm({ content, onChange }: ResumeBuilderFo
                   type="text"
                   value={content.contact.linkedin || ""}
                   onChange={(e) => updateContact("linkedin", e.target.value)}
-                  placeholder="linkedin.com/in/alex"
+                  placeholder="linkedin.com/in/username"
                   className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500"
                 />
               </div>
@@ -413,7 +473,7 @@ export default function ResumeBuilderForm({ content, onChange }: ResumeBuilderFo
                   type="text"
                   value={content.contact.github || ""}
                   onChange={(e) => updateContact("github", e.target.value)}
-                  placeholder="github.com/alex"
+                  placeholder="github.com/username"
                   className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500"
                 />
               </div>

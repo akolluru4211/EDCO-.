@@ -23,7 +23,7 @@ import {
   HelpCircle,
   Maximize2
 } from "lucide-react";
-import Button from "@/components/ui/Button";
+import { normalizeDisplayName } from "@/lib/services/user-profile";
 
 interface Annotation {
   id: string;
@@ -38,7 +38,8 @@ export default function InterviewResultsPage() {
   const params = useParams();
   const router = useRouter();
   const sessionId = params.sessionId as string;
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const { displayName } = normalizeDisplayName(undefined, undefined, profile?.name || user?.name);
 
   const [sessionData, setSessionData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -164,7 +165,12 @@ export default function InterviewResultsPage() {
             <ArrowLeft className="w-4 h-4" />
             <span>Back to Mock Interview Studio</span>
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {displayName && (
+              <span className="text-xs font-bold text-slate-700 bg-slate-100 border border-slate-200 px-3 py-1 rounded-full">
+                Candidate: {displayName}
+              </span>
+            )}
             <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
               Session Evaluation Complete
             </span>

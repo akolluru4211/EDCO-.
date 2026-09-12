@@ -27,6 +27,8 @@ import {
   X
 } from "lucide-react";
 
+import { getResumeProfileDefaults } from "@/lib/services/user-profile";
+
 export const dynamic = "force-dynamic";
 
 export default function ResumeStudioPage() {
@@ -84,7 +86,8 @@ export default function ResumeStudioPage() {
         }
       }
 
-      // 3. Fallback if newly created
+      // 3. Fallback if newly created - prefilled with real user profile defaults
+      const contactDefaults = getResumeProfileDefaults(user, profile);
       const fallbackResume: Resume = {
         id: resumeId || `resume-${user.uid}-${Date.now()}`,
         userId: user.uid,
@@ -92,11 +95,7 @@ export default function ResumeStudioPage() {
         templateId: "classic",
         content: {
           ...DEFAULT_RESUME_CONTENT,
-          contact: {
-            ...DEFAULT_RESUME_CONTENT.contact,
-            fullName: user.name || "Alex Rivera",
-            email: user.email || "alex@example.com",
-          },
+          contact: contactDefaults,
         },
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -105,7 +104,7 @@ export default function ResumeStudioPage() {
     };
 
     loadResume();
-  }, [resumeId, user, isJuniorTrack]);
+  }, [resumeId, user, profile, isJuniorTrack]);
 
   const handleContentChange = (updatedContent: ResumeContent) => {
     if (!resume || !user) return;

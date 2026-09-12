@@ -56,13 +56,17 @@ export default function ActiveInterviewStudioPage() {
   const handleStartSession = async () => {
     setGenerating(true);
     try {
+      const candidateName = user?.name || profile?.name || "";
+      const firstName = candidateName ? candidateName.trim().split(" ")[0] : "";
       const res = await fetch("/api/interview/generate-questions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           jobDescription: jobDescriptionInput,
           category: categoryName,
-          effectiveLevel
+          effectiveLevel,
+          candidateName,
+          userId: user?.uid
         })
       });
 
@@ -74,13 +78,17 @@ export default function ActiveInterviewStudioPage() {
         setQuestions([
           {
             id: "warmup-1",
-            text: "Tell me about yourself, your background, and what drives your passion for this domain.",
+            text: firstName
+              ? `Hi ${firstName}, welcome to your mock interview. Let's begin by having you tell me about yourself, your background, and what drives your passion for this domain.`
+              : "Tell me about yourself, your background, and what drives your passion for this domain.",
             difficultyLevel: 0,
             isWarmup: true
           },
           {
             id: "q-fallback-2",
-            text: `Can you walk me through your technical approach and key decisions when developing a solution in ${categoryName}?`,
+            text: firstName
+              ? `${firstName}, can you walk me through your technical approach and key decisions when developing a solution in ${categoryName}?`
+              : `Can you walk me through your technical approach and key decisions when developing a solution in ${categoryName}?`,
             difficultyLevel: effectiveLevel,
             isWarmup: false
           }
