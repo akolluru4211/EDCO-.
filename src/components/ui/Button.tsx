@@ -8,6 +8,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   size?: "sm" | "md" | "lg";
   icon?: React.ReactNode;
   href?: string;
+  isLoading?: boolean;
   children?: React.ReactNode;
 }
 
@@ -16,6 +17,7 @@ export const Button: React.FC<ButtonProps> = ({
   size = "md",
   icon,
   href,
+  isLoading = false,
   children,
   className = "",
   disabled,
@@ -54,16 +56,24 @@ export const Button: React.FC<ButtonProps> = ({
   if (href) {
     return (
       <Link href={href} className={baseClasses}>
+        {isLoading ? (
+          <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0" />
+        ) : (
+          icon && <span className="shrink-0">{icon}</span>
+        )}
         {children}
-        {icon && <span className="shrink-0">{icon}</span>}
       </Link>
     );
   }
 
   return (
-    <button className={baseClasses} disabled={disabled} {...props}>
+    <button className={baseClasses} disabled={disabled || isLoading} {...props}>
+      {isLoading ? (
+        <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0 mr-1.5" />
+      ) : (
+        icon && <span className="shrink-0">{icon}</span>
+      )}
       {children}
-      {icon && <span className="shrink-0">{icon}</span>}
     </button>
   );
 };

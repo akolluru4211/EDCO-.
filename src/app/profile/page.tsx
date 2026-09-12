@@ -23,6 +23,8 @@ import Button from "@/components/ui/Button";
 import { supabase } from "@/lib/supabase";
 import { recordAuditLog } from "@/lib/audit-logger";
 import AuthGuard from "@/components/auth/AuthGuard";
+import SyncedAccountsCard from "@/components/dashboard/SyncedAccountsCard";
+import { SyncedAccounts } from "@/lib/types";
 
 export default function ProfilePage() {
   const { user, profile, role, updateUserProfile } = useAuth();
@@ -47,6 +49,17 @@ export default function ProfilePage() {
   const [notifyTasks, setNotifyTasks] = useState(true);
   const [notifyLeaves, setNotifyLeaves] = useState(true);
   const [notifyPayroll, setNotifyPayroll] = useState(true);
+
+  // Connected Developer Accounts
+  const [syncedAccounts, setSyncedAccounts] = useState<SyncedAccounts>({
+    github: { connected: false, username: "", contributionsThisYear: 0, recentRepos: [], lastSyncedAt: "" },
+    linkedin: { connected: false, profileUrl: "", verified: false },
+    leetcode: { connected: false, username: "", problemsSolved: { easy: 0, medium: 0, hard: 0, total: 0 }, isSelfReported: false, lastUpdatedAt: "" }
+  });
+
+  const handleUpdateAccounts = async (updated: SyncedAccounts) => {
+    setSyncedAccounts(updated);
+  };
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -224,6 +237,13 @@ export default function ProfilePage() {
               </button>
             </form>
           </div>
+
+          {/* Connected Developer Accounts */}
+          <SyncedAccountsCard
+            syncedAccounts={syncedAccounts}
+            onUpdateAccounts={handleUpdateAccounts}
+            userId={user?.uid}
+          />
 
           {/* Change Password Card */}
           <div className="bg-[#13141B] p-6 rounded-3xl border border-white/10 space-y-6 shadow-xl">

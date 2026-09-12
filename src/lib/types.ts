@@ -348,6 +348,132 @@ export interface SyncedAccounts {
   };
 }
 
+// ==============================================================================
+// Phase 26: Developer & Social Profile Integration Types (GitHub, LinkedIn, LeetCode)
+// ==============================================================================
+
+export type SocialProvider = "GITHUB" | "LINKEDIN" | "LEETCODE";
+export type SyncStatus = "NOT_CONNECTED" | "SYNCING" | "SYNCED" | "FAILED";
+
+export interface GitHubRepositoryItem {
+  id?: number;
+  name: string;
+  fullName?: string;
+  description: string | null;
+  language: string | null;
+  languages?: string[];
+  stars: number;
+  forks: number;
+  isPrivate?: boolean;
+  htmlUrl: string;
+  updatedAt: string;
+  topics?: string[];
+}
+
+export interface GitHubProfileData {
+  username: string;
+  name: string | null;
+  avatarUrl: string | null;
+  bio: string | null;
+  company: string | null;
+  location: string | null;
+  publicRepos: number;
+  followers: number;
+  following: number;
+  topLanguages: string[];
+  repositories: GitHubRepositoryItem[];
+  totalStars: number;
+}
+
+export interface LeetCodeProfileData {
+  username: string;
+  profileUrl: string;
+  ranking: number | null;
+  reputation: number | null;
+  contestRating: number | null;
+  totalSolved: number;
+  easySolved: number;
+  mediumSolved: number;
+  hardSolved: number;
+  acceptanceRate: string | null;
+  badges: string[];
+  topLanguages: string[];
+}
+
+export interface LinkedInProfileData {
+  username?: string;
+  profileUrl: string;
+  name?: string;
+  headline?: string;
+  location?: string;
+  verified: boolean;
+  lastVerifiedAt?: string;
+  experienceYears?: number;
+  skills?: string[];
+}
+
+export interface ConnectedAccount {
+  id: string;
+  userId: string;
+  provider: SocialProvider;
+  providerUserId?: string;
+  username: string;
+  profileUrl: string;
+  status: "CONNECTED" | "DISCONNECTED" | "VERIFIED" | "PENDING";
+  scopes?: string[];
+  lastSyncedAt?: string;
+  syncStatus: SyncStatus;
+  syncError?: string;
+  data?: {
+    github?: GitHubProfileData;
+    linkedin?: LinkedInProfileData;
+    leetcode?: LeetCodeProfileData;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DeveloperEvidenceCategory {
+  category: string;
+  score: number;
+  confidence: "Low" | "Medium" | "High";
+  evidence: string[];
+  lastUpdated: string;
+}
+
+export interface DeveloperEvidenceProfile {
+  userId: string;
+  githubSummary?: {
+    username: string;
+    totalRepos: number;
+    totalStars: number;
+    topLanguages: string[];
+    verifiedProjectsCount: number;
+    lastSyncedAt?: string;
+  };
+  leetcodeSummary?: {
+    username: string;
+    ranking: number | null;
+    totalSolved: number;
+    easySolved: number;
+    mediumSolved: number;
+    hardSolved: number;
+    contestRating: number | null;
+    acceptanceRate: string | null;
+    lastSyncedAt?: string;
+  };
+  linkedinSummary?: {
+    profileUrl: string;
+    headline: string | null;
+    experienceYears: number;
+    verifiedSkillsCount: number;
+    lastVerifiedAt?: string;
+  };
+  abilityScores: DeveloperEvidenceCategory[];
+  overallAbilityScore: number;
+  lastSynthesizedAt: string;
+}
+
 export interface WeeklyScheduleDay {
   dayName: string; // Mon, Tue, etc.
   date: string;    // YYYY-MM-DD

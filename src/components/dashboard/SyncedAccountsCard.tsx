@@ -13,56 +13,180 @@ import {
   Edit3, 
   ShieldCheck, 
   Sparkles,
-  AlertCircle
+  AlertCircle,
+  RefreshCw,
+  Info,
+  X
 } from "lucide-react";
+import Button from "@/components/ui/Button";
 
 interface SyncedAccountsCardProps {
-  syncedAccounts: SyncedAccounts;
-  onUpdateAccounts: (updated: SyncedAccounts) => Promise<void>;
+  syncedAccounts?: SyncedAccounts;
+  onUpdateAccounts?: (updated: SyncedAccounts) => Promise<void>;
+  userId?: string;
 }
 
 export default function SyncedAccountsCard({
-  syncedAccounts,
+  syncedAccounts = {},
   onUpdateAccounts,
+  userId
 }: SyncedAccountsCardProps) {
+  // Modal states
+  const [showGitHubModal, setShowGitHubModal] = useState(false);
+  const [ghUsername, setGhUsername] = useState(syncedAccounts.github?.username || "");
+  const [ghLoading, setGhLoading] = useState(false);
+  const [ghError, setGhError] = useState<string | null>(null);
+
   const [showLeetCodeModal, setShowLeetCodeModal] = useState(false);
-  const [lcEasy, setLcEasy] = useState(syncedAccounts.leetcode?.problemsSolved.easy || 45);
-  const [lcMed, setLcMed] = useState(syncedAccounts.leetcode?.problemsSolved.medium || 82);
-  const [lcHard, setLcHard] = useState(syncedAccounts.leetcode?.problemsSolved.hard || 14);
-  const [lcUsername, setLcUsername] = useState(syncedAccounts.leetcode?.username || "alexrivera_dev");
+  const [lcUsername, setLcUsername] = useState(syncedAccounts.leetcode?.username || "");
+  const [lcLoading, setLcLoading] = useState(false);
+  const [lcError, setLcError] = useState<string | null>(null);
 
   const [showLinkedInModal, setShowLinkedInModal] = useState(false);
-  const [liUrl, setLiUrl] = useState(syncedAccounts.linkedin?.profileUrl || "https://linkedin.com/in/alexrivera");
+  const [liUrl, setLiUrl] = useState(syncedAccounts.linkedin?.profileUrl || "");
+  const [liLoading, setLiLoading] = useState(false);
+  const [liError, setLiError] = useState<string | null>(null);
 
-  const handleSaveLeetCode = async () => {
-    const total = Number(lcEasy) + Number(lcMed) + Number(lcHard);
-    const updated: SyncedAccounts = {
-      ...syncedAccounts,
-      leetcode: {
-        connected: true,
-        username: lcUsername,
-        problemsSolved: { easy: Number(lcEasy), medium: Number(lcMed), hard: Number(lcHard), total },
-        isSelfReported: true,
-        lastUpdatedAt: new Date().toISOString(),
-      },
-    };
-    await onUpdateAccounts(updated);
-    setShowLeetCodeModal(false);
+  // Sync GitHub Handler
+  const handleSyncGitHub = async (customUsername?: string) => {
+    const targetUser = (customUsername || ghUsername || syncedAccounts.github?.username || "").trim();
+    if (!targetUser) {
+      setGhError("Please enter a valid GitHub username.");
+      return;
+    }
+
+    setGhLoading(true);
+    setGhError(null);
+
+    try {
+      const res = await fetch("/api/integrations/github/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: targetUser, userId })
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || "Failed to sync GitHub profile.");
+      }
+
+      const ghData = json.data;
+      const updated: SyncedAccounts = {
+        ...syncedAccounts,
+        github: {
+          connected: true,
+          username: ghData.username,
+          contributionsThisYear: ghData.totalStars || 0,
+          recentRepos: (ghData.repositories || []).slice(0, 3).map((r: any) => ({
+            name: r.name,
+            stars: r.stars,
+            language: r.language || "Code"
+          })),
+          lastSyncedAt: new Date().toISOString()
+        }
+      };
+
+      if (onUpdateAccounts) await onUpdateAccounts(updated);
+      setShowGitHubModal(false);
+    } catch (err: any) {
+      setGhError(err.message || "Failed to sync GitHub account.");
+    } finally {
+      setGhLoading(false);
+    }
   };
 
-  const handleSaveLinkedIn = async () => {
-    const updated: SyncedAccounts = {
-      ...syncedAccounts,
-      linkedin: {
-        connected: true,
-        profileUrl: liUrl,
-        verified: true,
-      },
-    };
-    await onUpdateAccounts(updated);
-    setShowLinkedInModal(false);
+  // Sync LeetCode Handler
+  const handleSyncLeetCode = async (customUsername?: string) => {
+    const targetUser = (customUsername || lcUsername || syncedAccounts.leetcode?.username || "").trim();
+    if (!targetUser) {
+      setLcError("Please enter a valid LeetCode username.");
+      return;
+    }
+
+    setLcLoading(true);
+    setLcError(null);
+
+    try {
+      const res = await fetch("/api/integrations/leetcode/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: targetUser, userId })
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || "Failed to sync LeetCode profile.");
+      }
+
+      const lcData = json.data;
+      const updated: SyncedAccounts = {
+        ...syncedAccounts,
+        leetcode: {
+          connected: true,
+          username: lcData.username,
+          problemsSolved: {
+            easy: lcData.easySolved || 0,
+            medium: lcData.mediumSolved || 0,
+            hard: lcData.hardSolved || 0,
+            total: lcData.totalSolved || 0
+          },
+          isSelfReported: false,
+          lastUpdatedAt: new Date().toISOString()
+        }
+      };
+
+      if (onUpdateAccounts) await onUpdateAccounts(updated);
+      setShowLeetCodeModal(false);
+    } catch (err: any) {
+      setLcError(err.message || "Failed to sync LeetCode account.");
+    } finally {
+      setLcLoading(false);
+    }
   };
 
+  // Sync LinkedIn Handler
+  const handleSyncLinkedIn = async (customUrl?: string) => {
+    const targetUrl = (customUrl || liUrl || syncedAccounts.linkedin?.profileUrl || "").trim();
+    if (!targetUrl) {
+      setLiError("Please enter a valid LinkedIn profile URL.");
+      return;
+    }
+
+    setLiLoading(true);
+    setLiError(null);
+
+    try {
+      const res = await fetch("/api/integrations/linkedin/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profileUrl: targetUrl, userId })
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || "Failed to verify LinkedIn profile URL.");
+      }
+
+      const liData = json.data;
+      const updated: SyncedAccounts = {
+        ...syncedAccounts,
+        linkedin: {
+          connected: true,
+          profileUrl: liData.profileUrl,
+          verified: true
+        }
+      };
+
+      if (onUpdateAccounts) await onUpdateAccounts(updated);
+      setShowLinkedInModal(false);
+    } catch (err: any) {
+      setLiError(err.message || "Failed to verify LinkedIn account.");
+    } finally {
+      setLiLoading(false);
+    }
+  };
+
+  // Disconnect Handler
   const handleDisconnect = async (type: "github" | "linkedin" | "leetcode") => {
     const updated = { ...syncedAccounts };
     if (type === "github" && updated.github) {
@@ -72,104 +196,100 @@ export default function SyncedAccountsCard({
     } else if (type === "leetcode" && updated.leetcode) {
       updated.leetcode.connected = false;
     }
-    await onUpdateAccounts(updated);
-  };
 
-  const hasAnyConnected =
-    syncedAccounts.github?.connected ||
-    syncedAccounts.linkedin?.connected ||
-    syncedAccounts.leetcode?.connected;
+    if (onUpdateAccounts) await onUpdateAccounts(updated);
+
+    if (userId) {
+      try {
+        await fetch(`/api/integrations/connected-accounts?userId=${encodeURIComponent(userId)}&provider=${type}`, {
+          method: "DELETE"
+        });
+      } catch (err) {
+        console.warn("Delete account note:", err);
+      }
+    }
+  };
 
   return (
     <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-brand-700 bg-brand-50 px-2 py-0.5 rounded-full border border-brand-200">
-              Career Track
+            <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-200">
+              Verified Profiles
             </span>
             <h2 className="text-base sm:text-lg font-black text-slate-900">
-              Synced Technical Profiles
+              Connected Developer Accounts
             </h2>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Verified cached snapshots from GitHub, LinkedIn, and self-reported coding stats.
+          <p className="text-xs text-slate-500 mt-1">
+            Real data synchronized from GitHub, LinkedIn, and LeetCode powering your ATS resume and evidence scores.
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* GitHub Card */}
-        <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-4">
+        <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-5 flex flex-col justify-between space-y-4">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold">
-                  <GitBranch className="w-4 h-4 text-brand-300" />
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center">
+                  <GitBranch className="w-4 h-4" />
                 </div>
-                <span className="font-bold text-xs text-slate-900">GitHub Activity</span>
+                <div>
+                  <span className="font-bold text-xs text-slate-900 block">GitHub</span>
+                  <span className="text-[10px] text-slate-400">Repositories & Code</span>
+                </div>
               </div>
               {syncedAccounts.github?.connected ? (
-                <span className="text-[10px] font-mono font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                  Synced
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                  <CheckCircle2 className="w-3 h-3" />
+                  Connected
                 </span>
               ) : (
-                <span className="text-[10px] font-mono text-slate-400">Not Connected</span>
+                <span className="text-[10px] font-semibold text-slate-400">Not linked</span>
               )}
             </div>
 
             {syncedAccounts.github?.connected ? (
               <div className="space-y-2 text-xs">
-                <div className="flex items-center justify-between font-mono">
-                  <span className="text-slate-500">Contributions</span>
-                  <span className="font-bold text-slate-900">{syncedAccounts.github.contributionsThisYear} this year</span>
-                </div>
-                <div className="space-y-1">
-                  <span className="text-[10px] font-mono text-slate-400 uppercase">Recent Repositories</span>
-                  <div className="flex flex-wrap gap-1">
-                    {(syncedAccounts.github.recentRepos || []).slice(0, 2).map((r, i) => (
-                      <span key={i} className="px-2 py-0.5 rounded bg-white border border-slate-200 text-[10px] font-mono text-slate-700">
-                        {r.name} ({r.language})
-                      </span>
-                    ))}
-                  </div>
+                <p className="font-bold text-slate-800">@{syncedAccounts.github.username}</p>
+                <div className="flex items-center gap-2 text-slate-500 text-[11px]">
+                  <span>{syncedAccounts.github.recentRepos?.length || 0} Repositories</span>
+                  <span>&bull;</span>
+                  <span>{syncedAccounts.github.contributionsThisYear || 0} Stars</span>
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-slate-500">
-                Connect GitHub to display verified repo contributions and import project showcases automatically.
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Connect your GitHub profile to verify your projects and programming languages.
               </p>
             )}
           </div>
 
-          <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between">
+          <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between gap-2">
             {syncedAccounts.github?.connected ? (
-              <button
-                onClick={() => handleDisconnect("github")}
-                className="text-[11px] font-mono text-slate-400 hover:text-rose-600 flex items-center gap-1"
-              >
-                <Unlink className="w-3 h-3" />
-                <span>Disconnect</span>
-              </button>
+              <>
+                <button
+                  onClick={() => handleSyncGitHub()}
+                  disabled={ghLoading}
+                  className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${ghLoading ? "animate-spin" : ""}`} />
+                  <span>Sync Now</span>
+                </button>
+                <button
+                  onClick={() => handleDisconnect("github")}
+                  className="text-xs font-semibold text-rose-600 hover:text-rose-700 transition-colors"
+                >
+                  Disconnect
+                </button>
+              </>
             ) : (
               <button
-                onClick={() => {
-                  onUpdateAccounts({
-                    ...syncedAccounts,
-                    github: {
-                      connected: true,
-                      username: "alexrivera",
-                      contributionsThisYear: 384,
-                      recentRepos: [
-                        { name: "distributed-cache", stars: 34, language: "TypeScript" },
-                        { name: "trading-sim", stars: 28, language: "Python" },
-                      ],
-                      lastSyncedAt: new Date().toISOString(),
-                    },
-                  });
-                }}
-                className="w-full py-2 rounded-xl bg-slate-900 text-white text-xs font-bold uppercase tracking-wider hover:bg-slate-800"
+                onClick={() => setShowGitHubModal(true)}
+                className="w-full py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all shadow-xs"
               >
                 Connect GitHub
               </button>
@@ -177,237 +297,294 @@ export default function SyncedAccountsCard({
           </div>
         </div>
 
-        {/* LinkedIn Card */}
-        <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-4">
+        {/* LeetCode Card */}
+        <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-5 flex flex-col justify-between space-y-4">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-[#0a66c2] text-white flex items-center justify-center font-bold">
-                  <Linkedin className="w-4 h-4" />
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center">
+                  <Code2 className="w-4 h-4" />
                 </div>
-                <span className="font-bold text-xs text-slate-900">LinkedIn Profile</span>
+                <div>
+                  <span className="font-bold text-xs text-slate-900 block">LeetCode</span>
+                  <span className="text-[10px] text-slate-400">DSA & Algorithms</span>
+                </div>
               </div>
-              {syncedAccounts.linkedin?.connected ? (
-                <span className="text-[10px] font-mono font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3 text-emerald-600" />
+              {syncedAccounts.leetcode?.connected ? (
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                  <CheckCircle2 className="w-3 h-3" />
                   Verified
                 </span>
               ) : (
-                <span className="text-[10px] font-mono text-slate-400">Not Linked</span>
+                <span className="text-[10px] font-semibold text-slate-400">Not linked</span>
               )}
             </div>
 
-            {syncedAccounts.linkedin?.connected ? (
-              <div className="space-y-1 text-xs">
-                <span className="text-slate-500 block text-[11px]">Linked URL:</span>
-                <a
-                  href={syncedAccounts.linkedin.profileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-bold text-brand-700 hover:underline line-clamp-1 flex items-center gap-1"
-                >
-                  <span>{syncedAccounts.linkedin.profileUrl}</span>
-                  <ExternalLink className="w-3 h-3" />
-                </a>
+            {syncedAccounts.leetcode?.connected ? (
+              <div className="space-y-2 text-xs">
+                <p className="font-bold text-slate-800">@{syncedAccounts.leetcode.username}</p>
+                <div className="flex items-center gap-2 text-[11px] font-mono">
+                  <span className="text-emerald-600 font-bold">{syncedAccounts.leetcode.problemsSolved.easy} Easy</span>
+                  <span>&bull;</span>
+                  <span className="text-amber-600 font-bold">{syncedAccounts.leetcode.problemsSolved.medium} Med</span>
+                  <span>&bull;</span>
+                  <span className="text-rose-600 font-bold">{syncedAccounts.leetcode.problemsSolved.hard} Hard</span>
+                </div>
               </div>
             ) : (
-              <p className="text-xs text-slate-500">
-                Link your LinkedIn profile for verified professional credentials on job applications.
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Connect your LeetCode username to verify your DSA problem solving breakdown.
               </p>
             )}
           </div>
 
-          <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between">
-            {syncedAccounts.linkedin?.connected ? (
-              <div className="flex items-center justify-between w-full">
+          <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between gap-2">
+            {syncedAccounts.leetcode?.connected ? (
+              <>
                 <button
-                  onClick={() => setShowLinkedInModal(true)}
-                  className="text-[11px] font-mono text-slate-600 hover:text-slate-900 underline"
+                  onClick={() => handleSyncLeetCode()}
+                  disabled={lcLoading}
+                  className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
                 >
-                  Edit Link
+                  <RefreshCw className={`w-3.5 h-3.5 ${lcLoading ? "animate-spin" : ""}`} />
+                  <span>Sync Now</span>
                 </button>
                 <button
-                  onClick={() => handleDisconnect("linkedin")}
-                  className="text-[11px] font-mono text-slate-400 hover:text-rose-600 flex items-center gap-1"
+                  onClick={() => handleDisconnect("leetcode")}
+                  className="text-xs font-semibold text-rose-600 hover:text-rose-700 transition-colors"
                 >
-                  <Unlink className="w-3 h-3" />
-                  <span>Disconnect</span>
+                  Disconnect
                 </button>
-              </div>
+              </>
             ) : (
               <button
-                onClick={() => setShowLinkedInModal(true)}
-                className="w-full py-2 rounded-xl bg-slate-900 text-white text-xs font-bold uppercase tracking-wider hover:bg-slate-800"
+                onClick={() => setShowLeetCodeModal(true)}
+                className="w-full py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all shadow-xs"
               >
-                Add LinkedIn
+                Connect LeetCode
               </button>
             )}
           </div>
         </div>
 
-        {/* LeetCode Card */}
-        <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-4">
+        {/* LinkedIn Card */}
+        <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-5 flex flex-col justify-between space-y-4">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold">
-                  <Code2 className="w-4 h-4" />
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center">
+                  <Linkedin className="w-4 h-4" />
                 </div>
                 <div>
-                  <span className="font-bold text-xs text-slate-900 block">LeetCode Stats</span>
-                  <span className="text-[9px] font-mono text-slate-400">Self-reported</span>
+                  <span className="font-bold text-xs text-slate-900 block">LinkedIn</span>
+                  <span className="text-[10px] text-slate-400">Professional Identity</span>
                 </div>
               </div>
-              {syncedAccounts.leetcode?.connected && (
-                <span className="text-[10px] font-mono font-bold text-slate-700 bg-white border border-slate-200 px-2 py-0.5 rounded-full">
-                  {syncedAccounts.leetcode.problemsSolved.total} Solved
+              {syncedAccounts.linkedin?.connected ? (
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                  <CheckCircle2 className="w-3 h-3" />
+                  Verified
                 </span>
+              ) : (
+                <span className="text-[10px] font-semibold text-slate-400">Not linked</span>
               )}
             </div>
 
-            {syncedAccounts.leetcode?.connected ? (
-              <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                <div className="p-2 bg-white rounded-xl border border-slate-200">
-                  <span className="text-[9px] font-mono text-emerald-600 block">EASY</span>
-                  <span className="font-bold text-slate-900">{syncedAccounts.leetcode.problemsSolved.easy}</span>
-                </div>
-                <div className="p-2 bg-white rounded-xl border border-slate-200">
-                  <span className="text-[9px] font-mono text-amber-600 block">MED</span>
-                  <span className="font-bold text-slate-900">{syncedAccounts.leetcode.problemsSolved.medium}</span>
-                </div>
-                <div className="p-2 bg-white rounded-xl border border-slate-200">
-                  <span className="text-[9px] font-mono text-rose-600 block">HARD</span>
-                  <span className="font-bold text-slate-900">{syncedAccounts.leetcode.problemsSolved.hard}</span>
-                </div>
+            {syncedAccounts.linkedin?.connected ? (
+              <div className="space-y-2 text-xs">
+                <a
+                  href={syncedAccounts.linkedin.profileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold text-blue-600 hover:underline flex items-center gap-1 truncate"
+                >
+                  <span>{syncedAccounts.linkedin.profileUrl.replace(/^https?:\/\/(www\.)?linkedin\.com\/in\//i, "")}</span>
+                  <ExternalLink className="w-3 h-3 shrink-0" />
+                </a>
+                <p className="text-[11px] text-slate-400">Public profile URL verified</p>
               </div>
             ) : (
-              <p className="text-xs text-slate-500">
-                Log your problem-solving metrics to track algorithmic readiness.
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Connect your public LinkedIn profile URL to verify your professional credentials.
               </p>
             )}
           </div>
 
-          <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between">
-            {syncedAccounts.leetcode?.connected ? (
-              <div className="flex items-center justify-between w-full">
+          <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between gap-2">
+            {syncedAccounts.linkedin?.connected ? (
+              <>
                 <button
-                  onClick={() => setShowLeetCodeModal(true)}
-                  className="text-[11px] font-mono text-slate-600 hover:text-slate-900 underline flex items-center gap-1"
+                  onClick={() => handleSyncLinkedIn()}
+                  disabled={liLoading}
+                  className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
                 >
-                  <Edit3 className="w-3 h-3" />
-                  <span>Update Counts</span>
+                  <RefreshCw className={`w-3.5 h-3.5 ${liLoading ? "animate-spin" : ""}`} />
+                  <span>Re-verify</span>
                 </button>
                 <button
-                  onClick={() => handleDisconnect("leetcode")}
-                  className="text-[11px] font-mono text-slate-400 hover:text-rose-600 flex items-center gap-1"
+                  onClick={() => handleDisconnect("linkedin")}
+                  className="text-xs font-semibold text-rose-600 hover:text-rose-700 transition-colors"
                 >
-                  <Unlink className="w-3 h-3" />
-                  <span>Disconnect</span>
+                  Disconnect
                 </button>
-              </div>
+              </>
             ) : (
               <button
-                onClick={() => setShowLeetCodeModal(true)}
-                className="w-full py-2 rounded-xl bg-slate-900 text-white text-xs font-bold uppercase tracking-wider hover:bg-slate-800"
+                onClick={() => setShowLinkedInModal(true)}
+                className="w-full py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all shadow-xs"
               >
-                Log LeetCode
+                Connect LinkedIn
               </button>
             )}
           </div>
         </div>
       </div>
 
-      {/* LeetCode Update Modal */}
-      {showLeetCodeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
-          <div className="max-w-sm w-full bg-white rounded-3xl p-6 space-y-4 shadow-2xl border border-slate-200">
-            <h3 className="text-base font-bold text-slate-900">Update LeetCode Stats</h3>
-            <div className="space-y-3 text-xs">
-              <div>
-                <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">Username</label>
-                <input
-                  type="text"
-                  value={lcUsername}
-                  onChange={(e) => setLcUsername(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-xl"
-                />
+      {/* GitHub Connect Modal with Explicit Consent Disclosure */}
+      {showGitHubModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center">
+                  <GitBranch className="w-4 h-4" />
+                </div>
+                <h3 className="text-base font-bold text-slate-900">Connect GitHub Profile</h3>
               </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <label className="block text-[10px] font-bold text-emerald-600 uppercase mb-1">Easy</label>
-                  <input
-                    type="number"
-                    value={lcEasy}
-                    onChange={(e) => setLcEasy(Number(e.target.value))}
-                    className="w-full px-2 py-1.5 border rounded-lg"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-amber-600 uppercase mb-1">Medium</label>
-                  <input
-                    type="number"
-                    value={lcMed}
-                    onChange={(e) => setLcMed(Number(e.target.value))}
-                    className="w-full px-2 py-1.5 border rounded-lg"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-rose-600 uppercase mb-1">Hard</label>
-                  <input
-                    type="number"
-                    value={lcHard}
-                    onChange={(e) => setLcHard(Number(e.target.value))}
-                    className="w-full px-2 py-1.5 border rounded-lg"
-                  />
-                </div>
-              </div>
+              <button onClick={() => setShowGitHubModal(false)} className="p-1 text-slate-400 hover:text-slate-600">
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            <div className="flex gap-2 pt-2">
-              <button
-                onClick={() => setShowLeetCodeModal(false)}
-                className="w-1/2 py-2 rounded-xl border text-xs font-bold text-slate-700 hover:bg-slate-50"
-              >
+
+            <div className="p-3.5 rounded-2xl bg-indigo-50/60 border border-indigo-100 text-xs text-indigo-900 space-y-1">
+              <p className="font-bold flex items-center gap-1">
+                <ShieldCheck className="w-4 h-4 text-indigo-600" />
+                Consent & Data Policy
+              </p>
+              <p className="text-indigo-700 text-[11px] leading-relaxed">
+                EdWorld accesses only your public repositories, languages, and stars to verify portfolio projects. We never request or store private passwords or tokens.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700">GitHub Username or URL</label>
+              <input
+                type="text"
+                value={ghUsername}
+                onChange={(e) => setGhUsername(e.target.value)}
+                placeholder="e.g. torvalds or https://github.com/torvalds"
+                className="w-full text-sm rounded-xl border border-slate-300 px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-slate-900"
+              />
+              {ghError && <p className="text-xs text-rose-600 font-medium">{ghError}</p>}
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <Button variant="ghost" size="sm" onClick={() => setShowGitHubModal(false)}>
                 Cancel
-              </button>
-              <button
-                onClick={handleSaveLeetCode}
-                className="w-1/2 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800"
-              >
-                Save Stats
-              </button>
+              </Button>
+              <Button size="sm" onClick={() => handleSyncGitHub()} isLoading={ghLoading}>
+                Connect & Sync
+              </Button>
             </div>
           </div>
         </div>
       )}
 
-      {/* LinkedIn Link Modal */}
+      {/* LeetCode Connect Modal */}
+      {showLeetCodeModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center">
+                  <Code2 className="w-4 h-4" />
+                </div>
+                <h3 className="text-base font-bold text-slate-900">Connect LeetCode Profile</h3>
+              </div>
+              <button onClick={() => setShowLeetCodeModal(false)} className="p-1 text-slate-400 hover:text-slate-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-amber-50/60 border border-amber-100 text-xs text-amber-900 space-y-1">
+              <p className="font-bold flex items-center gap-1">
+                <ShieldCheck className="w-4 h-4 text-amber-600" />
+                Consent & Verification
+              </p>
+              <p className="text-amber-700 text-[11px] leading-relaxed">
+                EdWorld retrieves public problem solving breakdowns (Easy, Medium, Hard) and rankings directly from public profiles. No credentials required.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700">LeetCode Username or Profile URL</label>
+              <input
+                type="text"
+                value={lcUsername}
+                onChange={(e) => setLcUsername(e.target.value)}
+                placeholder="e.g. username or https://leetcode.com/u/username"
+                className="w-full text-sm rounded-xl border border-slate-300 px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-slate-900"
+              />
+              {lcError && <p className="text-xs text-rose-600 font-medium">{lcError}</p>}
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <Button variant="ghost" size="sm" onClick={() => setShowLeetCodeModal(false)}>
+                Cancel
+              </Button>
+              <Button size="sm" onClick={() => handleSyncLeetCode()} isLoading={lcLoading}>
+                Connect & Sync
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* LinkedIn Connect Modal */}
       {showLinkedInModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
-          <div className="max-w-sm w-full bg-white rounded-3xl p-6 space-y-4 shadow-2xl border border-slate-200">
-            <h3 className="text-base font-bold text-slate-900">Link LinkedIn Profile</h3>
-            <div className="space-y-2 text-xs">
-              <label className="block text-[11px] font-bold text-slate-600 uppercase">Profile URL</label>
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center">
+                  <Linkedin className="w-4 h-4" />
+                </div>
+                <h3 className="text-base font-bold text-slate-900">Connect LinkedIn Profile</h3>
+              </div>
+              <button onClick={() => setShowLinkedInModal(false)} className="p-1 text-slate-400 hover:text-slate-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-blue-50/60 border border-blue-100 text-xs text-blue-900 space-y-1">
+              <p className="font-bold flex items-center gap-1">
+                <ShieldCheck className="w-4 h-4 text-blue-600" />
+                Public URL Verification
+              </p>
+              <p className="text-blue-700 text-[11px] leading-relaxed">
+                EdWorld validates your public vanity URL format to associate your professional profile with your verified credentials. We never ask for LinkedIn passwords.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700">LinkedIn Profile URL</label>
               <input
                 type="text"
                 value={liUrl}
                 onChange={(e) => setLiUrl(e.target.value)}
                 placeholder="https://linkedin.com/in/username"
-                className="w-full px-3 py-2 border rounded-xl"
+                className="w-full text-sm rounded-xl border border-slate-300 px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-slate-900"
               />
+              {liError && <p className="text-xs text-rose-600 font-medium">{liError}</p>}
             </div>
-            <div className="flex gap-2 pt-2">
-              <button
-                onClick={() => setShowLinkedInModal(false)}
-                className="w-1/2 py-2 rounded-xl border text-xs font-bold text-slate-700 hover:bg-slate-50"
-              >
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <Button variant="ghost" size="sm" onClick={() => setShowLinkedInModal(false)}>
                 Cancel
-              </button>
-              <button
-                onClick={handleSaveLinkedIn}
-                className="w-1/2 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800"
-              >
-                Save Link
-              </button>
+              </Button>
+              <Button size="sm" onClick={() => handleSyncLinkedIn()} isLoading={liLoading}>
+                Verify & Save
+              </Button>
             </div>
           </div>
         </div>

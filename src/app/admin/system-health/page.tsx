@@ -91,6 +91,30 @@ export default function SystemHealthPage() {
         latencyMs: 120,
         details: "Role-scoped tool execution active. Sub-agents constrained to parent permissions.",
         lastChecked: now
+      },
+      {
+        name: "GitHub Developer Integration",
+        category: "Storage",
+        status: "CONNECTED",
+        latencyMs: 65,
+        details: "Read-only REST API & MCP tools active. Repository import and language analytics verified.",
+        lastChecked: now
+      },
+      {
+        name: "LeetCode Integration Engine",
+        category: "Storage",
+        status: "CONNECTED",
+        latencyMs: 78,
+        details: "Public GraphQL problem metrics and contest rating ingestion active.",
+        lastChecked: now
+      },
+      {
+        name: "LinkedIn Profile Verification",
+        category: "Auth",
+        status: "CONNECTED",
+        latencyMs: 40,
+        details: "Vanity URL structure validation and verified credential association active.",
+        lastChecked: now
       }
     ];
 
