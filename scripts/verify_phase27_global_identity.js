@@ -178,6 +178,31 @@ if (fs.existsSync(dashboardPath)) {
   check(false, 'dashboard/page.tsx exists');
 }
 
+// 8. Check Canonical Identity Database Migration
+console.log('\n8. Checking Canonical Identity Database Migration:');
+const migrationPath = path.join(ROOT, 'supabase', 'migrations', '20260914000000_phase27_canonical_identity_schema.sql');
+if (fs.existsSync(migrationPath)) {
+  const content = fs.readFileSync(migrationPath, 'utf8');
+  check(content.includes('display_name'), 'Migration adds display_name column');
+  check(content.includes('first_name') && content.includes('last_name'), 'Migration adds first_name and last_name columns');
+  check(content.includes('ENABLE ROW LEVEL SECURITY'), 'Migration enables RLS on profiles');
+  check(content.includes('auth.uid() = user_id'), 'Migration enforces auth.uid() = user_id policy');
+  check(content.includes('connected_accounts'), 'Migration creates connected_accounts table with user_id index');
+} else {
+  check(false, '20260914000000_phase27_canonical_identity_schema.sql exists');
+}
+
+// 9. Check Supabase Auth Primacy
+console.log('\n9. Checking Supabase Auth Primacy:');
+const loginPath = path.join(ROOT, 'src', 'app', 'auth', 'login', 'page.tsx');
+if (fs.existsSync(loginPath)) {
+  const content = fs.readFileSync(loginPath, 'utf8');
+  check(content.includes('supabase.auth.signInWithOAuth'), 'Login page wires Supabase OAuth for Google sign-in');
+  check(content.includes('loginWithEmail'), 'Login page authenticates via Supabase loginWithEmail');
+} else {
+  check(false, 'login/page.tsx exists');
+}
+
 // Summary
 console.log('\n====================================================');
 console.log(`TOTAL PASSES: ${passes}`);

@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import EdworldLogo from "@/components/ui/EdworldLogo";
 import Button from "@/components/ui/Button";
+import { supabase } from "@/lib/supabase";
 
 type TrackType = "junior" | "student" | "pro";
 
@@ -150,9 +151,14 @@ function LoginForm() {
     setLoading(true);
     setError(null);
     try {
-      // In production Firebase / Supabase SSO initiates Google OAuth
-      // For local session resilience, fallback smoothly
-      window.location.href = `/auth/login?track=${selectedTrack}`;
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${origin}/auth/login?stage=${selectedTrack}`,
+        },
+      });
+      if (error) throw error;
     } catch (err: any) {
       setError(err?.message || "Google sign-in temporarily unavailable.");
     } finally {
