@@ -52,14 +52,14 @@ export default function DirectConversationPage() {
 
     // Identify participants
     const parts = conversationId.split("_");
-    const otherUserId = parts.find((p) => p !== user.uid) || "user-alex-18";
+    const otherUserId = parts.find((p) => p !== user.uid) || "peer-user";
 
     const conv: Conversation = {
       id: conversationId,
       participantIds: [user.uid, otherUserId],
       participantDetails: {
         [user.uid]: { name: user.name || "Me", username: user.name?.toLowerCase().replace(" ", "_") },
-        [otherUserId]: { name: "Alex Rivera", username: "alexrivera", headline: "Full-Stack Software Engineer" },
+        [otherUserId]: { name: "Network Colleague", username: "peer_user", headline: "Verified Developer" },
       },
       lastMessageText: "Looking forward to discussing high-throughput distributed engines.",
       lastMessageAt: new Date().toISOString(),
@@ -78,7 +78,7 @@ export default function DirectConversationPage() {
         allStoredMessages = JSON.parse(cached);
       } catch (e) {}
     } else {
-      // Seed 60 messages to demonstrate real pagination
+      // Seed initial messages to demonstrate pagination
       const seeded: DirectMessage[] = [];
       const baseTime = Date.now() - 60 * 60 * 1000;
       for (let i = 1; i <= 60; i++) {
@@ -87,7 +87,7 @@ export default function DirectConversationPage() {
           id: `seed-msg-${i}`,
           conversationId,
           senderId: isSender ? user.uid : otherUserId,
-          senderName: isSender ? (user.name || "Me") : "Alex Rivera",
+          senderName: isSender ? (user.name || "Me") : "Network Colleague",
           text: `Message #${i}: Discussing optimistic concurrency control and distributed caching architectures.`,
           createdAt: new Date(baseTime + i * 60 * 1000).toISOString(),
         });

@@ -57,7 +57,38 @@ export default function ProjectStudioPage() {
     }
 
     const loadProjects = async () => {
-      // 1. Check user-scoped cache
+      // 1. Query Supabase projects table for user
+      try {
+        const { data: dbProjects } = await supabase
+          .from("projects")
+          .select("*")
+          .eq("user_id", user.uid);
+
+        if (dbProjects && dbProjects.length > 0) {
+          const mapped: ProjectItem[] = dbProjects.map((p) => ({
+            id: p.id,
+            userId: p.user_id,
+            title: p.title || "Untitled Project",
+            description: p.description || "",
+            skills: p.skills || [],
+            githubUrl: p.github_url || "",
+            liveUrl: p.live_url || "",
+            images: p.images || [],
+            isVerified: Boolean(p.is_verified),
+            source: p.source || "manual",
+            isPublic: Boolean(p.is_public),
+            createdAt: p.created_at,
+            updatedAt: p.updated_at,
+          }));
+          setProjects(mapped);
+          localStorage.setItem(`edworld_${user.uid}_projects`, JSON.stringify(mapped));
+          return;
+        }
+      } catch (err) {
+        console.warn("[Supabase Projects Query Note]:", err);
+      }
+
+      // 2. Check user-scoped cache
       const cached = localStorage.getItem(`edworld_${user.uid}_projects`);
       if (cached) {
         try {
@@ -104,6 +135,26 @@ export default function ProjectStudioPage() {
       };
     }
 
+    // Persist to Supabase
+    try {
+      await supabase.from("projects").upsert({
+        id: updatedProject.id,
+        user_id: user.uid,
+        title: updatedProject.title,
+        description: updatedProject.description,
+        skills: updatedProject.skills,
+        github_url: updatedProject.githubUrl,
+        live_url: updatedProject.liveUrl,
+        images: updatedProject.images,
+        is_verified: updatedProject.isVerified,
+        source: updatedProject.source,
+        is_public: updatedProject.isPublic,
+        updated_at: now,
+      });
+    } catch (e) {
+      console.warn("[Supabase Project Save Note]:", e);
+    }
+
     let updatedList: ProjectItem[];
     if (editingProject) {
       updatedList = projects.map((p) => (p.id === updatedProject.id ? updatedProject : p));
@@ -145,6 +196,23 @@ export default function ProjectStudioPage() {
       updatedAt: new Date().toISOString(),
     };
 
+    try {
+      await supabase.from("projects").upsert({
+        id: importedProject.id,
+        user_id: user.uid,
+        title: importedProject.title,
+        description: importedProject.description,
+        skills: importedProject.skills,
+        github_url: importedProject.githubUrl,
+        live_url: importedProject.liveUrl,
+        images: importedProject.images,
+        is_verified: true,
+        source: "github",
+        is_public: importedProject.isPublic,
+        updated_at: importedProject.updatedAt,
+      });
+    } catch (e) {}
+
     const updated = [importedProject, ...projects.filter((p) => p.id !== importedProject.id)];
     saveProjects(updated);
   };
@@ -152,12 +220,18 @@ export default function ProjectStudioPage() {
   const handleTogglePrivacy = async (project: ProjectItem) => {
     if (!user) return;
     const updated = { ...project, isPublic: !project.isPublic, updatedAt: new Date().toISOString() };
+    try {
+      await supabase.from("projects").update({ is_public: updated.isPublic }).eq("id", project.id);
+    } catch (e) {}
     const updatedList = projects.map((p) => (p.id === project.id ? updated : p));
     saveProjects(updatedList);
   };
 
   const confirmDelete = async () => {
     if (!user || !deleteTargetId) return;
+    try {
+      await supabase.from("projects").delete().eq("id", deleteTargetId);
+    } catch (e) {}
     const updated = projects.filter((p) => p.id !== deleteTargetId);
     saveProjects(updated);
     setDeleteTargetId(null);

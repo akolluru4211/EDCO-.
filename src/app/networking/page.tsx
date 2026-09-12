@@ -84,21 +84,8 @@ export default function NetworkingHubPage() {
         setConnections(JSON.parse(cached));
       } catch (e) {}
     } else {
-      // Seed an initial connection
-      const initial: Connection[] = [
-        {
-          id: `${user.uid}_user-alex-18`,
-          requesterId: user.uid,
-          requesterName: user.name || "Candidate",
-          recipientId: "user-alex-18",
-          recipientName: "Alex Rivera",
-          recipientHeadline: "Full-Stack Software Engineer",
-          status: "accepted",
-          requestType: "connection",
-          createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-      ];
+      // Initialize active user connections
+      const initial: Connection[] = [];
       setConnections(initial);
       localStorage.setItem(`edworld_${user.uid}_connections`, JSON.stringify(initial));
     }

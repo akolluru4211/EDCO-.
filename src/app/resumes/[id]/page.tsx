@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 
 import { getResumeProfileDefaults } from "@/lib/services/user-profile";
+import { supabase } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
@@ -131,7 +132,21 @@ export default function ResumeStudioPage() {
       }
       localStorage.setItem(`edworld_${user.uid}_resumes`, JSON.stringify(list));
 
-      // 2. Persist to Firestore
+      // 2. Persist to Supabase Relational Database
+      try {
+        await supabase.from("resumes").upsert({
+          id: resume.id,
+          user_id: user.uid,
+          title: updated.title,
+          template_id: updated.templateId,
+          content: updated.content,
+          updated_at: new Date().toISOString(),
+        });
+      } catch (e) {
+        console.warn("[Supabase Resume Save Note]:", e);
+      }
+
+      // 3. Persist to Firestore
       if (db) {
         try {
           await setDoc(doc(db, "resumes", resume.id), updated, { merge: true });
