@@ -43,6 +43,7 @@ import SpotlightCard from "@/components/ui/SpotlightCard";
 import BorderBeam from "@/components/ui/BorderBeam";
 import StreakFlame from "@/components/ui/StreakFlame";
 import ShimmerBadge from "@/components/ui/ShimmerBadge";
+import PerformanceIntelligenceWidget from "@/components/dashboard/PerformanceIntelligenceWidget";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -412,6 +413,12 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Phase 34: Central Performance Intelligence Widget */}
+        <PerformanceIntelligenceWidget
+          userName={user?.name || profile?.name || "Student"}
+          track={careerStage === "college" ? "student" : "career"}
+        />
+
         {/* ========================================================================= */}
         {/* MAIN DASHBOARD 2-COLUMN GRID (Matching Layout from Screenshot)            */}
         {/* ========================================================================= */}
@@ -457,7 +464,7 @@ export default function DashboardPage() {
                     <div className="space-y-1 pt-1">
                       <span className="text-xs font-bold text-[#8E95A5]">
                         {latestSession 
-                          ? `Evaluation Score: ${latestSession.score || 80}% Complete`
+                          ? `Evaluation Score: ${latestSession.score ?? 0}% Complete`
                           : "0% of 100% Completed • Ready to begin"
                         }
                       </span>
@@ -465,7 +472,7 @@ export default function DashboardPage() {
                       <div className="w-full sm:w-64 h-2 bg-[#F0F2F6] rounded-full overflow-hidden">
                         <div 
                           className="h-full bg-gradient-to-r from-[#7B57FF] to-[#00D2B4] rounded-full transition-all duration-700 ease-out" 
-                          style={{ width: `${latestSession ? (latestSession.score || 80) : 0}%` }}
+                          style={{ width: `${latestSession ? (latestSession.score ?? 0) : 0}%` }}
                         />
                       </div>
                     </div>
