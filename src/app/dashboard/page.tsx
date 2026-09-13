@@ -76,7 +76,11 @@ export default function DashboardPage() {
     points: number;
     current_streak: number;
     longest_streak: number;
-  }>({ points: 248, current_streak: 5, longest_streak: 12 });
+  }>({ points: 0, current_streak: 0, longest_streak: 0 });
+
+  const [completedDrillsCount, setCompletedDrillsCount] = useState<number>(0);
+  const [earnedBadgesCount, setEarnedBadgesCount] = useState<number>(0);
+  const [latestSession, setLatestSession] = useState<any>(null);
 
   // Kanban Application Tracker
   const [kanbanApps, setKanbanApps] = useState<{
@@ -115,7 +119,7 @@ export default function DashboardPage() {
 
     const loadData = async () => {
       try {
-        // Load User Stats
+        // 1. Load User Stats
         const { data: sData } = await supabase
           .from("user_stats")
           .select("*")
@@ -123,13 +127,53 @@ export default function DashboardPage() {
           .maybeSingle();
         if (sData) {
           setUserStats({
-            points: sData.points || 248,
-            current_streak: sData.current_streak || 5,
-            longest_streak: sData.longest_streak || 12,
+            points: sData.points || 0,
+            current_streak: sData.current_streak || 0,
+            longest_streak: sData.longest_streak || 0,
           });
         }
 
-        // 1. College stage data
+        // 2. Load Real Drills & Badges Count
+        const [sessionRes, badgeRes] = await Promise.all([
+          supabase.from("interview_sessions").select("id, category, score, created_at").eq("user_id", user.uid).order("created_at", { ascending: false }),
+          supabase.from("user_badges").select("id", { count: "exact", head: true }).eq("user_id", user.uid)
+        ]);
+
+        if (sessionRes.data && sessionRes.data.length > 0) {
+          setCompletedDrillsCount(sessionRes.data.length);
+          setLatestSession(sessionRes.data[0]);
+        }
+        if (badgeRes.count !== null && badgeRes.count !== undefined) {
+          setEarnedBadgesCount(badgeRes.count);
+        }
+
+        // 3. Load Real Kanban Applications
+        const { data: appsData } = await supabase
+          .from("job_applications")
+          .select("*")
+          .eq("user_id", user.uid);
+
+        if (appsData && appsData.length > 0) {
+          const grouped = { applied: [] as any[], interviewing: [] as any[], offer: [] as any[], rejected: [] as any[] };
+          appsData.forEach((a: any) => {
+            const stage = (a.stage || a.status || "applied").toLowerCase();
+            const item = {
+              id: a.id,
+              role: a.role || a.job_title || "Software Engineer",
+              company: a.company || "Hiring Partner",
+              date: new Date(a.applied_at || a.created_at || Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+            };
+            if (stage.includes("interview") || stage.includes("screen")) grouped.interviewing.push(item);
+            else if (stage.includes("offer")) grouped.offer.push(item);
+            else if (stage.includes("reject")) grouped.rejected.push(item);
+            else grouped.applied.push(item);
+          });
+          setKanbanApps(grouped);
+        } else {
+          setKanbanApps({ applied: [], interviewing: [], offer: [], rejected: [] });
+        }
+
+        // 4. College stage reference data
         const { data: drives } = await supabase.from("placement_drives").select("*");
         if (drives && drives.length > 0) setPlacementDrives(drives);
         else {
@@ -176,7 +220,7 @@ export default function DashboardPage() {
           ]);
         }
 
-        // 2. Working Prof data
+        // 5. Working Prof reference data
         const { data: salaries } = await supabase.from("salary_reference_data").select("*");
         if (salaries && salaries.length > 0) setSalaryData(salaries);
         else {
@@ -186,21 +230,6 @@ export default function DashboardPage() {
             { id: "s3", role: "Product Manager (Technical)", city: "Remote / Pan-India", experience_bracket: "5-8 Yrs", p25_inr: 2600000, p50_median_inr: 3500000, p75_inr: 4800000, data_source: "Aggregated Tech Market Benchmark" }
           ]);
         }
-
-        // Kanban Applications
-        setKanbanApps({
-          applied: [
-            { id: "app-1", role: "Software Engineer", company: "Stripe", date: "2 days ago" },
-            { id: "app-2", role: "Frontend Developer", company: "Vercel", date: "4 days ago" }
-          ],
-          interviewing: [
-            { id: "app-3", role: "Full Stack Engineer", company: "Linear", date: "Round 2: System Design" }
-          ],
-          offer: [
-            { id: "app-4", role: "Product Engineer", company: "Supabase", date: "Offer Received" }
-          ],
-          rejected: []
-        });
 
       } catch (err) {
         console.warn("Dashboard data load note:", err);
@@ -323,7 +352,11 @@ export default function DashboardPage() {
           {/* Greeting Header */}
           <UserGreeting
             context="dashboard"
-            subtitle="You're 37% closer to your career goal. ⚡"
+            subtitle={
+              userStats.points > 0 || userStats.current_streak > 0
+                ? `You've earned ${userStats.points} XP with an active ${userStats.current_streak}-day learning streak. ⚡`
+                : "Welcome to your career acceleration workspace. Start an interview drill, coding problem, or ATS resume."
+            }
           />
 
           {/* Top 4 Metric Capsule Cards */}
@@ -345,19 +378,19 @@ export default function DashboardPage() {
                 <GraduationCap className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-lg font-black text-[#181920] leading-none">17</div>
-                <span className="text-[11px] font-bold text-[#8E95A5]">Courses</span>
+                <div className="text-lg font-black text-[#181920] leading-none">{completedDrillsCount}</div>
+                <span className="text-[11px] font-bold text-[#8E95A5]">Drills Completed</span>
               </div>
             </div>
 
-            {/* 3. Certificates / Resumes Pill */}
+            {/* 3. Certificates / Badges Pill */}
             <div className="pill-stat">
               <div className="w-10 h-10 rounded-2xl bg-[#FFEFEA] text-[#FF7A50] flex items-center justify-center shadow-inner">
                 <Award className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-lg font-black text-[#181920] leading-none">120</div>
-                <span className="text-[11px] font-bold text-[#8E95A5]">Certificates</span>
+                <div className="text-lg font-black text-[#181920] leading-none">{earnedBadgesCount}</div>
+                <span className="text-[11px] font-bold text-[#8E95A5]">Badges Earned</span>
               </div>
             </div>
 
@@ -368,7 +401,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <div className="text-lg font-black text-[#181920] leading-none">{userStats.current_streak}d</div>
-                <span className="text-[11px] font-bold text-[#8E95A5]">Challenges</span>
+                <span className="text-[11px] font-bold text-[#8E95A5]">Active Streak</span>
               </div>
             </div>
           </div>
@@ -441,16 +474,27 @@ export default function DashboardPage() {
                   <div className="space-y-1.5 sm:space-y-2 flex-1">
                     <div className="flex items-center gap-1.5 text-xs font-bold text-[#7B57FF]">
                       <Layers className="w-3.5 h-3.5" />
-                      <span>Course</span>
+                      <span>{latestSession ? "Latest Interview Session" : "Starter Module"}</span>
                     </div>
                     <h3 className="text-lg sm:text-2xl font-black text-[#181920] tracking-tight leading-tight">
-                      Design Thinking &amp; STAR Architecture I
+                      {latestSession 
+                        ? `${(latestSession.category || "General").toUpperCase()} Mock Interview Evaluation`
+                        : "Design Thinking & STAR Architecture I"
+                      }
                     </h3>
                     <div className="space-y-1 pt-1">
-                      <span className="text-xs font-bold text-[#8E95A5]">46% of 100% Completed</span>
+                      <span className="text-xs font-bold text-[#8E95A5]">
+                        {latestSession 
+                          ? `Evaluation Score: ${latestSession.score || 80}% Complete`
+                          : "0% of 100% Completed • Ready to begin"
+                        }
+                      </span>
                       {/* Segmented Progress Bar */}
                       <div className="w-full sm:w-64 h-2 bg-[#F0F2F6] rounded-full overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-[#7B57FF] to-[#00D2B4] rounded-full w-[46%]" />
+                        <div 
+                          className="h-full bg-gradient-to-r from-[#7B57FF] to-[#00D2B4] rounded-full transition-all duration-500" 
+                          style={{ width: `${latestSession ? (latestSession.score || 80) : 0}%` }}
+                        />
                       </div>
                     </div>
                   </div>
@@ -462,7 +506,7 @@ export default function DashboardPage() {
                     href="/interviews"
                     className="flex-1 md:flex-initial px-5 py-3 rounded-2xl bg-[#13141B] hover:bg-[#252632] text-white text-xs font-bold shadow-md hover:scale-105 transition-all text-center"
                   >
-                    Resume learning
+                    {latestSession ? "Practice Next Drill" : "Start learning"}
                   </Link>
                   <div className="flex items-center gap-1.5">
                     <button 
@@ -607,29 +651,36 @@ export default function DashboardPage() {
             {/* 1. Floating Streak & Domain XP Card (Matching Screenshot) */}
             <div className="floating-streak-card p-6 sm:p-7 space-y-6">
               
-              {/* Header: You're on a 5-day streak */}
+              {/* Header: Dynamic streak based on real activity */}
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-xl font-black text-[#181920] leading-tight">
-                    You&apos;re on a<br />5-day streak
+                    {userStats.current_streak > 0 ? (
+                      <>You&apos;re on a<br />{userStats.current_streak}-day streak</>
+                    ) : (
+                      <>Start your<br />learning streak</>
+                    )}
                   </h3>
                 </div>
                 <div className="flex items-center gap-1 px-3 py-1.5 rounded-2xl bg-[#FFF6DC] text-[#FFB800] border border-[#FFB800]/30 shadow-sm">
                   <Flame className="w-5 h-5 fill-[#FFB800]" />
-                  <span className="text-lg font-black text-[#181920]">31</span>
+                  <span className="text-lg font-black text-[#181920]">{userStats.points}</span>
                 </div>
               </div>
 
-              {/* Day Pills: S M ⚡ ⚡ ⚡ ⚡ ⚡ S */}
+              {/* Day Pills: S M T W T F S */}
               <div className="flex items-center justify-between gap-1">
                 {["S", "M", "T", "W", "T", "F", "S"].map((day, idx) => {
-                  const isCompleted = idx >= 2 && idx <= 6; // Active streak on T, W, T, F, S
+                  const todayDayIndex = new Date().getDay();
+                  const isCompleted = userStats.current_streak > 0 && idx === todayDayIndex;
                   return (
                     <div
                       key={idx}
                       className={`w-9 h-9 rounded-2xl flex items-center justify-center text-xs font-black transition-transform ${
                         isCompleted
                           ? "bg-[#D7FC51] text-[#13141B] shadow-sm transform hover:scale-110"
+                          : idx === todayDayIndex
+                          ? "bg-white text-[#181920] border-2 border-[#13141B]"
                           : "bg-[#F4F6FB] text-[#8E95A5] border border-[#E8ECF2]"
                       }`}
                     >
@@ -639,22 +690,22 @@ export default function DashboardPage() {
                 })}
               </div>
 
-              {/* Domain XP Progress Bars (Cyan Striped) */}
+              {/* Domain XP Progress Bars */}
               <div className="space-y-4 pt-2 border-t border-[#F0F2F6]">
                 {[
-                  { domain: "Web Design & Architecture", xp: "4,712 XP", percent: 85 },
-                  { domain: "Color Psychology & STAR", xp: "4,328 XP", percent: 78 },
-                  { domain: "UX Writing & ATS Match", xp: "2,810 XP", percent: 55 },
-                  { domain: "Design Thinking II", xp: "1,561 XP", percent: 35 },
+                  { domain: "Technical Problem Solving", xp: `${Math.round(userStats.points * 0.4)} XP`, percent: Math.min(100, Math.round(userStats.points * 0.4 / 10)) },
+                  { domain: "STAR Behavioral Mastery", xp: `${Math.round(userStats.points * 0.3)} XP`, percent: Math.min(100, Math.round(userStats.points * 0.3 / 10)) },
+                  { domain: "ATS Resume Tuning", xp: `${Math.round(userStats.points * 0.2)} XP`, percent: Math.min(100, Math.round(userStats.points * 0.2 / 10)) },
+                  { domain: "System Architecture", xp: `${Math.round(userStats.points * 0.1)} XP`, percent: Math.min(100, Math.round(userStats.points * 0.1 / 10)) },
                 ].map((item, idx) => (
                   <div key={idx} className="space-y-1.5">
                     <div className="flex items-center justify-between text-xs font-bold">
                       <span className="text-[#181920]">{item.domain}</span>
                       <span className="text-[#8E95A5] font-mono text-[11px]">{item.xp}</span>
                     </div>
-                    <div className="progress-cyan-striped h-2.5 w-full">
+                    <div className="progress-cyan-striped h-2.5 w-full bg-[#F0F2F6] rounded-full overflow-hidden">
                       <div 
-                        className="progress-cyan-fill" 
+                        className="progress-cyan-fill h-full bg-[#00D2B4] rounded-full" 
                         style={{ width: `${item.percent}%` }}
                       />
                     </div>
@@ -668,7 +719,7 @@ export default function DashboardPage() {
                   href="/profile"
                   className="text-xs font-bold text-[#181920] hover:text-[#7B57FF] flex items-center gap-1 transition-colors"
                 >
-                  <span>View more details</span>
+                  <span>View profile progress</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
@@ -834,12 +885,18 @@ export default function DashboardPage() {
                     <span>Applied</span>
                     <span className="text-[10px] font-mono text-[#8E95A5]">{kanbanApps.applied.length}</span>
                   </div>
-                  {kanbanApps.applied.map((a) => (
-                    <div key={a.id} className="p-3 rounded-xl bg-white border border-[#E8ECF2] shadow-sm text-xs font-bold text-[#181920] space-y-0.5">
-                      <div>{a.role}</div>
-                      <div className="text-[10px] text-[#767E94] font-normal">{a.company} • {a.date}</div>
+                  {kanbanApps.applied.length > 0 ? (
+                    kanbanApps.applied.map((a) => (
+                      <div key={a.id} className="p-3 rounded-xl bg-white border border-[#E8ECF2] shadow-sm text-xs font-bold text-[#181920] space-y-0.5">
+                        <div>{a.role}</div>
+                        <div className="text-[10px] text-[#767E94] font-normal">{a.company} • {a.date}</div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-[11px] text-[#8E95A5] italic p-2 bg-white/60 rounded-xl border border-dashed border-[#E8ECF2]">
+                      No active applications
                     </div>
-                  ))}
+                  )}
                 </div>
 
                 {/* Interviewing */}
@@ -848,12 +905,18 @@ export default function DashboardPage() {
                     <span>Interviewing</span>
                     <span className="text-[10px] font-mono text-[#00D2B4]">{kanbanApps.interviewing.length}</span>
                   </div>
-                  {kanbanApps.interviewing.map((a) => (
-                    <div key={a.id} className="p-3 rounded-xl bg-white border border-[#00D2B4]/30 shadow-sm text-xs font-bold text-[#181920] space-y-0.5">
-                      <div>{a.role}</div>
-                      <div className="text-[10px] text-[#00D2B4] font-normal">{a.company} • {a.date}</div>
+                  {kanbanApps.interviewing.length > 0 ? (
+                    kanbanApps.interviewing.map((a) => (
+                      <div key={a.id} className="p-3 rounded-xl bg-white border border-[#00D2B4]/30 shadow-sm text-xs font-bold text-[#181920] space-y-0.5">
+                        <div>{a.role}</div>
+                        <div className="text-[10px] text-[#00D2B4] font-normal">{a.company} • {a.date}</div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-[11px] text-[#8E95A5] italic p-2 bg-white/60 rounded-xl border border-dashed border-[#00D2B4]/20">
+                      No interviews scheduled
                     </div>
-                  ))}
+                  )}
                 </div>
 
                 {/* Offer */}
@@ -862,21 +925,38 @@ export default function DashboardPage() {
                     <span>Offer</span>
                     <span className="text-[10px] font-mono text-[#13141B]">{kanbanApps.offer.length}</span>
                   </div>
-                  {kanbanApps.offer.map((a) => (
-                    <div key={a.id} className="p-3 rounded-xl bg-white border border-[#D7FC51]/50 shadow-sm text-xs font-bold text-[#181920] space-y-0.5">
-                      <div>{a.role}</div>
-                      <div className="text-[10px] text-[#13141B] font-bold">{a.company} • {a.date}</div>
+                  {kanbanApps.offer.length > 0 ? (
+                    kanbanApps.offer.map((a) => (
+                      <div key={a.id} className="p-3 rounded-xl bg-white border border-[#D7FC51]/50 shadow-sm text-xs font-bold text-[#181920] space-y-0.5">
+                        <div>{a.role}</div>
+                        <div className="text-[10px] text-[#13141B] font-bold">{a.company} • {a.date}</div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-[11px] text-[#8E95A5] italic p-2 bg-white/60 rounded-xl border border-dashed border-[#D7FC51]/40">
+                      No offers received yet
                     </div>
-                  ))}
+                  )}
                 </div>
 
                 {/* Archived */}
                 <div className="p-4 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] space-y-2">
                   <div className="text-xs font-black text-[#8E95A5] flex items-center justify-between">
                     <span>Archived</span>
-                    <span className="text-[10px] font-mono text-[#8E95A5]">0</span>
+                    <span className="text-[10px] font-mono text-[#8E95A5]">{kanbanApps.rejected?.length || 0}</span>
                   </div>
-                  <div className="text-[11px] text-[#8E95A5] italic p-2">No archived items</div>
+                  {kanbanApps.rejected && kanbanApps.rejected.length > 0 ? (
+                    kanbanApps.rejected.map((a) => (
+                      <div key={a.id} className="p-3 rounded-xl bg-white border border-[#E8ECF2] shadow-sm text-xs font-bold text-[#181920] space-y-0.5">
+                        <div>{a.role}</div>
+                        <div className="text-[10px] text-[#767E94] font-normal">{a.company} • {a.date}</div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-[11px] text-[#8E95A5] italic p-2 bg-white/60 rounded-xl border border-dashed border-[#E8ECF2]">
+                      No archived items
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

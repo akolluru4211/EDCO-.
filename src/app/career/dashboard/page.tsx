@@ -33,6 +33,7 @@ import {
 import Button from "@/components/ui/Button";
 import ClaudeAnalysisModal from "@/components/ai/ClaudeAnalysisModal";
 import { ClaudeAnalysisType } from "@/app/api/claude/analyze/route";
+import { supabase } from "@/lib/supabase";
 
 export default function CareerDashboardPage() {
   const { user, profile } = useAuth();
@@ -90,11 +91,11 @@ export default function CareerDashboardPage() {
   ]);
 
   // 2. Hackathons
-  const hackathons = [
+  const [hackathons, setHackathons] = useState<{ id: string; title: string; host: string; prize: string; deadline: string; teamStatus: string; tags: string[] }[]>([
     { id: "hk-1", title: "Smart City AI & Urban Tech Hackathon", host: "GovTech India", prize: "₹5,00,000", deadline: "Oct 18, 2026", teamStatus: "2/4 Members Needed", tags: ["Python", "FastAPI", "IoT"] },
     { id: "hk-2", title: "Web3 & Zero-Knowledge Devcon Sprint", host: "Ethereum Global Track", prize: "$10,000 USD", deadline: "Nov 05, 2026", teamStatus: "1/3 Member Needed", tags: ["Solidity", "Rust", "Next.js"] },
     { id: "hk-3", title: "HealthTech Open Diagnostic Challenge", host: "BioInformatics Hub", prize: "₹3,50,000", deadline: "Oct 30, 2026", teamStatus: "Looking for UI Lead", tags: ["Computer Vision", "PyTorch"] }
-  ];
+  ]);
 
   // 3. Peer Resume Review
   const [peerReviews, setPeerReviews] = useState<any[]>([
@@ -103,31 +104,75 @@ export default function CareerDashboardPage() {
   ]);
 
   // 4. Skill Micro-Certifications
-  const microCerts = [
+  const [microCerts, setMicroCerts] = useState<any[]>([
     { id: "mc-1", name: "High-Throughput API Architecture", authority: "Edworld Project Studio", badge: "Level 2 Certified", date: "Aug 2026", verifyId: "ED-API-9942" },
     { id: "mc-2", name: "Fullstack React & Next.js Scalability", authority: "Edworld Project Studio", badge: "Level 2 Certified", date: "Sep 2026", verifyId: "ED-WEB-8114" }
-  ];
+  ]);
 
   // ==========================================
   // WORKING PROFESSIONAL INTERACTIVE STATES
   // ==========================================
   // 1. Career Switch Gap Analysis State
-  const [currentRole, setCurrentRole] = useState("QA / SDET");
-  const [targetRole, setTargetRole] = useState("Backend Systems Engineer");
+  const [currentRole, setCurrentRole] = useState((profile as any)?.title || "Full Stack Developer");
+  const [targetRole, setTargetRole] = useState("Senior Backend Systems Architect");
   const [gapAnalysis, setGapAnalysis] = useState<any>({
-    matchScore: 74,
-    transferableSkills: ["Python Automation", "CI/CD Pipelines", "Test-Driven Development", "API Load Testing"],
-    missingSkills: ["Distributed Event Streaming (Kafka/RabbitMQ)", "Postgres Index Optimization & Query Plans", "System Design Trade-offs (CAP Theorem)"],
-    suggestedBridgeCourses: ["High-Scale Microservices Track", "Database Internals & Partitioning Sprint"]
+    matchScore: 80,
+    transferableSkills: ["REST APIs", "TypeScript/Node.js", "Relational Database Design", "CI/CD Pipelines"],
+    missingSkills: ["Distributed Event Streaming (Kafka)", "High-Throughput Caching (Redis)", "CAP Theorem & Partition Tolerance"],
+    suggestedBridgeCourses: ["High-Scale Microservices Track", "System Design & Distributed State Drill"]
   });
 
   // 2. Job Search Pipeline Kanban
-  const [kanbanApps, setKanbanApps] = useState<any[]>([
-    { id: "k-1", company: "Stripe", role: "Staff Engineer", stage: "System Design", date: "Sep 02" },
-    { id: "k-2", company: "Uber", role: "Senior Backend Eng", stage: "Tech Screen", date: "Sep 04" },
-    { id: "k-3", company: "Zomato", role: "Lead Architect", stage: "Offer", date: "Sep 06" },
-    { id: "k-4", company: "Coinbase", role: "Backend Engineer", stage: "Applied", date: "Sep 07" }
-  ]);
+  const [kanbanApps, setKanbanApps] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function loadCareerData() {
+      if (!user) return;
+      try {
+        // Load Real User Job Applications
+        const { data: appsData } = await supabase
+          .from("job_applications")
+          .select("*")
+          .eq("user_id", user.uid);
+
+        if (appsData && appsData.length > 0) {
+          const list = appsData.map((a: any) => ({
+            id: a.id,
+            company: a.company || "Hiring Partner",
+            role: a.role || a.job_title || "Software Engineer",
+            stage: a.stage || (a.status === "interviewing" ? "Tech Screen" : a.status === "offer" ? "Offer" : "Applied"),
+            date: new Date(a.applied_at || a.created_at || Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+          }));
+          setKanbanApps(list);
+        } else {
+          setKanbanApps([]);
+        }
+
+        // Load Real Badges / Micro Certs
+        const { data: bData } = await supabase
+          .from("user_badges")
+          .select("badges(name, description, code), earned_at")
+          .eq("user_id", user.uid);
+
+        if (bData && bData.length > 0) {
+          const list = bData.map((b: any, idx: number) => ({
+            id: `mc-${idx}`,
+            name: b.badges?.name || "Verified Skill Badge",
+            authority: "Edworld Project Studio",
+            badge: "Level 2 Certified",
+            date: new Date(b.earned_at || Date.now()).toLocaleDateString("en-US", { month: "short", year: "numeric" }),
+            verifyId: `ED-VERIFY-${b.badges?.code || "CERT"}`
+          }));
+          setMicroCerts(list);
+        } else {
+          setMicroCerts([]);
+        }
+      } catch (e) {
+        console.warn("Career dashboard data load note:", e);
+      }
+    }
+    loadCareerData();
+  }, [user]);
 
   // 3. Referral Request Generator
   const [refCompany, setRefCompany] = useState("Google");
@@ -584,7 +629,7 @@ Thanks so much for your time!`);
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-black text-[#13141B]">Interactive Application Kanban Tracker</h3>
-                  <span className="text-xs font-bold text-[#7B57FF]">4 Active Opportunities</span>
+                  <span className="text-xs font-bold text-[#7B57FF]">{kanbanApps.length} Active Opportunities</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {["Applied", "Tech Screen", "System Design", "Offer"].map(stage => {
@@ -596,13 +641,19 @@ Thanks so much for your time!`);
                           <span className="text-xs font-mono font-bold bg-[#F4F6FB] px-2 py-0.5 rounded-full">{stageApps.length}</span>
                         </div>
                         <div className="space-y-3">
-                          {stageApps.map(app => (
-                            <div key={app.id} className="p-3 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] space-y-1">
-                              <h5 className="font-bold text-xs text-[#13141B]">{app.company}</h5>
-                              <p className="text-[11px] text-[#5E6573]">{app.role}</p>
-                              <span className="text-[9px] font-mono text-[#8F9CAE]">Updated {app.date}</span>
+                          {stageApps.length > 0 ? (
+                            stageApps.map(app => (
+                              <div key={app.id} className="p-3 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] space-y-1">
+                                <h5 className="font-bold text-xs text-[#13141B]">{app.company}</h5>
+                                <p className="text-[11px] text-[#5E6573]">{app.role}</p>
+                                <span className="text-[9px] font-mono text-[#8F9CAE]">Updated {app.date}</span>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-[11px] text-[#8E95A5] italic p-2 bg-[#F4F6FB] rounded-xl border border-dashed border-[#E8ECF2]">
+                              No applications in {stage}
                             </div>
-                          ))}
+                          )}
                         </div>
                       </div>
                     );

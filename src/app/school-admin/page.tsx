@@ -144,7 +144,7 @@ export default function SchoolAdminPage() {
                 <Building2 className="w-3.5 h-3.5 text-emerald-600" />
                 <span>Institutional Administration</span>
               </span>
-              <span className="text-xs text-slate-400">&bull; Aggregated Metrics &amp; Safety</span>
+              <span className="text-xs text-slate-400">&bull; Aggregated Metrics Only &amp; Safety</span>
             </div>
             <h1 className="text-2xl sm:text-4xl font-black font-display text-slate-900 mt-1">School Administrator Portal</h1>
             <p className="text-xs sm:text-sm text-slate-600 max-w-xl">

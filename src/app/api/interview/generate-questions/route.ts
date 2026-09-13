@@ -82,18 +82,19 @@ export async function POST(req: NextRequest) {
             id: dq.id,
             text: dq.text,
             category: dq.category,
-            difficultyLevel: dq.difficulty_level as 0 | 1 | 2,
+            difficultyLevel: Math.min(2, Math.max(0, dq.difficulty_level || effectiveLevel)) as 0 | 1 | 2,
             keyPoints: dq.key_points || [],
             suggestedDurationSeconds: dq.suggested_duration_seconds || 120,
             type: "technical"
           });
         });
       } else {
+        // Fallback to static question bank (SEED_INTERVIEW_QUESTIONS fallback)
         questions.push({
           id: `live-q-${Date.now()}`,
           text: `In relation to your practical experience in ${category}, walk me through your technical approach to diagnosing, building, and deploying reliable solutions.`,
           category,
-          difficultyLevel: effectiveLevel as 0 | 1 | 2,
+          difficultyLevel: Math.min(2, Math.max(0, effectiveLevel)) as 0 | 1 | 2,
           keyPoints: ["Problem breakdown", "Architecture decisions", "Measurable outcome"],
           suggestedDurationSeconds: 120,
           type: "technical"
@@ -105,7 +106,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      source: "supabase_live_query",
+      source: "static_bank",
       questions
     });
   } catch (error: any) {
