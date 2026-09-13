@@ -1,8 +1,6 @@
-"use client";
-
 import React from "react";
 import Link from "next/link";
-import { useAuth } from "@/lib/auth-context";
+import { useRouter } from "next/navigation";
 import { Sparkles, X, CheckCircle2, ArrowRight, Zap, ShieldCheck } from "lucide-react";
 
 interface UpgradePromptModalProps {
@@ -18,13 +16,13 @@ export default function UpgradePromptModal({
   featureName,
   description,
 }: UpgradePromptModalProps) {
-  const { upgradeToPro } = useAuth();
+  const router = useRouter();
 
   if (!isOpen) return null;
 
-  const handleInstantUpgrade = async () => {
-    await upgradeToPro();
+  const handleGoToBilling = () => {
     onClose();
+    router.push("/billing?plan=pro");
   };
 
   return (
@@ -51,7 +49,7 @@ export default function UpgradePromptModal({
           </h2>
           <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
             {description ||
-              `The Free plan includes 1 ATS resume and 2 mock interviews per month. Upgrade to Pro for unlimited access and full job applications.`}
+              `The Free plan includes 1 ATS resume and 2 mock interviews per month. Upgrade to Pro (₹49/mo) or Premium (₹99/mo) for unlimited access and verified job applications.`}
           </p>
         </div>
 
@@ -59,7 +57,7 @@ export default function UpgradePromptModal({
         <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5 text-xs text-slate-700">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span><strong>Unlimited Mock Interviews</strong> with priority speech & AI coaching</span>
+            <span><strong>Unlimited Mock Interviews</strong> with priority speech &amp; AI coaching</span>
           </div>
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -67,28 +65,28 @@ export default function UpgradePromptModal({
           </div>
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span><strong>One-Click Job & Internship Applications</strong> with status tracking</span>
+            <span><strong>One-Click Job &amp; Internship Applications</strong> with status tracking</span>
           </div>
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span><strong>Peer & Senior Mentor Messaging</strong> on Career Track</span>
+            <span><strong>Peer &amp; Senior Mentor Messaging</strong> on Career Track</span>
           </div>
         </div>
 
         <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
           <button
-            onClick={handleInstantUpgrade}
-            className="w-full sm:flex-1 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-md shadow-brand-500/25 flex items-center justify-center gap-2 transition-all hover:scale-105"
+            onClick={handleGoToBilling}
+            className="w-full sm:flex-1 py-3 rounded-xl bg-slate-950 hover:bg-black text-[#D7FC51] font-black text-xs shadow-md flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95 cursor-pointer"
           >
             <Zap className="w-4 h-4" />
-            <span>Upgrade to Pro (₹1,499/mo)</span>
+            <span>Upgrade to Pro (₹49/mo)</span>
           </button>
           <Link
             href="/billing"
             onClick={onClose}
             className="w-full sm:w-auto px-4 py-3 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs text-center"
           >
-            View Plans
+            View All Plans
           </Link>
         </div>
       </div>

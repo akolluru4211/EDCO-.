@@ -16,8 +16,10 @@ export async function POST(req: NextRequest) {
       razorpay_payment_id,
       razorpay_signature,
       cycle = "monthly",
+      plan: requestedPlan = "pro",
     } = await req.json();
 
+    const plan = requestedPlan === "premium" ? "premium" : "pro";
     const keySecret = process.env.RAZORPAY_KEY_SECRET || "rzp_test_mock_secret_key_12345";
 
     // Strict constant-time HMAC-SHA256 signature verification
@@ -36,14 +38,21 @@ export async function POST(req: NextRequest) {
 
     const periodDays = cycle === "yearly" ? 365 : 30;
     const currentPeriodEnd = new Date(Date.now() + periodDays * 24 * 3600 * 1000).toISOString();
-    const amountInr = cycle === "yearly" ? 11988 : 1499;
+    
+    // Pro: ₹49/mo (₹490/yr) | Premium: ₹99/mo (₹990/yr)
+    let amountInr = 49;
+    if (plan === "premium") {
+      amountInr = cycle === "yearly" ? 990 : 99;
+    } else {
+      amountInr = cycle === "yearly" ? 490 : 49;
+    }
 
     // 1. Update Subscriptions table in Supabase
     const { error: subError } = await supabase
       .from("subscriptions")
       .upsert({
         user_id: user.id,
-        plan: "pro",
+        plan,
         status: "active",
         razorpay_order_id,
         razorpay_payment_id,
@@ -63,7 +72,7 @@ export async function POST(req: NextRequest) {
         order_id: razorpay_order_id,
         payment_id: razorpay_payment_id,
         amount_inr: amountInr,
-        plan: "pro",
+        plan,
         status: "success",
         created_at: new Date().toISOString()
       });
@@ -82,7 +91,7 @@ export async function POST(req: NextRequest) {
           target_type: "subscription",
           target_id: user.id,
           metadata: {
-            plan: "pro",
+            plan,
             cycle,
             orderId: razorpay_order_id,
             paymentId: razorpay_payment_id,
@@ -95,9 +104,15 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      plan: "pro",
+      plan,
       status: "active",
       currentPeriodEnd,
+      subscription: {
+        userId: user.id,
+        plan,
+        status: "active",
+        currentPeriodEnd,
+      },
     });
   } catch (error: any) {
     console.error("[Verify Payment Error]:", error);
