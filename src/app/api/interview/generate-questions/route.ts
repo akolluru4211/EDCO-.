@@ -13,6 +13,7 @@ export interface GeneratedQuestion {
   suggestedDurationSeconds?: number;
   isWarmup?: boolean;
   type: "warmup" | "behavioral" | "technical";
+  adaptiveFocus?: string;
 }
 
 const FIXED_OPENING_QUESTION: GeneratedQuestion = {
@@ -29,20 +30,65 @@ const FIXED_OPENING_QUESTION: GeneratedQuestion = {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
-    const { jobDescription, category = "Software Engineering", effectiveLevel = 0, userId = "learner-user", candidateName = "" } = body;
+    const { 
+      jobDescription, 
+      category = "Software Engineering", 
+      effectiveLevel = 0, 
+      userId = "learner-user", 
+      candidateName = "" 
+    } = body;
 
     const firstName = candidateName ? candidateName.trim().split(" ")[0] : "";
-    const personalizedWarmup = {
+
+    // 1. Fetch User's Historical Communication Profile & Weakness for Adaptive Question Generation
+    let userCommProfile: any = null;
+    if (userId) {
+      try {
+        const { data: profileData } = await supabase
+          .from("communication_profiles")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle();
+        userCommProfile = profileData;
+      } catch (err) {
+        console.warn("[Fetch Comm Profile Note]:", err);
+      }
+    }
+
+    // 2. Adapt the Warmup Question dynamically based on past performance
+    let warmupText = firstName 
+      ? `Hi ${firstName}, welcome to your mock interview. Let's begin by having you tell me about yourself, your background, and what drives your passion for this domain.`
+      : FIXED_OPENING_QUESTION.text;
+
+    let adaptiveFocus: string | undefined;
+
+    if (userCommProfile) {
+      if (userCommProfile.total_interviews > 1 && userCommProfile.clarity_score < 75) {
+        warmupText = firstName
+          ? `Hi ${firstName}, welcome back! To start, can you briefly introduce yourself and highlight the 2 or 3 core achievements that make you suitable for this role?`
+          : "Can you briefly introduce yourself and highlight the 2 or 3 core achievements that make you suitable for this role?";
+        adaptiveFocus = "Structure & Conciseness";
+      } else if (userCommProfile.primary_weakness?.includes("filler")) {
+        adaptiveFocus = "Pacing & Filler Word Reduction";
+      }
+    }
+
+    const personalizedWarmup: GeneratedQuestion = {
       ...FIXED_OPENING_QUESTION,
-      text: firstName 
-        ? `Hi ${firstName}, welcome to your mock interview. Let's begin by having you tell me about yourself, your background, and what drives your passion for this domain.`
-        : FIXED_OPENING_QUESTION.text,
+      text: warmupText,
+      adaptiveFocus
     };
 
-    // Execute via Central MCP Engine
+    // 3. Execute via Central MCP Engine if available
     const mcpResult = await executeMCPTool(
       "generate_interview_questions",
-      { category, effectiveLevel, jobDescription, candidateName },
+      { 
+        category, 
+        effectiveLevel, 
+        jobDescription, 
+        candidateName,
+        communicationProfile: userCommProfile 
+      },
       {
         userId: req.headers.get("x-user-id") || userId,
         role: "CLIENT",
@@ -51,10 +97,9 @@ export async function POST(req: NextRequest) {
     );
 
     if (mcpResult.success && mcpResult.data?.questions) {
-      // Ensure the warmup has the personalized opening
       const returnedQuestions = mcpResult.data.questions.map((q: any, idx: number) => {
         if (idx === 0 && q.isWarmup && firstName && !q.text.includes(firstName)) {
-          return { ...q, text: `Hi ${firstName}, welcome to your mock interview. ${q.text}` };
+          return { ...q, text: `Hi ${firstName}, welcome to your mock interview. ${q.text}`, adaptiveFocus };
         }
         return q;
       });
@@ -62,11 +107,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         source: mcpResult.data.source || "mcp_engine",
-        questions: returnedQuestions
+        questions: returnedQuestions,
+        adaptiveProfileApplied: !!userCommProfile
       });
     }
 
-    // Direct Live Supabase Query Fallback
+    // 4. Direct Live Supabase Query Fallback
     const questions: GeneratedQuestion[] = [personalizedWarmup];
     try {
       const { data: dbQuestions } = await supabase
@@ -89,7 +135,7 @@ export async function POST(req: NextRequest) {
           });
         });
       } else {
-        // Fallback to static question bank (SEED_INTERVIEW_QUESTIONS fallback)
+        // Dynamic Role-Calibrated Question
         questions.push({
           id: `live-q-${Date.now()}`,
           text: `In relation to your practical experience in ${category}, walk me through your technical approach to diagnosing, building, and deploying reliable solutions.`,
@@ -100,6 +146,20 @@ export async function POST(req: NextRequest) {
           type: "technical"
         });
       }
+
+      // Add a behavioral/communication calibration question if user is on advanced track
+      if (userCommProfile?.total_interviews && userCommProfile.total_interviews >= 1) {
+        questions.push({
+          id: `adaptive-beh-${Date.now()}`,
+          text: `Tell me about a time when you had to explain a complex technical limitation in ${category} to a non-technical stakeholder or client. How did you structure your explanation?`,
+          category,
+          difficultyLevel: 1,
+          keyPoints: ["Empathy and clarity", "Simplifying jargon", "Achieving stakeholder buy-in"],
+          suggestedDurationSeconds: 90,
+          type: "behavioral",
+          adaptiveFocus: "Technical-to-Business Translation"
+        });
+      }
     } catch (err) {
       console.warn("[Live Question Fetch Note]:", err);
     }
@@ -107,7 +167,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       source: "static_bank",
-      questions
+      questions,
+      adaptiveProfileApplied: !!userCommProfile
     });
   } catch (error: any) {
     return NextResponse.json({
@@ -117,4 +178,3 @@ export async function POST(req: NextRequest) {
     }, { status: 500 });
   }
 }
-

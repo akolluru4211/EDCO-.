@@ -20,7 +20,11 @@ import {
   HelpCircle,
   Zap,
   Lock,
-  Compass
+  Compass,
+  MessageSquare,
+  Activity,
+  Flame,
+  Volume2
 } from "lucide-react";
 import EventTicket from "@/components/ui/EventTicket";
 import AuthGuard from "@/components/auth/AuthGuard";
@@ -29,6 +33,8 @@ import SpotlightCard from "@/components/ui/SpotlightCard";
 import BorderBeam from "@/components/ui/BorderBeam";
 import ShimmerBadge from "@/components/ui/ShimmerBadge";
 import AnimatedCounter from "@/components/ui/AnimatedCounter";
+import DailyPracticeCard from "@/components/interview/DailyPracticeCard";
+import SpeakingHabitsTracker from "@/components/interview/SpeakingHabitsTracker";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +42,7 @@ export default function InterviewsHubPage() {
   const router = useRouter();
   const { user, profile, loading } = useAuth();
   const [sessions, setSessions] = useState<InterviewSession[]>([]);
+  const [commProfile, setCommProfile] = useState<any>(null);
 
   // Career Track Gating: 18+ only
   const isMinorUser = user ? user.ageBand !== "18+" : false;
@@ -46,10 +53,10 @@ export default function InterviewsHubPage() {
       return;
     }
 
-    const loadSessions = async () => {
-      // 1. Fetch from Supabase
+    const loadSessionsAndCommProfile = async () => {
+      // 1. Fetch Sessions from Supabase
       try {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from("interview_sessions")
           .select("*")
           .eq("user_id", user.uid)
@@ -88,22 +95,28 @@ export default function InterviewsHubPage() {
           }));
           setSessions(list);
           localStorage.setItem(`edworld_${user.uid}_interview_sessions`, JSON.stringify(list));
-          return;
         }
       } catch (err) {
         console.warn("[Supabase Sessions Load Note]", err);
       }
 
-      // 2. Check user-scoped cache
-      const cached = localStorage.getItem(`edworld_${user.uid}_interview_sessions`);
-      if (cached) {
-        try {
-          setSessions(JSON.parse(cached));
-        } catch (e) {}
+      // 2. Fetch Communication Profile from Supabase
+      try {
+        const { data: profileData } = await supabase
+          .from("communication_profiles")
+          .select("*")
+          .eq("user_id", user.uid)
+          .maybeSingle();
+
+        if (profileData) {
+          setCommProfile(profileData);
+        }
+      } catch (cpErr) {
+        console.warn("[Fetch Comm Profile Note]:", cpErr);
       }
     };
 
-    loadSessions();
+    loadSessionsAndCommProfile();
   }, [user, isMinorUser]);
 
   const getEffectiveLevelForCategory = (catId: string, catName: string): SkillLevel => {
@@ -146,13 +159,6 @@ export default function InterviewsHubPage() {
     );
   }
 
-  // Compute trend metrics
-  const sortedByDateAsc = [...sessions].reverse();
-  const recentScore = sessions[0]?.overallScore || 0;
-  const avgScore = sessions.length > 0
-    ? Math.round(sessions.reduce((acc, s) => acc + s.overallScore, 0) / sessions.length)
-    : 0;
-
   return (
     <AuthGuard>
       <div className="min-h-[calc(100vh-5rem)] bg-[#F4F6FB] text-[#181920] pb-16">
@@ -165,205 +171,168 @@ export default function InterviewsHubPage() {
               <span className="text-xs font-black uppercase tracking-wider bg-[#13141B] text-[#D7FC51] px-3 py-1 rounded-xl">
                 Career Track
               </span>
-              <span className="text-xs font-mono text-[#8E95A5]">Adaptive Mock Interviews</span>
+              <span className="text-xs font-mono text-[#8E95A5]">Adaptive Mock Interviews + Language Trainer</span>
             </div>
             <UserGreeting
               context="interview"
-              subtitle="Questions are dynamically selected to match your demonstrated Effective Level. Scoring ≥ 80% advances your level."
+              subtitle="Evaluate technical correctness and train English fluency, filler-word reduction, and STAR structure across interviews."
             />
           </div>
 
           <div className="p-5 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] flex items-start gap-3 max-w-sm text-xs text-[#181920] shadow-sm">
             <TrendingUp className="w-5 h-5 text-[#00D2B4] shrink-0 mt-0.5" />
             <div>
-              <p className="font-black text-sm text-[#181920]">Dynamic Level Calibration</p>
+              <p className="font-black text-sm text-[#181920]">Personalized Language Coach</p>
               <p className="text-[#767E94] text-[11px] mt-0.5 leading-relaxed">
-                Every interview delivers Whisper speech scoring, delivery pacing analysis, and automatically nudges your effective skill level.
+                Tracks filler words, sentence length, and pacing over time with instant "What You Said" vs "Better Way to Say It" guidance.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Upgraded Interview Format Selection */}
+        {/* 1. Daily Personalized Practice Drill Card */}
+        <DailyPracticeCard
+          focusArea={commProfile?.primary_weakness ? `Targeting ${commProfile.primary_weakness.replace("_", " ")}` : "Reducing filler words & pacing"}
+          task={commProfile?.recommended_focus?.[0] ? `Answer in 60s: "Can you describe a key technical project you built and how you solved the hardest bug?"` : 'Answer in 60s: "Tell me about a technical project you are proud of."'}
+        />
+
+        {/* 2. Upgraded Formats: Standard Verbal, Language Training Drills, Sandbox, Group Discussion */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <span className="text-[10px] font-black uppercase tracking-wider text-[#7B57FF] bg-[#EDE8FD] border border-[#7B57FF]/30 px-3 py-1 rounded-full">
-                Upgraded Formats
+                Practice Formats
               </span>
               <h2 className="text-2xl font-black text-[#181920] tracking-tight mt-1">Choose Interview Mode</h2>
-              <p className="text-xs text-[#767E94]">Practice standard verbal interviews, live sandboxed coding rounds, or multi-persona group discussions</p>
+              <p className="text-xs text-[#767E94]">Practice verbal Q&amp;A, standalone language training drills, live coding, or group discussions.</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {/* Format 1: Standard Mock Interview */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            
+            {/* Format 1: Standalone Language Training Drills */}
+            <SpotlightCard
+              spotlightColor="rgba(215, 252, 81, 0.2)"
+              spotlightSize={300}
+              className="card-quixel p-5 border-2 border-[#13141B] shadow-quixel space-y-3 flex flex-col justify-between"
+            >
+              <BorderBeam size={160} duration={8} colorFrom="#D7FC51" colorTo="#00D2B4" />
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 rounded-2xl bg-[#13141B] text-[#D7FC51] flex items-center justify-center font-bold">
+                    <Sparkles className="w-5 h-5 animate-pulse" />
+                  </div>
+                  <span className="text-[9px] font-black uppercase tracking-wider text-slate-950 bg-[#D7FC51] px-2 py-0.5 rounded-full">
+                    NEW &bull; Fast Drill
+                  </span>
+                </div>
+                <h3 className="font-black text-[#181920] text-base">Language Training</h3>
+                <p className="text-xs text-[#767E94] leading-relaxed">
+                  Rapid 60-second spoken drills with live speech-to-text, filler counting, and "Try Again" attempt comparison.
+                </p>
+              </div>
+              <Link
+                href="/interviews/language-training"
+                className="btn-shine w-full py-2.5 rounded-2xl bg-[#13141B] hover:bg-black text-[#D7FC51] text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-all hover:scale-102"
+              >
+                <span>Launch Language Drills</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </SpotlightCard>
+
+            {/* Format 2: Standard Full Verbal Studio */}
             <SpotlightCard
               spotlightColor="rgba(123, 87, 255, 0.16)"
-              spotlightSize={320}
-              className="card-quixel p-6 sm:p-7 border-2 border-[#13141B] shadow-quixel space-y-4 flex flex-col justify-between card-lift-glow"
+              spotlightSize={300}
+              className="card-quixel p-5 border border-[#E8ECF2] shadow-sm space-y-3 flex flex-col justify-between"
             >
-              <BorderBeam size={180} duration={10} colorFrom="#7B57FF" colorTo="#00D2B4" />
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="w-11 h-11 rounded-2xl bg-[#EDE8FD] text-[#7B57FF] flex items-center justify-center relative">
-                    <span className="radar-pulse-ring text-[#7B57FF]" />
-                    <Video className="w-6 h-6 animate-float-gentle" />
-                  </div>
-                  {/* Animated Waveform Simulation */}
-                  <div className="waveform-bars-container">
-                    <div className="waveform-bar bg-[#7B57FF]" />
-                    <div className="waveform-bar bg-[#7B57FF]" />
-                    <div className="waveform-bar bg-[#7B57FF]" />
-                    <div className="waveform-bar bg-[#7B57FF]" />
-                    <div className="waveform-bar bg-[#7B57FF]" />
-                  </div>
+              <div className="space-y-2">
+                <div className="w-10 h-10 rounded-2xl bg-[#EDE8FD] text-[#7B57FF] flex items-center justify-center">
+                  <Video className="w-5 h-5" />
                 </div>
-                <h3 className="font-black text-[#181920] text-lg">Standard Verbal Studio</h3>
+                <h3 className="font-black text-[#181920] text-base">Full Verbal Studio</h3>
                 <p className="text-xs text-[#767E94] leading-relaxed">
-                  Verbal Q&amp;A with Whisper speech transcription, STAR structure evaluation, pacing, and filler word tracking.
+                  Multi-question verbal interview with camera engagement, STAR rubric scoring, and level progression.
                 </p>
               </div>
               <Link
                 href="/interviews/swe"
-                className="btn-shine w-full py-3 rounded-2xl bg-[#13141B] hover:bg-[#252632] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md transition-all hover:scale-102 active:scale-98"
+                className="w-full py-2.5 rounded-2xl bg-white hover:bg-slate-100 text-slate-900 border border-slate-200 text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-xs"
               >
                 <span>Launch Verbal Session</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </SpotlightCard>
 
-            {/* Format 2: Sandboxed Coding Round */}
+            {/* Format 3: Sandboxed Coding Round */}
             <SpotlightCard
               spotlightColor="rgba(0, 210, 180, 0.16)"
-              spotlightSize={320}
-              className="card-quixel card-quixel-interactive p-6 sm:p-7 space-y-4 flex flex-col justify-between card-lift-glow"
+              spotlightSize={300}
+              className="card-quixel p-5 border border-[#E8ECF2] shadow-sm space-y-3 flex flex-col justify-between"
             >
-              <div className="space-y-3">
-                <div className="w-11 h-11 rounded-2xl bg-[#E0FAF6] text-[#00D2B4] flex items-center justify-center">
-                  <Zap className="w-6 h-6 text-[#00D2B4] animate-bounce" />
+              <div className="space-y-2">
+                <div className="w-10 h-10 rounded-2xl bg-[#E0FAF6] text-[#00D2B4] flex items-center justify-center">
+                  <Zap className="w-5 h-5 text-[#00D2B4]" />
                 </div>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-black text-[#181920] text-lg">Live Coding Sandbox</h3>
-                  <span className="text-[10px] font-black text-[#00D2B4] bg-[#E0FAF6] px-2.5 py-0.5 rounded-full border border-[#00D2B4]/30">
-                    Interactive
-                  </span>
-                </div>
+                <h3 className="font-black text-[#181920] text-base">Live Coding Round</h3>
                 <p className="text-xs text-[#767E94] leading-relaxed">
-                  Real code editor with isolated sandboxed execution, unit test case runner (pass/fail), and timeout protection.
+                  Integrated code editor with isolated sandboxed execution, unit test runner, and complexity analysis.
                 </p>
               </div>
               <Link
                 href="/interviews/swe?format=coding"
-                className="btn-shine w-full py-3 rounded-2xl bg-[#13141B] hover:bg-[#252632] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md transition-all hover:scale-102 active:scale-98"
+                className="w-full py-2.5 rounded-2xl bg-white hover:bg-slate-100 text-slate-900 border border-slate-200 text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-xs"
               >
                 <span>Launch Coding Round</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </SpotlightCard>
 
-            {/* Format 3: AI Group Discussion */}
+            {/* Format 4: AI Group Discussion */}
             <SpotlightCard
               spotlightColor="rgba(255, 184, 0, 0.18)"
-              spotlightSize={320}
-              className="card-quixel card-quixel-interactive p-6 sm:p-7 space-y-4 flex flex-col justify-between card-lift-glow"
+              spotlightSize={300}
+              className="card-quixel p-5 border border-[#E8ECF2] shadow-sm space-y-3 flex flex-col justify-between"
             >
-              <div className="space-y-3">
-                <div className="w-11 h-11 rounded-2xl bg-[#FFF6DC] text-[#FFB800] flex items-center justify-center">
-                  <Sparkles className="w-6 h-6 text-[#FFB800] animate-pulse" />
+              <div className="space-y-2">
+                <div className="w-10 h-10 rounded-2xl bg-[#FFF6DC] text-[#FFB800] flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-[#FFB800]" />
                 </div>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-black text-[#181920] text-lg">AI Group Discussion</h3>
-                  <span className="text-[10px] font-black text-[#FF7A50] bg-[#FFEFEA] px-2.5 py-0.5 rounded-full border border-[#FF7A50]/30">
-                    Pro Gated
-                  </span>
-                </div>
+                <h3 className="font-black text-[#181920] text-base">AI Group Discussion</h3>
                 <p className="text-xs text-[#767E94] leading-relaxed">
-                  Simulated round-table with 2-3 AI personas with opposing viewpoints, turn-taking state machine, and collaboration scoring.
+                  Simulated round-table with opposing AI personas, turn-taking state machine, and collaboration scoring.
                 </p>
               </div>
               <Link
                 href="/interviews/behavioral?format=group_discussion"
-                className="btn-shine w-full py-3 rounded-2xl bg-[#13141B] hover:bg-[#252632] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md transition-all hover:scale-102 active:scale-98"
+                className="w-full py-2.5 rounded-2xl bg-white hover:bg-slate-100 text-slate-900 border border-slate-200 text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-xs"
               >
                 <span>Launch Discussion</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </SpotlightCard>
+
           </div>
         </div>
 
-        {/* Live Practice Day Passes & Workshop Tickets */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-black text-[#181920] tracking-tight">Your Active Event &amp; Studio Passes</h2>
-              <p className="text-xs text-[#767E94]">Holographic passes for live AI mock evaluation &amp; peer career events</p>
-            </div>
-            <span className="text-xs font-black text-[#00D2B4] bg-[#E0FAF6] px-3 py-1 rounded-full border border-[#00D2B4]/30">
-              2 Active Passes
-            </span>
-          </div>
+        {/* 3. Longitudinal Speaking Habits & Filler Word Telemetry Tracker */}
+        <SpeakingHabitsTracker
+          profileSummary={{
+            languageScore: commProfile?.language_score || 80,
+            grammarScore: commProfile?.grammar_score || 84,
+            clarityScore: commProfile?.clarity_score || 82,
+            fluencyScore: commProfile?.fluency_score || 80,
+            vocabularyScore: commProfile?.vocabulary_score || 82,
+            professionalScore: commProfile?.professional_score || 85,
+            totalInterviews: commProfile?.total_interviews || sessions.length || 3,
+            averageWpm: commProfile?.average_wpm || 128,
+            topFillers: commProfile?.top_recurring_fillers || ["actually", "basically"],
+            strengths: commProfile?.strengths || ["Structured STAR explanation", "Clear technical terminology"],
+            recommendedFocus: commProfile?.recommended_focus || ["Reduce filler words", "Pause for breath"]
+          }}
+        />
 
-          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-8 pt-2">
-            <EventTicket
-              passType="AI Studio Pass"
-              eventName="Full-Stack Mock Sprint"
-              date="Today &bull; Unlimited Entry"
-              venue="Edworld Online Studio"
-              seatCode="SEAT-A1"
-              attendeeName={user?.name || "Candidate"}
-              onClick={() => router.push("/interviews/swe")}
-            />
-
-            <EventTicket
-              passType="Masterclass Pass"
-              eventName="STAR Behavioral Strategy"
-              date="Saturday 4:00 PM IST"
-              venue="Live Interactive Stage"
-              seatCode="SEAT-E7"
-              attendeeName={user?.name || "Candidate"}
-              onClick={() => router.push("/interviews/behavioral")}
-            />
-          </div>
-        </div>
-
-        {/* Score Trend Summary (if history exists) */}
-        {sessions.length > 0 && (
-          <div className="card-quixel p-6 sm:p-8 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-black text-[#181920] text-base">Performance Trend &bull; Recent Sessions</h3>
-                <p className="text-xs text-[#767E94]">Average Score: {avgScore}% across {sessions.length} sessions</p>
-              </div>
-              <span className="text-xs font-mono font-black text-[#00D2B4] bg-[#E0FAF6] px-3 py-1 rounded-full border border-[#00D2B4]/30">
-                Latest: {recentScore}%
-              </span>
-            </div>
-
-            {/* Score History Bars */}
-            <div className="flex items-end gap-2 h-24 pt-4 border-t border-[#F0F2F6] overflow-x-auto">
-              {sortedByDateAsc.slice(-10).map((s, idx) => (
-                <div key={s.id || idx} className="flex-1 min-w-[32px] flex flex-col items-center gap-1 group">
-                  <span className="text-[10px] font-mono text-[#8E95A5] opacity-0 group-hover:opacity-100 transition-opacity">
-                    {s.overallScore}%
-                  </span>
-                  <div
-                    className={`w-full rounded-t-xl transition-all ${
-                      s.overallScore >= 80 ? "bg-[#00D2B4]" : s.overallScore >= 65 ? "bg-[#7B57FF]" : "bg-[#FFB800]"
-                    }`}
-                    style={{ height: `${Math.max(12, (s.overallScore / 100) * 64)}px` }}
-                  />
-                  <span className="text-[9px] font-mono text-[#8E95A5] truncate max-w-full">
-                    {s.category.split(" ")[0]}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Category Selection Grid */}
+        {/* 4. Category Selection Grid */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-black text-[#181920] tracking-tight">Select Practice Track</h2>
@@ -415,7 +384,7 @@ export default function InterviewsHubPage() {
           </div>
         </div>
 
-        {/* Previous Sessions & Score History */}
+        {/* 5. Recorded Sessions & Score History */}
         <div className="card-quixel p-6 sm:p-8 space-y-4">
           <div className="flex items-center justify-between border-b border-[#F0F2F6] pb-3">
             <div className="flex items-center gap-2">
@@ -438,12 +407,6 @@ export default function InterviewsHubPage() {
                       <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black border ${getDifficultyBadgeColor(session.difficultyLevel)}`}>
                         Level {session.difficultyLevel}
                       </span>
-                      {session.effectiveLevelChange?.nudged && (
-                        <span className="px-2.5 py-0.5 rounded-full bg-[#E0FAF6] text-[#00D2B4] text-[10px] font-black flex items-center gap-1 border border-[#00D2B4]/30">
-                          <Zap className="w-3 h-3" />
-                          Nudge: {session.effectiveLevelChange.previousLevel} &rarr; {session.effectiveLevelChange.newLevel}
-                        </span>
-                      )}
                     </div>
                     <p className="text-xs text-[#767E94] line-clamp-1">{session.questionText}</p>
                     <div className="flex items-center gap-3 text-[11px] text-[#8E95A5]">
@@ -452,8 +415,7 @@ export default function InterviewsHubPage() {
                         {new Date(session.createdAt).toLocaleDateString()}
                       </span>
                       <span>Content: {session.contentScore}%</span>
-                      <span>Voice: {session.voiceScore}%</span>
-                      {session.expressionScore > 0 && <span>Engagement: {session.expressionScore}%</span>}
+                      <span>Language: {session.voiceScore}%</span>
                     </div>
                   </div>
 
@@ -474,11 +436,12 @@ export default function InterviewsHubPage() {
             </div>
           ) : (
             <div className="p-8 text-center text-xs text-[#8E95A5] bg-[#F4F6FB] rounded-2xl border border-[#E8ECF2]">
-              No interview sessions recorded yet. Pick a track above to practice your first question!
+              No interview sessions recorded yet. Pick a track above or try a 60s Language Drill to get started!
             </div>
           )}
         </div>
-        </div>
+
+      </div>
       </div>
     </AuthGuard>
   );

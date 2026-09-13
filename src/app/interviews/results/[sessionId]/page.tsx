@@ -21,7 +21,11 @@ import {
   ShieldCheck, 
   AlertCircle,
   HelpCircle,
-  Maximize2
+  Maximize2,
+  Activity,
+  Zap,
+  Flame,
+  ArrowRight
 } from "lucide-react";
 import { normalizeDisplayName } from "@/lib/services/user-profile";
 
@@ -70,36 +74,60 @@ export default function InterviewResultsPage() {
           .maybeSingle();
 
         if (data) {
+          const metrics = data.metrics || {};
           setSessionData({
             sessionId: data.id,
             overallScore: data.overall_score || 82,
-            contentScore: data.metrics?.contentScore || 85,
-            voiceScore: data.metrics?.voiceDelivery || 80,
-            engagementScore: data.metrics?.facialEngagement || 85,
-            metrics: data.metrics || {},
-            annotations: data.metrics?.annotations || [],
+            contentScore: metrics.contentScore || 85,
+            voiceScore: metrics.voiceDelivery || 80,
+            engagementScore: metrics.facialEngagement || 85,
+            languageScore: metrics.languageScore || metrics.voiceDelivery || 78,
+            grammarScore: metrics.grammarScore || 82,
+            clarityScore: metrics.clarityScore || 80,
+            fluencyScore: metrics.fluencyScore || 78,
+            vocabularyScore: metrics.vocabularyScore || 80,
+            professionalScore: metrics.professionalScore || 84,
+            whatYouSaid: metrics.whatYouSaid || data.questions?.[0]?.transcript || "",
+            improvedVersion: metrics.improvedVersion || "",
+            improvementRationale: metrics.improvementRationale || [],
+            coachSuggestions: metrics.coachSuggestions || [],
+            metrics,
+            annotations: metrics.annotations || [],
             feedback: {
-              strengths: [
+              strengths: metrics.strengths || [
                 "Clear STAR problem framing and structured execution steps.",
                 "Strong technical communication and natural articulation."
               ],
-              areasForImprovement: [
+              areasForImprovement: metrics.areasForImprovement || [
                 "Consider integrating more quantified metrics to substantiate results."
               ],
-              detailedSummary: "Strong technical delivery. Your response demonstrates solid subject mastery and clear communicative flow.",
-              nextPracticeAdvice: "Practice framing your next technical answer using the STAR method.",
+              detailedSummary: metrics.detailedSummary || "Strong technical delivery with clear communicative flow.",
+              nextPracticeAdvice: metrics.nextPracticeAdvice || "Practice framing your next technical answer using the STAR method.",
               eyeContactFeedback: "Good eye contact — you looked at the camera during most of your answer."
             },
-            fullscreenExitEvents: data.metrics?.fullscreen_exit_events || []
+            fullscreenExitEvents: metrics.fullscreen_exit_events || []
           });
         } else {
-          // Default fallback data for preview
+          // Fallback preview record
           setSessionData({
             sessionId,
             overallScore: 84,
             contentScore: 88,
             voiceScore: 82,
             engagementScore: 85,
+            languageScore: 80,
+            grammarScore: 86,
+            clarityScore: 84,
+            fluencyScore: 80,
+            vocabularyScore: 82,
+            professionalScore: 85,
+            whatYouSaid: "In my past work, I basically identified a bottleneck in our data pipeline where API queries were timing out. I redesigned the endpoint using Redis caching which reduced latency by 65 percent.",
+            improvedVersion: "In my past work, I identified a bottleneck in our data pipeline where API queries were timing out. I redesigned the endpoint using Redis caching, which reduced latency by 65 percent.",
+            improvementRationale: ["Removed conversational filler ('basically')", "Maintained clear STAR architecture explanation"],
+            coachSuggestions: [
+              "Take a brief silent breath between points instead of vocalizing fillers.",
+              "Your technical explanation is well-structured with strong quantified impact."
+            ],
             metrics: {
               wordsPerMinute: 132,
               fillerWordCount: 1,
@@ -180,74 +208,107 @@ export default function InterviewResultsPage() {
         {/* Hero Score Header */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-1 text-center md:text-left">
-            <span className="text-[10px] uppercase tracking-wider font-extrabold text-indigo-600">AI Diagnostic Report</span>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900">STAR Diagnostic &amp; Delivery Results</h1>
+            <div className="flex items-center gap-2 justify-center md:justify-start">
+              <span className="text-[10px] uppercase tracking-wider font-extrabold text-indigo-600">AI Diagnostic Report</span>
+              <span className="text-[10px] font-mono text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">AI-generated assessment</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900">STAR Diagnostic &amp; Language Results</h1>
             <p className="text-xs text-slate-500 max-w-lg">
-              Detailed breakdown of your content structure, vocal pacing, camera engagement, and inline speech notes.
+              Comprehensive analysis of your technical content, English communication, sentence structure, and delivery pacing.
             </p>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <div className="p-5 rounded-3xl bg-slate-900 text-white text-center min-w-[130px] shadow-lg">
-              <span className="text-[9px] uppercase font-extrabold tracking-wider text-slate-400">Overall Score</span>
-              <div className="text-4xl font-black text-emerald-400 font-mono mt-0.5">{sessionData.overallScore}%</div>
+              <span className="text-[9px] uppercase font-extrabold tracking-wider text-slate-400">Technical Score</span>
+              <div className="text-3xl font-black text-emerald-400 font-mono mt-0.5">{sessionData.overallScore}%</div>
+            </div>
+            <div className="p-5 rounded-3xl bg-indigo-950 text-white text-center min-w-[130px] shadow-lg border border-indigo-500/30">
+              <span className="text-[9px] uppercase font-extrabold tracking-wider text-indigo-300">Language Score</span>
+              <div className="text-3xl font-black text-[#D7FC51] font-mono mt-0.5">{sessionData.languageScore || 80}%</div>
             </div>
           </div>
         </div>
 
         {/* Sub-Score Breakdown Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {/* Content Score */}
-          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] uppercase font-extrabold tracking-wider text-slate-400">Content &amp; Structure</span>
-              <FileText className="w-4 h-4 text-indigo-600" />
-            </div>
-            <div className="text-2xl font-black text-slate-900 font-mono">{sessionData.contentScore}%</div>
-            <p className="text-[11px] text-slate-500">STAR methodology &amp; problem decomposition.</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-1">
+            <span className="text-[10px] uppercase font-extrabold tracking-wider text-slate-400 block">Grammar</span>
+            <div className="text-2xl font-black text-slate-900 font-mono">{sessionData.grammarScore || 84}%</div>
+            <p className="text-[10px] text-slate-500">Syntax &amp; tense consistency</p>
           </div>
 
-          {/* Voice Delivery Score */}
-          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] uppercase font-extrabold tracking-wider text-slate-400">Voice Delivery</span>
-              <Volume2 className="w-4 h-4 text-sky-600" />
-            </div>
-            <div className="text-2xl font-black text-slate-900 font-mono">{sessionData.voiceScore}%</div>
-            <p className="text-[11px] text-slate-500">Pacing ({sessionData.metrics?.wordsPerMinute || 130} WPM) &amp; articulation.</p>
+          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-1">
+            <span className="text-[10px] uppercase font-extrabold tracking-wider text-slate-400 block">Clarity &amp; Flow</span>
+            <div className="text-2xl font-black text-slate-900 font-mono">{sessionData.clarityScore || 82}%</div>
+            <p className="text-[10px] text-slate-500">Sentence length &amp; STAR arc</p>
           </div>
 
-          {/* Eye Contact / Engagement Score (Encouraging, Light-Touch) */}
-          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] uppercase font-extrabold tracking-wider text-slate-400">Camera Engagement</span>
-              <Eye className="w-4 h-4 text-emerald-600" />
-            </div>
-            <div className="text-2xl font-black text-slate-900 font-mono">{sessionData.engagementScore}%</div>
-            <p className="text-[11px] text-slate-500">
-              {sessionData.feedback?.eyeContactFeedback || "Good eye contact — steady visual camera focus."}
-            </p>
+          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-1">
+            <span className="text-[10px] uppercase font-extrabold tracking-wider text-slate-400 block">Speaking Pace</span>
+            <div className="text-2xl font-black text-slate-900 font-mono">{sessionData.metrics?.wordsPerMinute || 130} <span className="text-xs text-slate-500">WPM</span></div>
+            <p className="text-[10px] text-slate-500">Conversational pacing</p>
+          </div>
+
+          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-1">
+            <span className="text-[10px] uppercase font-extrabold tracking-wider text-slate-400 block">Filler Words</span>
+            <div className="text-2xl font-black text-rose-600 font-mono">{sessionData.metrics?.fillerWordCount || 0}</div>
+            <p className="text-[10px] text-slate-500">Identified filler clusters</p>
           </div>
         </div>
 
-        {/* Fullscreen Integrity Neutral Info */}
-        <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-between text-xs text-slate-600">
-          <div className="flex items-center gap-2">
-            <Maximize2 className="w-4 h-4 text-slate-400" />
-            <span>
-              <strong>Fullscreen Integrity:</strong> {exitCount === 0 ? "Maintained continuous fullscreen throughout session." : `You exited fullscreen ${exitCount} time during this session (neutral record).`}
-            </span>
-          </div>
-          <span className="text-[10px] font-mono font-bold text-slate-400 bg-slate-100 px-2.5 py-0.5 rounded-full">
-            {exitCount} Exits
-          </span>
-        </div>
+        {/* "What You Said" vs "Better Way to Say It" Section */}
+        {sessionData.improvedVersion && (
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="space-y-0.5">
+                <span className="text-[10px] uppercase tracking-wider font-extrabold text-indigo-600">Language Coach Translation</span>
+                <h2 className="text-base font-black text-slate-900">What You Said vs. Better Way to Say It</h2>
+              </div>
+              <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 font-bold">
+                Natural Refinement
+              </span>
+            </div>
 
-        {/* Section 1: Encouraging Summary First */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1 text-xs">
+                <span className="text-[10px] font-mono text-slate-500 uppercase block font-bold">What You Said:</span>
+                <p className="text-slate-800 italic leading-relaxed">
+                  "{sessionData.whatYouSaid}"
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200 space-y-1.5 text-xs">
+                <span className="text-[10px] font-mono text-emerald-800 uppercase block font-bold">Improved Version:</span>
+                <p className="text-emerald-950 font-medium leading-relaxed">
+                  "{sessionData.improvedVersion}"
+                </p>
+                {sessionData.improvementRationale?.length > 0 && (
+                  <div className="text-[11px] text-emerald-900/80 pt-1 border-t border-emerald-200/60">
+                    <strong>Why:</strong> {sessionData.improvementRationale.join(" • ")}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {sessionData.coachSuggestions?.length > 0 && (
+              <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-200 text-xs text-indigo-950 space-y-1">
+                <span className="font-bold text-indigo-900 flex items-center gap-1.5 text-[11px]">
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-600" /> AI Coach Advice for Next Session:
+                </span>
+                <p className="text-indigo-900 leading-relaxed">
+                  {sessionData.coachSuggestions[0]}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Executive Performance Summary & Strengths */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4">
           <h2 className="text-base font-black text-slate-900 flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-indigo-600" />
-            <span>Executive Performance Summary</span>
+            <span>Executive Delivery Summary</span>
           </h2>
           <p className="text-xs text-slate-700 leading-relaxed">
             {sessionData.feedback?.detailedSummary}
@@ -278,19 +339,18 @@ export default function InterviewResultsPage() {
           </div>
         </div>
 
-        {/* Section 2: Transcript with Inline Mistake Annotations */}
+        {/* Annotated Speech Transcript */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
           <div className="flex items-center justify-between border-b border-slate-100 pb-4">
             <div>
               <h2 className="text-base font-black text-slate-900">Annotated Speech Transcript</h2>
-              <p className="text-xs text-slate-400">Click underlined phrases to inspect AI diagnostic suggestions.</p>
+              <p className="text-xs text-slate-400">Click highlighted phrases to inspect diagnostic suggestions.</p>
             </div>
             <span className="text-xs font-mono font-bold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200">
               {annotations.length} Annotations
             </span>
           </div>
 
-          {/* Transcript Content Box */}
           <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs text-slate-800 leading-relaxed">
             <p className="whitespace-pre-wrap">
               {annotations.length > 0 ? (
@@ -298,12 +358,11 @@ export default function InterviewResultsPage() {
                   &ldquo;In my past work, I identified a bottleneck in our data pipeline where API queries were timing out under concurrent traffic. I redesigned the endpoint using Redis caching and asynchronous job queues, which reduced latency by 65 percent and stabilized overall uptime.&rdquo;
                 </span>
               ) : (
-                <span>&ldquo;{sessionData.transcript || "No transcript recorded."}&rdquo;</span>
+                <span>&ldquo;{sessionData.transcript || sessionData.whatYouSaid || "No transcript recorded."}&rdquo;</span>
               )}
             </p>
           </div>
 
-          {/* Inline Annotations List */}
           {annotations.length > 0 && (
             <div className="space-y-2.5 pt-2">
               <span className="text-[10px] uppercase tracking-wider font-extrabold text-slate-400">
@@ -336,13 +395,22 @@ export default function InterviewResultsPage() {
           )}
         </div>
 
-        {/* Action Button */}
-        <div className="flex justify-end gap-3">
+        {/* Action Buttons: Practice Drills & Retake */}
+        <div className="flex items-center justify-between flex-wrap gap-4 pt-4 border-t border-slate-200">
+          <Link
+            href="/interviews/language-training"
+            className="px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-md flex items-center gap-2"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>Open Language Training Drills</span>
+          </Link>
+
           <Link
             href="/interviews"
-            className="px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all shadow-sm"
+            className="px-6 py-3 rounded-2xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition-all shadow-md flex items-center gap-2"
           >
-            Practice Next Session
+            <span>Practice Next Full Interview</span>
+            <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
