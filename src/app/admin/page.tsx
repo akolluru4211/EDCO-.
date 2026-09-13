@@ -24,7 +24,8 @@ import {
   Layers,
   Settings,
   Shield,
-  UserX
+  UserX,
+  Activity
 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { UserRole, SystemAuditLog } from "@/lib/types";
@@ -185,7 +186,14 @@ export default function AdminControlPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center flex-wrap gap-2">
+          <Link
+            href="/admin/ai-monitoring"
+            className="px-4 py-2.5 rounded-2xl bg-[#7B57FF]/20 hover:bg-[#7B57FF]/30 border border-[#7B57FF]/40 text-xs font-bold text-[#D7FC51] transition-all shadow-md flex items-center gap-1.5"
+          >
+            <Activity className="w-3.5 h-3.5 text-[#D7FC51]" />
+            <span>AI Telemetry</span>
+          </Link>
           <Link
             href="/admin/audit-logs"
             className="px-4 py-2.5 rounded-2xl bg-[#1C1D26] hover:bg-[#252633] border border-white/10 text-xs font-bold text-slate-200 transition-all shadow-md"

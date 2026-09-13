@@ -7,12 +7,14 @@ import { teacherTools } from "./tools/teacher";
 import { collegeTools } from "./tools/college";
 import { adminTools } from "./tools/admin";
 import { developerTools } from "./tools/developer";
+import { claudeMCPTools } from "./tools/claude-tools";
 import { recordAuditLog } from "@/lib/audit-logger";
 import { RoleType } from "@/lib/server-role-guard";
 
 // Central Registry of all Domain Tools
 export const ALL_MCP_TOOLS: MCPToolDefinition[] = [
   ...studentTools,
+  ...claudeMCPTools,
   ...developerTools,
   ...employeeTools,
   ...hrTools,

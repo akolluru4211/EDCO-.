@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { executeMCPTool } from "@/lib/mcp/engine";
+import { ClaudeOrchestrator, ClaudeAnalysisRequest } from "@/lib/ai/claude-orchestrator";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export type ClaudeAnalysisType = 
+  | "analyze_resume" 
+  | "analyze_job_match" 
+  | "analyze_interview" 
+  | "analyze_language" 
+  | "analyze_project" 
+  | "analyze_coding_attempt" 
+  | "generate_personalized_feedback" 
+  | "generate_practice_plan"
   | "code_review" 
   | "resume_ats" 
   | "project_architecture" 
@@ -19,63 +27,80 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json().catch(() => ({}));
     const { 
-      type = "code_review", 
+      type = "analyze_resume", 
       content, 
       metadata = {}, 
-      rawMcpPayload 
+      inputReference,
+      bypassCache = false
     }: {
       type: ClaudeAnalysisType;
       content: string;
       metadata?: Record<string, any>;
-      rawMcpPayload?: any;
+      inputReference?: Record<string, any>;
+      bypassCache?: boolean;
     } = body;
 
     if (!content || typeof content !== "string" || content.trim().length === 0) {
-      return NextResponse.json({ error: "Content is required for Claude MCP analysis." }, { status: 400 });
+      return NextResponse.json({ error: "Content is required for Claude analysis." }, { status: 400 });
     }
 
-    const trimmed = content.trim();
+    // Map legacy names to canonical Phase 33 analysis types
+    let canonicalType: ClaudeAnalysisRequest["analysisType"] = "analyze_resume";
+    let feature: ClaudeAnalysisRequest["feature"] = "resume";
 
-    // 1. If raw payload provided from active external Claude MCP Server, format and return directly
-    if (rawMcpPayload) {
+    if (type === "analyze_job_match" || type === "resume_ats") {
+      canonicalType = "analyze_job_match";
+      feature = "ats";
+    } else if (type === "analyze_interview" || type === "interview_response") {
+      canonicalType = "analyze_interview";
+      feature = "interview";
+    } else if (type === "analyze_language") {
+      canonicalType = "analyze_language";
+      feature = "language";
+    } else if (type === "analyze_project" || type === "project_architecture") {
+      canonicalType = "analyze_project";
+      feature = "project";
+    } else if (type === "analyze_coding_attempt" || type === "code_review" || type === "problem_solution") {
+      canonicalType = "analyze_coding_attempt";
+      feature = "coding";
+    } else if (type === "generate_personalized_feedback" || type === "appraisal_performance") {
+      canonicalType = "generate_personalized_feedback";
+      feature = "career";
+    } else if (type === "generate_practice_plan") {
+      canonicalType = "generate_practice_plan";
+      feature = "career";
+    }
+
+    const userId = user?.id || req.headers.get("x-user-id") || "guest";
+
+    const res = await ClaudeOrchestrator.analyze({
+      userId,
+      feature,
+      analysisType: canonicalType,
+      content: content.trim(),
+      metadata,
+      inputReference,
+      bypassCache
+    });
+
+    if (res.success && res.data) {
       return NextResponse.json({
         success: true,
-        type,
-        source: "claude-mcp-server",
-        analysis: rawMcpPayload,
+        type: canonicalType,
+        source: "claude-orchestrator",
+        analysis: res.data,
         timestamp: new Date().toISOString()
       });
     }
 
-    // 2. Dispatch to MCP Central Engine Tool
-    const userId = user?.id || req.headers.get("x-user-id") || "auth-user";
-    const mcpRes = await executeMCPTool(
-      "analyze_claude_review",
-      { type, content: trimmed, metadata },
-      {
-        userId,
-        role: "CLIENT",
-        timestamp: new Date().toISOString()
-      }
-    );
-
-    if (mcpRes.success && mcpRes.data) {
-      return NextResponse.json({
-        success: true,
-        type,
-        source: "claude-mcp-engine",
-        analysis: mcpRes.data,
-        timestamp: new Date().toISOString()
-      });
-    }
     return NextResponse.json({
       success: false,
-      error: mcpRes.error || "Failed to execute Claude analysis via MCP."
-    }, { status: mcpRes.statusCode || 500 });
+      error: res.error || "Failed to execute Claude analysis."
+    }, { status: res.statusCode || 500 });
 
   } catch (error: any) {
-    console.error("[Claude MCP Analysis Error]:", error);
-    return NextResponse.json({ error: error.message || "Failed to execute Claude MCP analysis." }, { status: 500 });
+    console.error("[Claude Analysis Route Error]:", error);
+    return NextResponse.json({ error: error.message || "Failed to execute Claude analysis." }, { status: 500 });
   }
 }
 
