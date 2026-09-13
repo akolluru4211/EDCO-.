@@ -92,7 +92,7 @@ export const SEED_SECTOR_DATA: Record<SectorType, LandingSectorPageData> = {
     hero_headline: "Explore, build, and discover your potential before high school.",
     hero_subtext: "A 100% private, kid-safe creative sandbox for Ages 13–15. Master real programming logic, test AI tools responsibly, and discover what you love.",
     cta_label: "Start Exploring Free",
-    cta_href: "/auth/signup?track=junior&stage=junior",
+    cta_href: "/signup?intent=junior",
     visual_mode: "maximalist",
     features: [
       { sector: "junior", display_order: 1, icon_key: "brain", title: "AI & Future Skills Literacy", description: "Learn what AI actually is, and how to use it well" },
@@ -109,7 +109,7 @@ export const SEED_SECTOR_DATA: Record<SectorType, LandingSectorPageData> = {
     hero_headline: "Bridge high school and your future career with real projects.",
     hero_subtext: "Built for Ages 16–18. Practice low-pressure communication drills, track real scholarship deadlines, compare colleges honestly, and build verifiable micro-projects.",
     cta_label: "Create Student Account",
-    cta_href: "/auth/signup?track=student&stage=student",
+    cta_href: "/signup?intent=explorer",
     visual_mode: "maximalist",
     features: [
       { sector: "explorer", display_order: 1, icon_key: "message-square", title: "Communication Trainer", description: "Light interview practice, zero pressure, real feedback" },
@@ -126,7 +126,7 @@ export const SEED_SECTOR_DATA: Record<SectorType, LandingSectorPageData> = {
     hero_headline: "From campus coursework to top-tier technical placement.",
     hero_subtext: "The comprehensive career acceleration OS for college students. ATS resume optimizer, full-stack STAR mock drills with live code execution, and verified GitHub portfolios.",
     cta_label: "Launch College Profile",
-    cta_href: "/auth/signup?track=student&stage=student",
+    cta_href: "/signup?intent=college",
     visual_mode: "career",
     features: [
       { sector: "college", display_order: 1, icon_key: "file-text", title: "Resume Maker", description: "Built to actually pass ATS filters, not just look nice" },
@@ -143,7 +143,7 @@ export const SEED_SECTOR_DATA: Record<SectorType, LandingSectorPageData> = {
     hero_headline: "Level up your seniority or execute a high-impact career switch.",
     hero_subtext: "Designed for engineers, product leads, and ambitious professionals. Pinpoint exact skill gaps, run STAR interview drills with language cadence scoring, and manage applications with zero noise.",
     cta_label: "Build Career OS",
-    cta_href: "/auth/signup?track=pro&stage=professional",
+    cta_href: "/signup?intent=working_professional",
     visual_mode: "career",
     features: [
       { sector: "working_professional", display_order: 1, icon_key: "trending-up", title: "Career-Switch Path Recommendations", description: "See the real gap between where you are and where you want to be" },

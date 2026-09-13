@@ -137,7 +137,7 @@ export default function SectorLandingPage({
 
           <div className="flex items-center gap-3">
             <Link
-              href="/auth/login"
+              href="/login"
               className={`text-xs font-bold px-4 py-2 rounded-xl transition-all ${
                 isMaximalist
                   ? "text-[#5E6573] hover:text-[#13141B] hover:bg-[#F4F6FB]"
@@ -216,7 +216,7 @@ export default function SectorLandingPage({
             </Link>
 
             <Link
-              href="/auth/login"
+              href="/login"
               className={`w-full sm:w-auto px-6 py-4 rounded-2xl font-bold text-xs transition-all border ${
                 isMaximalist
                   ? "bg-white border-[#E8ECF2] text-[#13141B] hover:bg-[#F4F6FB]"

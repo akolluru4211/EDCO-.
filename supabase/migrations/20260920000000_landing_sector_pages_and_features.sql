@@ -75,7 +75,7 @@ VALUES (
   'Explore, build, and discover your potential before high school.',
   'A 100% private, kid-safe creative sandbox for Ages 13–15. Master real programming logic, test AI tools responsibly, and discover what you love.',
   'Start Exploring Free',
-  '/auth/signup?track=junior&stage=junior',
+  '/signup?intent=junior',
   'maximalist'
 )
 ON CONFLICT (sector) DO UPDATE SET
@@ -95,7 +95,7 @@ VALUES (
   'Bridge high school and your future career with real projects.',
   'Built for Ages 16–18. Practice low-pressure communication drills, track real scholarship deadlines, compare colleges honestly, and build verifiable micro-projects.',
   'Create Student Account',
-  '/auth/signup?track=student&stage=student',
+  '/signup?intent=explorer',
   'maximalist'
 )
 ON CONFLICT (sector) DO UPDATE SET
@@ -115,7 +115,7 @@ VALUES (
   'From campus coursework to top-tier technical placement.',
   'The comprehensive career acceleration OS for college students. ATS resume optimizer, full-stack STAR mock drills with live code execution, and verified GitHub portfolios.',
   'Launch College Profile',
-  '/auth/signup?track=student&stage=student',
+  '/signup?intent=college',
   'career'
 )
 ON CONFLICT (sector) DO UPDATE SET
@@ -135,7 +135,7 @@ VALUES (
   'Level up your seniority or execute a high-impact career switch.',
   'Designed for engineers, product leads, and ambitious professionals. Pinpoint exact skill gaps, run STAR interview drills with language cadence scoring, and manage applications with zero noise.',
   'Build Career OS',
-  '/auth/signup?track=pro&stage=professional',
+  '/signup?intent=working_professional',
   'career'
 )
 ON CONFLICT (sector) DO UPDATE SET

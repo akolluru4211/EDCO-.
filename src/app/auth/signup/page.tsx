@@ -8,7 +8,6 @@ import {
   ArrowRight, 
   AlertCircle, 
   ShieldCheck, 
-  Shield, 
   Lock, 
   AlertTriangle,
   Compass,
@@ -20,7 +19,7 @@ import {
   Sparkles,
   ChevronDown,
   MailCheck,
-  KeyRound
+  Info
 } from "lucide-react";
 import EdworldLogo from "@/components/ui/EdworldLogo";
 import Button from "@/components/ui/Button";
@@ -92,8 +91,14 @@ function SignupForm() {
   const searchParams = useSearchParams();
   const { signupWithEmail, submitGuardianConsent } = useAuth();
   
-  const rawStage = searchParams?.get("stage") || searchParams?.get("track") || "student";
-  const initialStage: StageKey = rawStage === "junior" ? "junior" : rawStage === "pro" || rawStage === "professional" ? "pro" : "student";
+  const intentParam = searchParams?.get("intent") || searchParams?.get("stage") || searchParams?.get("track") || "student";
+  
+  const initialStage: StageKey = 
+    intentParam === "junior" || intentParam === "for-junior" 
+      ? "junior" 
+      : intentParam === "pro" || intentParam === "professional" || intentParam === "working_professional" || intentParam === "for-professionals"
+      ? "pro" 
+      : "student";
   
   const [selectedStage, setSelectedStage] = useState<StageKey>(initialStage);
 
@@ -138,20 +143,70 @@ function SignupForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [signupSuccess, setSignupSuccess] = useState(false);
+  const [mismatchLogged, setMismatchLogged] = useState(false);
 
   useEffect(() => {
-    const stage = searchParams?.get("stage") || searchParams?.get("track");
-    if (stage === "junior") setSelectedStage("junior");
-    else if (stage === "student") setSelectedStage("student");
-    else if (stage === "pro" || stage === "professional") setSelectedStage("pro");
+    const raw = searchParams?.get("intent") || searchParams?.get("stage") || searchParams?.get("track");
+    if (raw === "junior" || raw === "for-junior") setSelectedStage("junior");
+    else if (raw === "explorer" || raw === "for-explorer" || raw === "college" || raw === "for-college" || raw === "student") setSelectedStage("student");
+    else if (raw === "pro" || raw === "professional" || raw === "working_professional" || raw === "for-professionals") setSelectedStage("pro");
   }, [searchParams]);
 
   const activeStage = STAGE_CONFIGS[selectedStage];
   const IconComponent = activeStage.icon;
 
+  // Real age band strictly calculated from entered DOB
   const derivedAgeBand = dob ? calculateAgeBandFromDob(dob) : null;
   const isMinorBand = derivedAgeBand === "13-15" || derivedAgeBand === "16-18";
   const isUnder13 = derivedAgeBand === null && dob !== "";
+
+  // Check intent / actual-age mismatch
+  const isAgeMismatch = 
+    (intentParam === "working_professional" || intentParam === "for-professionals" || intentParam === "college" || selectedStage === "pro") && 
+    derivedAgeBand === "13-15";
+
+  // Log mismatch event asynchronously without blocking signup
+  useEffect(() => {
+    if (isAgeMismatch && !mismatchLogged) {
+      setMismatchLogged(true);
+      fetch("/api/performance/event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventType: "INTENT_AGE_MISMATCH",
+          source: "signup_flow",
+          title: "Signup Intent vs Real Age Mismatch",
+          metricsPayload: {
+            intent: intentParam,
+            derivedAgeBand,
+            timestamp: new Date().toISOString()
+          },
+          evidenceText: `User entered intent '${intentParam}' but verified DOB indicates '${derivedAgeBand}'. Seamlessly adapted to Junior track.`
+        })
+      }).catch((e) => console.warn("Mismatch log notice:", e));
+    }
+  }, [isAgeMismatch, mismatchLogged, intentParam, derivedAgeBand]);
+
+  // Tone adjustment helper
+  const getIntentGreeting = () => {
+    switch (intentParam) {
+      case "junior":
+      case "for-junior":
+        return "Welcome to EdWorld. Let's get your junior explorer profile set up.";
+      case "explorer":
+      case "for-explorer":
+        return "Welcome to EdWorld. Let's get your high school & pre-college profile set up.";
+      case "college":
+      case "for-college":
+        return "Welcome to EdWorld. Let's get your college profile set up.";
+      case "working_professional":
+      case "for-professionals":
+      case "pro":
+        return "Welcome to EdWorld. Let's get your professional career profile set up.";
+      default:
+        return "Create your EdWorld account to start practicing and building your career.";
+    }
+  };
 
   // Password strength calculations
   const hasMinLen = password.length >= 8;
@@ -184,7 +239,9 @@ function SignupForm() {
       return;
     }
 
-    if (selectedStage === "junior" && !guardianConsentAgreed) {
+    // If derived age is 13-15 or junior, require guardian consent
+    const isJuniorAccount = derivedAgeBand === "13-15" || selectedStage === "junior";
+    if (isJuniorAccount && !guardianConsentAgreed) {
       setError("Guardian consent is required for junior learners under 16 per DPDP Act regulations.");
       return;
     }
@@ -196,642 +253,294 @@ function SignupForm() {
 
     setLoading(true);
     try {
-      const stageEnum = activeStage.stageEnum;
-      const gradeLevel = selectedStage === "junior" ? juniorGrade : selectedStage === "student" ? `${degree} - ${currentYear}` : "Working Professional";
-      
+      // Real stage is derived from DOB for minors, or selected stage for adults (18+)
+      const stageEnum: CareerStage = 
+        derivedAgeBand === "13-15"
+          ? "JUNIOR"
+          : derivedAgeBand === "16-18"
+          ? "STUDENT"
+          : activeStage.stageEnum;
+
+      const gradeLevel = 
+        stageEnum === "JUNIOR" 
+          ? juniorGrade 
+          : stageEnum === "STUDENT" 
+          ? `${degree} - ${currentYear}` 
+          : "Working Professional";
+
       await signupWithEmail(name, email, password, dob, gradeLevel, phone, stageEnum);
 
-      if (selectedStage === "junior" && guardianName && guardianEmail) {
-        try {
-          await submitGuardianConsent(guardianName, guardianEmail, "parent");
-        } catch {
-          // Non-blocking for local dev
-        }
-      }
-
-      // Save custom stage profile data locally for seamless onboarding hydration
-      if (typeof window !== "undefined") {
-        const stageProfileData = {
-          stage: selectedStage,
-          schoolName: selectedStage === "junior" ? schoolName : undefined,
-          juniorGrade: selectedStage === "junior" ? juniorGrade : undefined,
-          collegeName: selectedStage === "student" ? collegeName : undefined,
-          degree: selectedStage === "student" ? degree : undefined,
-          branch: selectedStage === "student" ? branch : undefined,
-          gradYear: selectedStage === "student" ? gradYear : undefined,
-          careerInterests: selectedStage === "student" ? careerInterests : undefined,
-          github: selectedStage === "student" ? github : undefined,
-          linkedin: selectedStage === "student" ? linkedin : selectedStage === "pro" ? linkedin : undefined,
-          leetcode: selectedStage === "student" ? leetcode : undefined,
-          currentRole: selectedStage === "pro" ? currentRole : undefined,
-          experienceYears: selectedStage === "pro" ? experienceYears : undefined,
-          industry: selectedStage === "pro" ? industry : undefined,
-          coreSkills: selectedStage === "pro" ? coreSkills : undefined,
-          careerGoal: selectedStage === "pro" ? careerGoal : undefined,
-          portfolioUrl: selectedStage === "pro" ? portfolioUrl : undefined,
-          resumeUrl: selectedStage === "pro" ? resumeUrl : undefined,
-        };
-        localStorage.setItem("edworld_pending_stage_profile", JSON.stringify(stageProfileData));
+      if (guardianName && guardianEmail && isMinorBand) {
+        await submitGuardianConsent(guardianName, guardianEmail, "parent");
       }
 
       setSignupSuccess(true);
+      
+      // Route directly to the verified dashboard matching real account profile
       setTimeout(() => {
-        if (selectedStage === "junior") {
-          router.push("/onboarding/junior");
-        } else if (selectedStage === "pro") {
-          router.push("/onboarding/professional");
+        if (stageEnum === "JUNIOR") {
+          router.push("/student/junior/dashboard");
+        } else if (stageEnum === "STUDENT") {
+          router.push("/dashboard");
         } else {
-          router.push("/onboarding/student");
+          router.push("/career/dashboard");
         }
-      }, 1000);
+      }, 1500);
+
     } catch (err: any) {
-      setError(err?.message || "Failed to create account. Please verify your details.");
+      setError(err?.message || "Could not complete signup. Please try again or use another email.");
     } finally {
       setLoading(false);
     }
   };
 
-  if (signupSuccess) {
-    return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4 sm:p-6 bg-paper text-ink">
-        <div className="max-w-md w-full bg-paper-raised rounded-3xl border border-line shadow-sm p-8 space-y-6 text-center animate-in fade-in duration-200">
-          <div className="w-16 h-16 rounded-2xl bg-forest/10 border border-forest/20 text-forest flex items-center justify-center mx-auto shadow-sm">
-            <MailCheck className="w-8 h-8" />
-          </div>
-          <div className="space-y-2">
-            <h1 className="text-2xl sm:text-3xl font-bold font-display text-ink tracking-tight">Account Created!</h1>
-            <p className="text-sm text-ink-soft">
-              Welcome to Edworld Co, <strong className="text-ink">{name}</strong>. Initializing your {activeStage.badge} workspace.
-            </p>
-          </div>
-          <div className="p-4 rounded-2xl bg-paper-soft border border-line text-xs text-ink-muted font-mono flex items-center justify-center gap-2">
-            <Sparkles className="w-4 h-4 text-forest animate-spin" />
-            <span>Redirecting to personalized onboarding...</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-paper text-ink">
-      <div className="max-w-xl w-full bg-paper-raised rounded-3xl border border-line shadow-sm p-6 sm:p-8 space-y-6 animate-in fade-in duration-200 my-8">
-        {/* Header */}
-        <div className="text-center space-y-3">
-          <div className="flex justify-center">
-            <EdworldLogo size="md" showText={false} />
-          </div>
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mb-2 border transition-colors duration-200" style={{
-              backgroundColor: selectedStage === "junior" ? "rgba(139, 92, 246, 0.1)" : selectedStage === "pro" ? "rgba(245, 158, 11, 0.1)" : "rgba(16, 185, 129, 0.1)",
-              borderColor: selectedStage === "junior" ? "rgba(139, 92, 246, 0.3)" : selectedStage === "pro" ? "rgba(245, 158, 11, 0.3)" : "rgba(16, 185, 129, 0.3)",
-              color: selectedStage === "junior" ? "#7c3aed" : selectedStage === "pro" ? "#b45309" : "#059669"
-            }}>
-              <IconComponent className="w-3.5 h-3.5" />
-              <span>{activeStage.badge}</span>
+    <div className="min-h-screen bg-[#F4F6FB] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans selection:bg-[#D7FC51] selection:text-black">
+      <div className="sm:mx-auto sm:w-full sm:max-w-xl space-y-4 text-center">
+        <Link href="/" className="inline-block transition-transform hover:scale-105 active:scale-95">
+          <EdworldLogo />
+        </Link>
+        <h2 className="text-2xl sm:text-3xl font-black font-display text-[#13141B] tracking-tight">
+          {activeStage.title}
+        </h2>
+        <p className="text-xs sm:text-sm text-[#5E6573] max-w-lg mx-auto">
+          {getIntentGreeting()}
+        </p>
+      </div>
+
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-xl">
+        <div className="card-quixel rounded-3xl p-6 sm:p-8 bg-white border border-[#E8ECF2] shadow-xl space-y-6">
+          
+          {/* Stage Default Switcher (Non-binding, editable by user) */}
+          <div className="space-y-2">
+            <label className="block text-[11px] font-bold text-[#8E95A5] uppercase tracking-wider">
+              Selected Pathway (Suggested & Editable)
+            </label>
+            <div className="grid grid-cols-3 gap-2 p-1.5 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2]">
+              {(["junior", "student", "pro"] as StageKey[]).map((stg) => {
+                const conf = STAGE_CONFIGS[stg];
+                const isCurrent = selectedStage === stg;
+                return (
+                  <button
+                    key={stg}
+                    type="button"
+                    onClick={() => setSelectedStage(stg)}
+                    className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex flex-col sm:flex-row items-center justify-center gap-1.5 cursor-pointer ${
+                      isCurrent
+                        ? "bg-[#13141B] text-white shadow-sm"
+                        : "text-[#5E6573] hover:text-[#13141B] hover:bg-white/60"
+                    }`}
+                  >
+                    <span>{conf.badge}</span>
+                  </button>
+                );
+              })}
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold font-display text-ink tracking-tight">{activeStage.title}</h1>
-            <p className="text-xs sm:text-sm text-ink-soft mt-1">{activeStage.subtitle}</p>
           </div>
-        </div>
 
-        {/* Stage Switcher Selector */}
-        <div className="space-y-1.5">
-          <label className="block text-[11px] font-bold text-ink-muted uppercase tracking-wider text-center">
-            Select Your Track / Stage
-          </label>
-          <div className="grid grid-cols-3 gap-1.5 p-1.5 bg-paper-soft rounded-2xl border border-line">
-            {(Object.keys(STAGE_CONFIGS) as StageKey[]).map((key) => {
-              const cfg = STAGE_CONFIGS[key];
-              const isSelected = selectedStage === key;
-              const StageIcon = cfg.icon;
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setSelectedStage(key)}
-                  className={`flex flex-col sm:flex-row items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-bold transition-all ${
-                    isSelected
-                      ? key === "junior"
-                        ? "bg-violet-600 text-white shadow-sm"
-                        : key === "pro"
-                        ? "bg-amber-600 text-white shadow-sm"
-                        : "bg-emerald-600 text-white shadow-sm"
-                      : "text-ink-soft hover:text-ink hover:bg-paper"
-                  }`}
-                >
-                  <StageIcon className="w-4 h-4 shrink-0" />
-                  <span className="truncate">{key === "junior" ? "Junior School" : key === "student" ? "Student" : "Professional"}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {error && (
-          <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Section 1: Credentials */}
-          <div className="space-y-3">
-            <div className="text-xs font-bold text-ink uppercase tracking-wider pb-1 border-b border-line flex items-center gap-1.5">
-              <User className="w-3.5 h-3.5 text-forest" />
-              <span>Basic Account Details</span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-ink">
-                  Full Name <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Alex Morgan"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-line text-sm text-ink bg-paper placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-forest transition-all"
-                />
+          {/* Friendly Intent / Real Age Mismatch Message */}
+          {isAgeMismatch && (
+            <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs space-y-1.5 animate-in fade-in">
+              <div className="flex items-center gap-2 font-bold text-indigo-950">
+                <Info className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                <span>Notice on pathway selection</span>
               </div>
+              <p className="text-indigo-800 leading-relaxed">
+                Looks like our Working Professional tools aren&apos;t quite the right fit yet — here&apos;s what&apos;s actually available for you right now in our Junior Discovery Lab, and it&apos;ll grow with you!
+              </p>
+            </div>
+          )}
 
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-ink">
-                  Email Address <span className="text-rose-500">*</span>
+          {error && (
+            <div className="p-4 rounded-2xl bg-[#FFEFEA] border border-[#FF7A50]/20 text-[#FF7A50] text-xs flex items-start gap-3 animate-in fade-in">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {signupSuccess && (
+            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-3 animate-in fade-in">
+              <ShieldCheck className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+              <span>Account created successfully! Preparing your personalized workspace...</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            
+            {/* Full Name */}
+            <div>
+              <label className="block text-xs font-bold text-[#13141B] uppercase tracking-wider mb-1.5">
+                Full Name
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                placeholder="Alex Morgan"
+                className="w-full px-4 py-3 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] text-xs text-[#13141B] focus:outline-none focus:border-[#13141B] transition-colors"
+              />
+            </div>
+
+            {/* Email & Phone Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-[#13141B] uppercase tracking-wider mb-1.5">
+                  Email Address
                 </label>
                 <input
                   type="email"
-                  required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-line text-sm text-ink bg-paper placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-forest transition-all"
+                  required
+                  placeholder="alex@example.com"
+                  className="w-full px-4 py-3 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] text-xs text-[#13141B] focus:outline-none focus:border-[#13141B] transition-colors"
                 />
               </div>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <label className="block text-xs font-bold text-ink">
-                    Phone Number <span className="text-rose-500">*</span>
-                  </label>
-                  <span className="text-[10px] text-forest font-bold bg-forest/10 px-1.5 py-0.5 rounded border border-forest/20">
-                    No OTP Required
-                  </span>
-                </div>
+              <div>
+                <label className="block text-xs font-bold text-[#13141B] uppercase tracking-wider mb-1.5">
+                  Phone Number
+                </label>
                 <input
                   type="tel"
-                  required
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+91 98765 43210"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-line text-sm text-ink bg-paper placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-forest transition-all"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <label className="block text-xs font-bold text-ink">
-                    Date of Birth <span className="text-rose-500">*</span>
-                  </label>
-                  <span className="text-[10px] text-ink-muted">Safety</span>
-                </div>
-                <input
-                  type="date"
                   required
-                  value={dob}
-                  onChange={(e) => setDob(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-line text-sm text-ink bg-paper focus:outline-none focus:ring-2 focus:ring-forest transition-all"
+                  placeholder="+91 98765 43210"
+                  className="w-full px-4 py-3 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] text-xs text-[#13141B] focus:outline-none focus:border-[#13141B] transition-colors"
                 />
               </div>
             </div>
 
-            <div className="space-y-1">
-              <label className="block text-xs font-bold text-ink">
-                Password <span className="text-rose-500">*</span>
+            {/* DOB (Strict verification) */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold text-[#13141B] uppercase tracking-wider">
+                  Date of Birth
+                </label>
+                {derivedAgeBand && (
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#EDE8FD] text-[#7B57FF]">
+                    Age Band: {derivedAgeBand}
+                  </span>
+                )}
+              </div>
+              <input
+                type="date"
+                value={dob}
+                onChange={(e) => setDob(e.target.value)}
+                required
+                className="w-full px-4 py-3 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] text-xs text-[#13141B] focus:outline-none focus:border-[#13141B] transition-colors"
+              />
+              <p className="text-[11px] text-[#8E95A5] mt-1">
+                Required for safety compliance. Used strictly to configure age-appropriate features.
+              </p>
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-xs font-bold text-[#13141B] uppercase tracking-wider mb-1.5">
+                Password
               </label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
-                  required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full px-3.5 py-2.5 pr-10 rounded-xl border border-line text-sm text-ink bg-paper placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-forest transition-all"
+                  required
+                  placeholder="Min. 8 characters with letters & numbers"
+                  className="w-full px-4 py-3 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] text-xs text-[#13141B] focus:outline-none focus:border-[#13141B] transition-colors pr-10"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink transition-colors p-1"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#8E95A5] hover:text-[#13141B]"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              {password && (
-                <div className="space-y-1 pt-1">
-                  <div className="flex gap-1.5 h-1">
-                    <div className={`h-full flex-1 rounded-full ${hasMinLen ? "bg-forest" : "bg-line"}`} />
-                    <div className={`h-full flex-1 rounded-full ${hasNumber ? "bg-forest" : "bg-line"}`} />
-                    <div className={`h-full flex-1 rounded-full ${hasLetter ? "bg-forest" : "bg-line"}`} />
-                  </div>
-                  <div className="flex justify-between text-[10px] text-ink-soft">
-                    <span className={hasMinLen ? "text-forest font-semibold" : "text-ink-muted"}>✓ 8+ chars</span>
-                    <span className={hasNumber ? "text-forest font-semibold" : "text-ink-muted"}>✓ Number</span>
-                    <span className={hasLetter ? "text-forest font-semibold" : "text-ink-muted"}>✓ Letter</span>
-                  </div>
+            </div>
+
+            {/* Junior Guardian Consent Section */}
+            {(selectedStage === "junior" || derivedAgeBand === "13-15") && (
+              <div className="p-4 rounded-2xl bg-purple-50/70 border border-purple-200/80 space-y-3">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-purple-700" />
+                  <span className="text-xs font-bold text-purple-900">
+                    Guardian Consent (DPDP Act Compliance)
+                  </span>
                 </div>
-              )}
-            </div>
-          </div>
-
-          {/* Under 13 Warning */}
-          {isUnder13 && (
-            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs space-y-1">
-              <div className="flex items-center gap-1.5 font-bold">
-                <AlertTriangle className="w-4 h-4 text-rose-600" />
-                <span>Under 13 Policy Restriction</span>
-              </div>
-              <p className="text-[11px] leading-relaxed">
-                Edworld Co is designed for learners aged 13 and above. Registration is not permitted for users under 13 per DPDP Act and COPPA regulations.
-              </p>
-            </div>
-          )}
-
-          {/* Age-Band Inference Feedback */}
-          {derivedAgeBand && !isUnder13 && (
-            <div
-              className={`p-3 rounded-xl border text-xs space-y-1 ${
-                isMinorBand
-                  ? "bg-violet-50/50 border-violet-200 text-ink"
-                  : "bg-forest/10 border-forest/20 text-ink"
-              }`}
-            >
-              <div className="flex items-center gap-1.5 font-bold">
-                {isMinorBand ? (
-                  <Lock className="w-3.5 h-3.5 text-violet-600" />
-                ) : (
-                  <ShieldCheck className="w-3.5 h-3.5 text-forest" />
-                )}
-                <span>Calibrated Age Band: {derivedAgeBand}</span>
-              </div>
-              <p className="text-[11px] leading-relaxed text-ink-soft">
-                {isMinorBand
-                  ? "Minor safety protections active: Public recruiter discovery is restricted per DPDP Act."
-                  : "Career Track active: Full access to ATS benchmarks, mock interviews, and skill certifications."}
-              </p>
-            </div>
-          )}
-
-          {/* Section 2: Stage-Adaptive Specific Fields */}
-          {selectedStage === "junior" && (
-            <div className="p-4 rounded-2xl bg-violet-50/40 border border-violet-200 space-y-3 animate-in fade-in duration-150">
-              <div className="text-xs font-bold text-violet-900 uppercase tracking-wider flex items-center gap-1.5">
-                <Compass className="w-3.5 h-3.5 text-violet-600" />
-                <span>Junior School Details (Ages 13–15)</span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="block text-xs font-bold text-ink">School Name</label>
+                <p className="text-[11px] text-purple-800 leading-relaxed">
+                  For students under 16, a parent or legal guardian must grant consent for educational access.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <input
                     type="text"
-                    value={schoolName}
-                    onChange={(e) => setSchoolName(e.target.value)}
-                    placeholder="e.g. St. Xavier's High School"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-line text-sm text-ink bg-paper placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
+                    value={guardianName}
+                    onChange={(e) => setGuardianName(e.target.value)}
+                    placeholder="Parent / Guardian Name"
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-purple-200 text-xs text-[#13141B]"
+                  />
+                  <input
+                    type="email"
+                    value={guardianEmail}
+                    onChange={(e) => setGuardianEmail(e.target.value)}
+                    placeholder="Parent / Guardian Email"
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-purple-200 text-xs text-[#13141B]"
                   />
                 </div>
-
-                <div className="space-y-1">
-                  <label className="block text-xs font-bold text-ink">Class / Grade</label>
-                  <select
-                    value={juniorGrade}
-                    onChange={(e) => setJuniorGrade(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-line text-sm text-ink bg-paper focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
-                  >
-                    {JUNIOR_GRADES.map((g) => (
-                      <option key={g} value={g}>{g}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Guardian Details & Consent */}
-              <div className="pt-2 border-t border-violet-200/60 space-y-3">
-                <div className="text-xs font-bold text-violet-900 flex items-center gap-1.5">
-                  <Shield className="w-3.5 h-3.5 text-violet-600" />
-                  <span>Guardian Consent (DPDP Act Compliance)</span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="block text-xs font-bold text-ink">Guardian Name</label>
-                    <input
-                      type="text"
-                      value={guardianName}
-                      onChange={(e) => setGuardianName(e.target.value)}
-                      placeholder="Parent / Legal Guardian Name"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-line text-sm text-ink bg-paper placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="block text-xs font-bold text-ink">Guardian Email</label>
-                    <input
-                      type="email"
-                      value={guardianEmail}
-                      onChange={(e) => setGuardianEmail(e.target.value)}
-                      placeholder="guardian@example.com"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-line text-sm text-ink bg-paper placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
-                    />
-                  </div>
-                </div>
-
-                <label className="flex items-start gap-2.5 pt-1 cursor-pointer select-none text-xs text-ink-soft">
+                <label className="flex items-start gap-2 text-[11px] text-purple-900 cursor-pointer pt-1">
                   <input
                     type="checkbox"
                     checked={guardianConsentAgreed}
                     onChange={(e) => setGuardianConsentAgreed(e.target.checked)}
-                    className="mt-0.5 rounded border-line text-violet-600 focus:ring-violet-500"
+                    className="mt-0.5 rounded border-purple-300"
                   />
-                  <span className="leading-snug text-ink">
-                    I confirm that I am a parent/guardian or have obtained guardian consent to create this learning account under India DPDP Act & COPPA guidelines.
-                  </span>
+                  <span>I confirm my parent or legal guardian approves this educational account.</span>
                 </label>
               </div>
-            </div>
-          )}
+            )}
 
-          {selectedStage === "student" && (
-            <div className="p-4 rounded-2xl bg-emerald-50/40 border border-emerald-200 space-y-3 animate-in fade-in duration-150">
-              <div className="text-xs font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
-                <GraduationCap className="w-3.5 h-3.5 text-emerald-600" />
-                <span>College & Academic Details (Ages 16–18 • College)</span>
-              </div>
+            {/* Terms & Privacy */}
+            <label className="flex items-start gap-2.5 text-xs text-[#5E6573] cursor-pointer pt-2">
+              <input
+                type="checkbox"
+                checked={termsAgreed}
+                onChange={(e) => setTermsAgreed(e.target.checked)}
+                required
+                className="mt-0.5 rounded border-[#E8ECF2]"
+              />
+              <span>
+                I agree to the{" "}
+                <Link href="/terms" className="text-[#13141B] font-bold hover:underline" target="_blank">
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" className="text-[#13141B] font-bold hover:underline" target="_blank">
+                  Privacy Policy
+                </Link>.
+              </span>
+            </label>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="block text-xs font-bold text-ink">College / University</label>
-                  <input
-                    type="text"
-                    value={collegeName}
-                    onChange={(e) => setCollegeName(e.target.value)}
-                    placeholder="e.g. National Institute of Tech"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-line text-sm text-ink bg-paper placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
-                  />
-                </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3.5 rounded-2xl bg-[#13141B] hover:bg-[#2A2C38] disabled:opacity-50 text-white font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-md hover:scale-[1.01] active:scale-98 cursor-pointer mt-2"
+            >
+              <span>{loading ? "Creating Account..." : "Create Account & Get Started"}</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </form>
 
-                <div className="space-y-1">
-                  <label className="block text-xs font-bold text-ink">Degree Program</label>
-                  <select
-                    value={degree}
-                    onChange={(e) => setDegree(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-line text-sm text-ink bg-paper focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
-                  >
-                    {STUDENT_DEGREES.map((d) => (
-                      <option key={d} value={d}>{d}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="space-y-1 sm:col-span-1">
-                  <label className="block text-xs font-bold text-ink">Branch / Major</label>
-                  <input
-                    type="text"
-                    value={branch}
-                    onChange={(e) => setBranch(e.target.value)}
-                    placeholder="Computer Science, ECE..."
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-line text-sm text-ink bg-paper placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block text-xs font-bold text-ink">Current Year</label>
-                  <select
-                    value={currentYear}
-                    onChange={(e) => setCurrentYear(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-line text-sm text-ink bg-paper focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
-                  >
-                    {STUDENT_YEARS.map((y) => (
-                      <option key={y} value={y}>{y}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block text-xs font-bold text-ink">Graduation Year</label>
-                  <input
-                    type="number"
-                    value={gradYear}
-                    onChange={(e) => setGradYear(e.target.value)}
-                    placeholder="2027"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-line text-sm text-ink bg-paper focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-ink">Primary Career Interests</label>
-                <input
-                  type="text"
-                  value={careerInterests}
-                  onChange={(e) => setCareerInterests(e.target.value)}
-                  placeholder="e.g. Full-Stack Development, AI/ML, Cloud Engineering"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-line text-sm text-ink bg-paper placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
-                />
-              </div>
-
-              {/* Optional Links Accordion */}
-              <div className="pt-1">
-                <button
-                  type="button"
-                  onClick={() => setShowOptionalFields(!showOptionalFields)}
-                  className="text-xs font-bold text-emerald-800 flex items-center gap-1.5 hover:underline"
-                >
-                  <span>{showOptionalFields ? "Hide" : "Add"} Portfolio & Coding Links (Optional)</span>
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showOptionalFields ? "rotate-180" : ""}`} />
-                </button>
-
-                {showOptionalFields && (
-                  <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-emerald-200/60">
-                    <input
-                      type="url"
-                      value={github}
-                      onChange={(e) => setGithub(e.target.value)}
-                      placeholder="GitHub URL"
-                      className="px-3 py-2 rounded-xl border border-line text-xs text-ink bg-paper focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                    />
-                    <input
-                      type="url"
-                      value={linkedin}
-                      onChange={(e) => setLinkedin(e.target.value)}
-                      placeholder="LinkedIn URL"
-                      className="px-3 py-2 rounded-xl border border-line text-xs text-ink bg-paper focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                    />
-                    <input
-                      type="url"
-                      value={leetcode}
-                      onChange={(e) => setLeetcode(e.target.value)}
-                      placeholder="LeetCode / Codeforces"
-                      className="px-3 py-2 rounded-xl border border-line text-xs text-ink bg-paper focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {selectedStage === "pro" && (
-            <div className="p-4 rounded-2xl bg-amber-50/40 border border-amber-200 space-y-3 animate-in fade-in duration-150">
-              <div className="text-xs font-bold text-amber-900 uppercase tracking-wider flex items-center gap-1.5">
-                <Briefcase className="w-3.5 h-3.5 text-amber-600" />
-                <span>Professional Career OS (Ages 18+ • Career)</span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="block text-xs font-bold text-ink">Current Job Title / Role</label>
-                  <input
-                    type="text"
-                    value={currentRole}
-                    onChange={(e) => setCurrentRole(e.target.value)}
-                    placeholder="e.g. Senior Software Engineer"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-line text-sm text-ink bg-paper placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block text-xs font-bold text-ink">Experience Level</label>
-                  <select
-                    value={experienceYears}
-                    onChange={(e) => setExperienceYears(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-line text-sm text-ink bg-paper focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
-                  >
-                    {PRO_EXPERIENCE.map((exp) => (
-                      <option key={exp} value={exp}>{exp}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="block text-xs font-bold text-ink">Industry / Domain</label>
-                  <select
-                    value={industry}
-                    onChange={(e) => setIndustry(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-line text-sm text-ink bg-paper focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
-                  >
-                    {PRO_INDUSTRIES.map((ind) => (
-                      <option key={ind} value={ind}>{ind}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block text-xs font-bold text-ink">Core Skills</label>
-                  <input
-                    type="text"
-                    value={coreSkills}
-                    onChange={(e) => setCoreSkills(e.target.value)}
-                    placeholder="e.g. React, Go, System Design, AWS"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-line text-sm text-ink bg-paper placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-ink">Immediate Career Goal</label>
-                <input
-                  type="text"
-                  value={careerGoal}
-                  onChange={(e) => setCareerGoal(e.target.value)}
-                  placeholder="e.g. FAANG Interview Prep, Transition to Engineering Lead, Remote Roles"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-line text-sm text-ink bg-paper placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
-                />
-              </div>
-
-              {/* Optional Links Accordion */}
-              <div className="pt-1">
-                <button
-                  type="button"
-                  onClick={() => setShowOptionalFields(!showOptionalFields)}
-                  className="text-xs font-bold text-amber-900 flex items-center gap-1.5 hover:underline"
-                >
-                  <span>{showOptionalFields ? "Hide" : "Add"} Portfolio & Resume Links (Optional)</span>
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showOptionalFields ? "rotate-180" : ""}`} />
-                </button>
-
-                {showOptionalFields && (
-                  <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-amber-200/60">
-                    <input
-                      type="url"
-                      value={portfolioUrl}
-                      onChange={(e) => setPortfolioUrl(e.target.value)}
-                      placeholder="Portfolio / Website URL"
-                      className="px-3 py-2 rounded-xl border border-line text-xs text-ink bg-paper focus:outline-none focus:ring-1 focus:ring-amber-500"
-                    />
-                    <input
-                      type="url"
-                      value={resumeUrl}
-                      onChange={(e) => setResumeUrl(e.target.value)}
-                      placeholder="Resume / LinkedIn URL"
-                      className="px-3 py-2 rounded-xl border border-line text-xs text-ink bg-paper focus:outline-none focus:ring-1 focus:ring-amber-500"
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Terms & Privacy Consent */}
-          <label className="flex items-start gap-2.5 pt-1 cursor-pointer select-none text-xs text-ink-soft">
-            <input
-              type="checkbox"
-              checked={termsAgreed}
-              onChange={(e) => setTermsAgreed(e.target.checked)}
-              className="mt-0.5 rounded border-line text-forest focus:ring-forest"
-            />
-            <span className="leading-snug">
-              I agree to the{" "}
-              <Link href="/terms" className="text-forest font-bold underline">Terms of Service</Link> and{" "}
-              <Link href="/privacy" className="text-forest font-bold underline">Privacy Policy</Link> (v2026.1).
-            </span>
-          </label>
-
-          <Button
-            type="submit"
-            disabled={loading || isUnder13}
-            variant="primary"
-            size="md"
-            className="w-full"
-            icon={<ArrowRight className="w-4 h-4" />}
-          >
-            <span>
-              {loading
-                ? "Creating Account..."
-                : selectedStage === "junior"
-                ? "Start Junior Learning Track →"
-                : selectedStage === "pro"
-                ? "Build My Career OS →"
-                : "Build Student Profile →"}
-            </span>
-          </Button>
-        </form>
-
-        <p className="text-center text-xs text-ink-soft">
-          Already have an account?{" "}
-          <Link href="/auth/login" className="text-forest font-bold hover:underline">
-            Sign In &rarr;
-          </Link>
-        </p>
+          <div className="pt-4 border-t border-[#E8ECF2] text-center">
+            <p className="text-xs text-[#5E6573]">
+              Already have an account?{" "}
+              <Link href="/login" className="font-bold text-[#13141B] hover:underline">
+                Sign in
+              </Link>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -839,7 +548,7 @@ function SignupForm() {
 
 export default function SignupPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-xs text-ink-muted">Loading signup portal...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-[#F4F6FB]" />}>
       <SignupForm />
     </Suspense>
   );
