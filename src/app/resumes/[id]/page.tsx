@@ -258,7 +258,8 @@ export default function ResumeStudioPage() {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Link
-              href="/resumes"
+              href="/dashboard"
+              title="Back to Dashboard"
               className="p-2 rounded-xl border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />

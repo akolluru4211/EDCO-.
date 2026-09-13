@@ -1,221 +1,215 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { Resume, ResumeTemplateId } from "@/lib/types";
+import { Resume, ResumeContent, ResumeTemplateId } from "@/lib/types";
 import { DEFAULT_RESUME_CONTENT } from "@/lib/mock-data";
 import { supabase } from "@/lib/supabase";
+import { db } from "@/lib/firebase";
+import { doc, setDoc } from "firebase/firestore";
+import ResumeBuilderForm from "@/components/resume/ResumeBuilderForm";
+import ResumePreview from "@/components/resume/ResumePreview";
+import JDMatchModal from "@/components/resume/JDMatchModal";
+import PdfExportButton from "@/components/resume/PdfExportButton";
 import { 
-  FileText, 
-  Plus, 
-  Copy, 
-  Trash2, 
-  ExternalLink, 
+  ArrowLeft, 
   Sparkles, 
-  Clock, 
-  Layout, 
-  CheckCircle2,
+  Check, 
+  Eye, 
+  FileEdit,
   Lock,
   ArrowRight,
-  Compass,
-  AlertCircle
+  Info,
+  X
 } from "lucide-react";
-import EdworldLogo from "@/components/ui/EdworldLogo";
 import AuthGuard from "@/components/auth/AuthGuard";
-import { getResumeProfileDefaults, normalizeDisplayName } from "@/lib/services/user-profile";
+import { getResumeProfileDefaults } from "@/lib/services/user-profile";
 import UserGreeting from "@/components/ui/UserGreeting";
 
 export const dynamic = "force-dynamic";
 
-export default function ResumesListPage() {
+export default function ResumesDirectEditorPage() {
+  const searchParams = useSearchParams();
   const router = useRouter();
   const { user, profile, loading } = useAuth();
-  const [resumes, setResumes] = useState<Resume[]>([]);
-  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const isNewQuery = searchParams.get("isNew") === "true";
 
   // Junior Track Gating (13-15 years)
   const isJuniorTrack = user?.ageBand === "13-15";
 
+  const [resume, setResume] = useState<Resume | null>(null);
+  const [activeTemplate, setActiveTemplate] = useState<ResumeTemplateId>("classic");
+  const [isJDModalOpen, setIsJDModalOpen] = useState(false);
+  const [mobileTab, setMobileTab] = useState<"edit" | "preview">("edit");
+  const [savedStatus, setSavedStatus] = useState<string>("Saved");
+  const [showPreFillBanner, setShowPreFillBanner] = useState(isNewQuery);
+
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     if (!user || isJuniorTrack) {
-      setResumes([]);
+      setResume(null);
       return;
     }
 
-    const loadUserResumes = async () => {
-      // 1. Fetch from Supabase
+    const loadPrimaryResume = async () => {
+      // 1. Fetch primary/most recent resume from Supabase
       try {
         const { data, error } = await supabase
           .from("resumes")
           .select("*")
-          .eq("user_id", user.uid);
+          .eq("user_id", user.uid)
+          .order("updated_at", { ascending: false })
+          .limit(1);
 
         if (data && data.length > 0) {
-          const list: Resume[] = data.map((d) => ({
-            id: d.id,
-            userId: d.user_id,
-            title: d.title,
-            templateId: "classic",
-            content: d.content || DEFAULT_RESUME_CONTENT,
-            createdAt: d.created_at,
-            updatedAt: d.updated_at,
-          }));
-          setResumes(list);
-          localStorage.setItem(`edworld_${user.uid}_resumes`, JSON.stringify(list));
+          const item = data[0];
+          const loaded: Resume = {
+            id: item.id,
+            userId: item.user_id,
+            title: item.title || "ATS Master Resume",
+            templateId: (item.template_id as ResumeTemplateId) || "classic",
+            content: item.content || DEFAULT_RESUME_CONTENT,
+            createdAt: item.created_at,
+            updatedAt: item.updated_at,
+          };
+          setResume(loaded);
+          setActiveTemplate(loaded.templateId || "classic");
+          localStorage.setItem(`edworld_${user.uid}_resumes`, JSON.stringify([loaded]));
           return;
         }
       } catch (err) {
-        console.warn("Supabase resume fetch note:", err);
+        console.warn("[Supabase Resume Fetch Note]:", err);
       }
 
-      // 2. Local storage or default fallback
+      // 2. Local storage cache fallback
       const cached = localStorage.getItem(`edworld_${user.uid}_resumes`);
       if (cached) {
         try {
           const parsed = JSON.parse(cached);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            setResumes(parsed);
+            setResume(parsed[0]);
+            setActiveTemplate(parsed[0].templateId || "classic");
             return;
           }
         } catch {}
       }
 
-      // 3. If no resumes exist, initialize one for this user
-      const initialSkills = profile?.interests?.map((i) => i.name) || ["TypeScript", "React", "Node.js", "REST APIs"];
-      const defaultContact = getResumeProfileDefaults(user, profile);
-      const defaultResume: Resume = {
-        id: `resume-${user.uid}-default`,
+      // 3. Fallback: Initialize master ATS resume prefilled with real user profile defaults
+      const interestSkills = profile?.interests?.map((i) => i.name) || ["TypeScript", "React", "Node.js", "REST APIs"];
+      const contactDefaults = getResumeProfileDefaults(user, profile);
+      const initialResume: Resume = {
+        id: `resume-${user.uid}-master`,
         userId: user.uid,
-        title: "Primary ATS Master Resume",
+        title: "ATS Master Resume",
         templateId: "classic",
         content: {
           ...DEFAULT_RESUME_CONTENT,
-          contact: defaultContact,
+          contact: contactDefaults,
           skills: {
             ...DEFAULT_RESUME_CONTENT.skills,
-            technical: initialSkills,
+            technical: interestSkills,
           },
         },
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
 
-      setResumes([defaultResume]);
-      localStorage.setItem(`edworld_${user.uid}_resumes`, JSON.stringify([defaultResume]));
+      try {
+        await supabase
+          .from("resumes")
+          .upsert({
+            id: initialResume.id,
+            user_id: user.uid,
+            title: initialResume.title,
+            template_id: initialResume.templateId,
+            content: initialResume.content,
+            created_at: initialResume.createdAt,
+            updated_at: initialResume.updatedAt,
+          });
+      } catch (e) {
+        console.warn("[Supabase Resume Init Note]:", e);
+      }
+
+      setResume(initialResume);
+      setActiveTemplate("classic");
+      localStorage.setItem(`edworld_${user.uid}_resumes`, JSON.stringify([initialResume]));
     };
 
-    loadUserResumes();
+    loadPrimaryResume();
   }, [user, profile, isJuniorTrack]);
 
-  const saveResumes = async (newList: Resume[]) => {
-    if (!user) return;
-    setResumes(newList);
-    localStorage.setItem(`edworld_${user.uid}_resumes`, JSON.stringify(newList));
-  };
-
-  const handleCreateNew = async () => {
-    if (!user) return;
-    const interestSkills = profile?.interests?.map((i) => i.name) || ["Python", "SQL", "Git"];
-    const contactDefaults = getResumeProfileDefaults(user, profile);
-    const newResume: Resume = {
-      id: `resume-${user.uid}-${Date.now()}`,
-      userId: user.uid,
-      title: `Resume Version #${resumes.length + 1}`,
-      templateId: "classic",
-      content: {
-        ...DEFAULT_RESUME_CONTENT,
-        contact: contactDefaults,
-        skills: {
-          ...DEFAULT_RESUME_CONTENT.skills,
-          technical: interestSkills,
-        },
-      },
-      createdAt: new Date().toISOString(),
+  const handleContentChange = (updatedContent: ResumeContent) => {
+    if (!resume || !user) return;
+    const updated: Resume = {
+      ...resume,
+      content: updatedContent,
+      templateId: activeTemplate,
       updatedAt: new Date().toISOString(),
     };
+    setResume(updated);
+    setSavedStatus("Saving...");
 
-    try {
-      await supabase
-        .from("resumes")
-        .insert({
-          id: newResume.id,
+    // Debounced autosave (1000ms) to Supabase + local storage
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(async () => {
+      // 1. Update local storage
+      const cached = localStorage.getItem(`edworld_${user.uid}_resumes`);
+      let list: Resume[] = cached ? JSON.parse(cached) : [];
+      const index = list.findIndex((r) => r.id === resume.id);
+      if (index >= 0) {
+        list[index] = updated;
+      } else {
+        list = [updated, ...list];
+      }
+      localStorage.setItem(`edworld_${user.uid}_resumes`, JSON.stringify(list));
+
+      // 2. Persist to Supabase Relational Database
+      try {
+        await supabase.from("resumes").upsert({
+          id: resume.id,
           user_id: user.uid,
-          title: newResume.title,
-          content: newResume.content,
-          created_at: newResume.createdAt,
-          updated_at: newResume.updatedAt,
+          title: updated.title,
+          template_id: updated.templateId,
+          content: updated.content,
+          updated_at: new Date().toISOString(),
         });
-    } catch (err) {
-      console.warn("Supabase resume insert note:", err);
-    }
+      } catch (e) {
+        console.warn("[Supabase Resume Save Note]:", e);
+      }
 
-    const updated = [newResume, ...resumes];
-    await saveResumes(updated);
-    router.push(`/resumes/${newResume.id}`);
+      // 3. Persist to Firestore if available
+      if (db) {
+        try {
+          await setDoc(doc(db, "resumes", resume.id), updated, { merge: true });
+        } catch (err) {
+          console.warn("[Firestore Resume Autosave Note]:", err);
+        }
+      }
+
+      setSavedStatus("Saved");
+    }, 1000);
   };
 
-  const handleDuplicate = async (res: Resume, e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    if (!user) return;
-    const duplicated: Resume = {
-      ...res,
-      id: `resume-${user.uid}-${Date.now()}`,
-      userId: user.uid,
-      title: `${res.title} (Copy)`,
-      updatedAt: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
-    };
-
-    try {
-      await supabase
-        .from("resumes")
-        .insert({
-          id: duplicated.id,
-          user_id: user.uid,
-          title: duplicated.title,
-          content: duplicated.content,
-          created_at: duplicated.createdAt,
-          updated_at: duplicated.updatedAt,
-        });
-    } catch (err) {
-      console.warn("Supabase resume copy note:", err);
+  const handleTemplateChange = (tmpl: ResumeTemplateId) => {
+    setActiveTemplate(tmpl);
+    if (resume) {
+      const updated = { ...resume, templateId: tmpl };
+      setResume(updated);
+      handleContentChange(resume.content);
     }
-
-    const updated = [duplicated, ...resumes];
-    await saveResumes(updated);
   };
 
-  const handleDeleteClick = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setDeleteTargetId(id);
+  const handleTitleChange = (newTitle: string) => {
+    if (!resume) return;
+    const updated = { ...resume, title: newTitle };
+    setResume(updated);
+    handleContentChange(resume.content);
   };
 
-  const confirmDelete = async () => {
-    if (!deleteTargetId || !user) return;
-    if (resumes.length === 1) {
-      alert("You must keep at least one active resume draft.");
-      setDeleteTargetId(null);
-      return;
-    }
-
-    try {
-      await supabase
-        .from("resumes")
-        .delete()
-        .eq("id", deleteTargetId)
-        .eq("user_id", user.uid);
-    } catch (e) {
-      console.warn("Supabase resume delete note:", e);
-    }
-
-    const updated = resumes.filter((r) => r.id !== deleteTargetId);
-    await saveResumes(updated);
-    setDeleteTargetId(null);
-  };
-
-  // If user is in Junior Track (13-15), render Junior Guidance Gate
+  // Junior Track Gating (13-15 years)
   if (isJuniorTrack) {
     return (
       <AuthGuard>
@@ -246,134 +240,184 @@ export default function ResumesListPage() {
     );
   }
 
+  if (loading || !resume) {
+    return (
+      <AuthGuard>
+        <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-slate-50">
+          <div className="text-center space-y-3 font-mono text-xs text-slate-500">
+            <div className="w-6 h-6 border-2 border-slate-900 border-t-transparent rounded-full animate-spin mx-auto" />
+            <p>Loading ATS Builder Workspace...</p>
+          </div>
+        </div>
+      </AuthGuard>
+    );
+  }
+
   return (
     <AuthGuard>
-      <div className="min-h-[calc(100vh-5rem)] bg-[#F4F6FB] text-[#181920] pb-16">
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-8 animate-in fade-in duration-300">
-        
-        {/* Header */}
-        <div className="card-quixel p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E0FAF6] border border-[#00D2B4]/30 text-[#00D2B4] text-[10px] font-black uppercase tracking-wider mb-2">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>ATS Optimization Studio &bull; Single-Column Formats</span>
+      <div className="min-h-[calc(100vh-4rem)] bg-slate-100 flex flex-col">
+        {/* Top Action Bar */}
+        <header className="bg-white border-b border-slate-200 sticky top-16 z-30 px-4 sm:px-6 py-3 shadow-xs">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Link
+                href="/dashboard"
+                title="Back to Dashboard"
+                className="p-2 rounded-xl border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </Link>
+              <div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={resume.title}
+                    onChange={(e) => handleTitleChange(e.target.value)}
+                    className="font-bold text-slate-900 text-sm sm:text-base border-b border-transparent hover:border-slate-300 focus:border-slate-900 focus:outline-none bg-transparent px-1 py-0.5"
+                    aria-label="Resume Title"
+                  />
+                </div>
+                <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono pl-1">
+                  <span className="flex items-center gap-1">
+                    <Check className="w-3 h-3 text-emerald-500" />
+                    {savedStatus}
+                  </span>
+                  <span>&bull;</span>
+                  <span>ATS Optimized Single-Column</span>
+                </div>
+              </div>
             </div>
+
+            <div className="flex items-center flex-wrap gap-2.5">
+              {/* Template Selector */}
+              <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold">
+                {(["classic", "modern", "tech"] as ResumeTemplateId[]).map((tmpl) => (
+                  <button
+                    key={tmpl}
+                    onClick={() => handleTemplateChange(tmpl)}
+                    className={`px-3 py-1.5 rounded-lg uppercase tracking-wider text-[10px] font-mono transition-all ${
+                      activeTemplate === tmpl
+                        ? "bg-white text-slate-900 shadow-sm"
+                        : "text-slate-500 hover:text-slate-900"
+                    }`}
+                  >
+                    {tmpl}
+                  </button>
+                ))}
+              </div>
+
+              {/* AI JD-Match Button */}
+              <button
+                onClick={() => setIsJDModalOpen(true)}
+                className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-brand-300" />
+                <span>AI JD Match</span>
+              </button>
+
+              {/* PDF Export Button */}
+              <PdfExportButton
+                resumeContent={resume.content}
+                templateId={activeTemplate}
+                fileName={`${(resume.content.contact.fullName || "Resume").replace(/\s+/g, "_")}_ATS_Resume`}
+              />
+            </div>
+          </div>
+        </header>
+
+        {/* User Identity Greeting Context Sub-Bar */}
+        <div className="bg-white/80 backdrop-blur-xs border-b border-slate-200/60 px-4 sm:px-6 py-2.5">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
             <UserGreeting
               context="resume"
-              subtitle="Create and tailor job-specific single-column resumes designed to pass Applicant Tracking Systems."
+              subtitle="All contact details & skills sync seamlessly with your verified profile."
+              className="text-xs"
             />
+            <div className="flex items-center gap-2 text-[11px] font-mono text-slate-500 shrink-0">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Live ATS Studio Active</span>
+            </div>
           </div>
+        </div>
 
+        {/* Pre-fill Alert Banner for New Resumes */}
+        {showPreFillBanner && (
+          <div className="bg-slate-900 text-white px-4 py-2.5 text-xs flex items-center justify-between border-b border-slate-800">
+            <div className="flex items-center gap-2 max-w-4xl mx-auto flex-1">
+              <Info className="w-4 h-4 text-brand-300 shrink-0" />
+              <span>
+                We&apos;ve pre-filled your contact info and starting skills from your profile — feel free to edit or add more.
+              </span>
+            </div>
+            <button
+              onClick={() => setShowPreFillBanner(false)}
+              className="p-1 text-slate-400 hover:text-white cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        {/* Mobile Tab Toggle */}
+        <div className="md:hidden flex border-b border-slate-200 bg-white">
           <button
-            onClick={handleCreateNew}
-            className="px-6 py-3.5 rounded-2xl bg-[#13141B] hover:bg-[#252632] text-white text-xs font-bold uppercase tracking-wider shadow-md hover:scale-105 transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+            onClick={() => setMobileTab("edit")}
+            className={`flex-1 py-2.5 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 ${
+              mobileTab === "edit"
+                ? "border-b-2 border-slate-900 text-slate-900"
+                : "text-slate-500"
+            }`}
           >
-            <Plus className="w-4 h-4 text-[#D7FC51]" />
-            <span>Create New Resume</span>
+            <FileEdit className="w-3.5 h-3.5" />
+            <span>Editor</span>
+          </button>
+          <button
+            onClick={() => setMobileTab("preview")}
+            className={`flex-1 py-2.5 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 ${
+              mobileTab === "preview"
+                ? "border-b-2 border-slate-900 text-slate-900"
+                : "text-slate-500"
+            }`}
+          >
+            <Eye className="w-3.5 h-3.5" />
+            <span>Live Preview</span>
           </button>
         </div>
 
-        {/* Resumes Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {resumes.map((resume) => {
-            const expCount = resume.content?.experience?.length || 0;
-            const skillCount =
-              (resume.content?.skills?.technical?.length || 0) +
-              (resume.content?.skills?.tools?.length || 0);
+        {/* Main Studio Grid */}
+        <div className="max-w-7xl mx-auto w-full flex-1 p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Form Column */}
+          <div className={`lg:col-span-6 w-full ${mobileTab === "preview" ? "hidden md:block" : "block"}`}>
+            <ResumeBuilderForm
+              content={resume.content}
+              onChange={handleContentChange}
+            />
+          </div>
 
-            return (
-              <div
-                key={resume.id}
-                className="card-quixel card-quixel-interactive p-6 flex flex-col justify-between space-y-5 group"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="px-3 py-1 rounded-full bg-[#EDE8FD] text-[#7B57FF] text-[10px] font-mono font-black uppercase border border-[#7B57FF]/30">
-                      {resume.templateId ? resume.templateId.toUpperCase() : "CLASSIC"} ATS
-                    </span>
-                    <span className="text-[10px] text-[#8E95A5] font-mono flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {new Date(resume.updatedAt).toLocaleDateString()}
-                    </span>
-                  </div>
-
-                  <div>
-                    <h3 className="font-black text-[#181920] text-lg line-clamp-1 group-hover:text-[#7B57FF] transition-colors">
-                      {resume.title}
-                    </h3>
-                    <p className="text-xs text-[#767E94] mt-0.5">
-                      {resume.content?.contact?.fullName || "Candidate"} &bull; {resume.content?.contact?.email || ""}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-4 text-xs text-[#767E94] pt-2 border-t border-[#F0F2F6] font-mono text-[11px]">
-                    <span>{expCount} Experiences</span>
-                    <span>&bull;</span>
-                    <span>{skillCount} Skills</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between pt-3 border-t border-[#F0F2F6]">
-                  <div className="flex items-center gap-1">
-                    <button
-                      title="Duplicate Resume"
-                      onClick={() => handleDuplicate(resume)}
-                      className="p-2 rounded-xl text-[#8E95A5] hover:text-[#181920] hover:bg-[#F4F6FB] transition-colors cursor-pointer"
-                    >
-                      <Copy className="w-4 h-4" />
-                    </button>
-                    <button
-                      title="Delete Resume"
-                      onClick={() => setDeleteTargetId(resume.id)}
-                      className="p-2 rounded-xl text-[#8E95A5] hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  <Link
-                    href={`/resumes/${resume.id}`}
-                    className="px-4 py-2 rounded-2xl bg-[#13141B] hover:bg-[#252632] text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm"
-                  >
-                    <span>Open Editor</span>
-                    <ExternalLink className="w-3.5 h-3.5 text-[#D7FC51]" />
-                  </Link>
-                </div>
+          {/* Live Preview Column */}
+          <div className={`lg:col-span-6 w-full sticky top-36 ${mobileTab === "edit" ? "hidden md:block" : "block"}`}>
+            <div className="bg-slate-200/80 p-4 sm:p-6 rounded-3xl border border-slate-300/80 shadow-inner overflow-hidden">
+              <div className="flex items-center justify-between mb-3 text-[11px] font-mono text-slate-500 px-1">
+                <span>ATS Vector Preview &bull; {activeTemplate.toUpperCase()}</span>
+                <span>100% Text Selectable</span>
               </div>
-            );
-          })}
-        </div>
-
-        {/* Delete Confirmation Modal */}
-        {deleteTargetId && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#13141B]/60 backdrop-blur-sm animate-in fade-in">
-            <div className="max-w-sm w-full bg-white rounded-4xl p-6 sm:p-8 space-y-4 shadow-2xl border border-[#E8ECF2] text-center">
-              <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto">
-                <Trash2 className="w-6 h-6" />
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-xl font-black text-[#181920]">Delete this resume version?</h3>
-                <p className="text-xs text-[#767E94]">This action cannot be undone.</p>
-              </div>
-
-              <div className="flex items-center gap-3 pt-2">
-                <button
-                  onClick={() => setDeleteTargetId(null)}
-                  className="flex-1 py-3 rounded-2xl border border-[#E8ECF2] bg-[#F4F6FB] text-[#181920] text-xs font-bold hover:bg-[#E8ECF2] transition-all cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={confirmDelete}
-                  className="flex-1 py-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
-                >
-                  Delete
-                </button>
+              <div className="shadow-2xl rounded-lg overflow-hidden bg-white">
+                <ResumePreview
+                  content={resume.content}
+                  templateId={activeTemplate}
+                />
               </div>
             </div>
           </div>
-        )}
         </div>
+
+        {/* JD Match Modal */}
+        <JDMatchModal
+          isOpen={isJDModalOpen}
+          onClose={() => setIsJDModalOpen(false)}
+          resumeContent={resume.content}
+          resumeId={resume.id}
+        />
       </div>
     </AuthGuard>
   );
