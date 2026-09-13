@@ -25,14 +25,22 @@ async function seedData() {
     {
       id: "pro",
       name: "Career Pro",
-      price_inr: 499,
+      price_inr: 49,
       resume_limit: 9999,
       interview_limit_per_month: 9999,
-      features: ["Unlimited Resumes", "Unlimited Mock Interviews", "Apply to Jobs", "Mentor Direct Messaging"]
+      features: ["Unlimited Resumes", "Unlimited Mock Interviews", "Apply to Jobs", "Live Coding Sandbox", "STAR Evaluations"]
+    },
+    {
+      id: "premium",
+      name: "Executive Premium",
+      price_inr: 99,
+      resume_limit: 9999,
+      interview_limit_per_month: 9999,
+      features: ["Everything in Pro", "1:1 Verified Mentor Connect", "AI Group Discussion Studio", "Executive Portfolio", "Direct Referrals"]
     }
   ]);
   if (pErr) console.warn("Plans note:", pErr.message);
-  else console.log("   ✅ Plans seeded (Free vs Pro).");
+  else console.log("   ✅ Plans seeded (Free, Pro ₹49, Premium ₹99).");
 
   // Seed Badges
   const { error: bErr } = await supabase.from("badges").upsert([

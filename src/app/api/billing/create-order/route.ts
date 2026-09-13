@@ -27,9 +27,17 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json().catch(() => ({}));
     const cycle = body.cycle || "monthly";
+    const plan = (body.plan || "pro").toLowerCase();
 
-    // Pro Monthly: ₹1,499 (149900 paise) | Pro Annual: ₹11,988 (1198800 paise)
-    const amount = cycle === "yearly" ? 1198800 : 149900;
+    // Pro Monthly: ₹49 (4900 paise) | Pro Annual: ₹490 (49000 paise)
+    // Premium Monthly: ₹99 (9900 paise) | Premium Annual: ₹990 (99000 paise)
+    let amount = 4900;
+    if (plan === "premium") {
+      amount = cycle === "yearly" ? 99000 : 9900;
+    } else {
+      amount = cycle === "yearly" ? 49000 : 4900;
+    }
+
     const currency = "INR";
     const receipt = `rcpt_${user.id.substring(0, 8)}_${Date.now()}`;
 
@@ -52,7 +60,7 @@ export async function POST(req: NextRequest) {
           receipt,
           notes: {
             userId: user.id,
-            plan: "pro",
+            plan,
             cycle,
           },
         });

@@ -58,14 +58,14 @@ export default function BillingPage() {
     });
   };
 
-  const handleUpgrade = async () => {
+  const handleUpgrade = async (targetPlan: "pro" | "premium" = "pro") => {
     setIsProcessing(true);
     try {
       // 1. Create order on server
       const orderRes = await fetch("/api/billing/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cycle: billingCycle }),
+        body: JSON.stringify({ cycle: billingCycle, plan: targetPlan }),
       });
 
       const orderData = await orderRes.json();
@@ -78,7 +78,7 @@ export default function BillingPage() {
             amount: orderData.amount,
             currency: orderData.currency,
             name: "Edworld Co",
-            description: `Pro Subscription (${billingCycle === "yearly" ? "Annual" : "Monthly"})`,
+            description: `${targetPlan === "premium" ? "Premium" : "Pro"} Subscription (${billingCycle === "yearly" ? "Annual" : "Monthly"})`,
             order_id: orderData.orderId,
             handler: async function (response: any) {
               const verifyRes = await fetch("/api/billing/verify", {
@@ -87,12 +87,13 @@ export default function BillingPage() {
                 body: JSON.stringify({
                   ...response,
                   cycle: billingCycle,
+                  plan: targetPlan,
                 }),
               });
               const verifyData = await verifyRes.json();
               if (verifyData.success) {
                 await upgradeToPro();
-                setActionSuccess("Payment verified! Successfully upgraded to Edworld Co Pro via Razorpay.");
+                setActionSuccess(`Payment verified! Successfully upgraded to Edworld Co ${targetPlan === "premium" ? "Premium" : "Pro"} via Razorpay.`);
                 setTimeout(() => setActionSuccess(null), 4000);
               }
             },
@@ -112,12 +113,12 @@ export default function BillingPage() {
 
       // Sandbox Fallback
       await upgradeToPro();
-      setActionSuccess("Payment verified! Successfully upgraded to Edworld Co Pro via Razorpay.");
+      setActionSuccess(`Payment verified! Successfully activated Edworld Co ${targetPlan === "premium" ? "Premium" : "Pro"} plan.`);
       setTimeout(() => setActionSuccess(null), 4000);
     } catch (err: any) {
       console.warn("Upgrade error:", err);
       await upgradeToPro();
-      setActionSuccess("Pro plan activated successfully.");
+      setActionSuccess(`${targetPlan === "premium" ? "Premium" : "Pro"} plan activated successfully.`);
       setTimeout(() => setActionSuccess(null), 4000);
     } finally {
       setIsProcessing(false);
@@ -149,7 +150,7 @@ export default function BillingPage() {
   return (
     <AuthGuard requireAuth={true}>
       <div className="min-h-screen bg-paper pb-20 pt-8 px-4 sm:px-6">
-        <div className="max-w-4xl mx-auto space-y-8">
+        <div className="max-w-6xl mx-auto space-y-8">
           {/* Header */}
           <div className="text-center space-y-3">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-forest/10 text-forest border border-forest/20">
@@ -159,7 +160,7 @@ export default function BillingPage() {
               Invest in Your Career Acceleration
             </h1>
             <p className="text-sm text-ink-soft max-w-xl mx-auto leading-relaxed">
-              Transparent pricing with no hidden charges. Cancel anytime. All earnings directly power student learning infrastructure.
+              Transparent, student-friendly pricing. Cancel anytime. Pro plan at ₹49/mo, Premium VIP at ₹99/mo.
             </p>
 
             {/* Billing Cycle Toggle */}
@@ -184,7 +185,7 @@ export default function BillingPage() {
               >
                 <span>Annual Billing</span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-forest-light/30 text-paper font-mono">
-                  Save 33%
+                  Save ~17%
                 </span>
               </button>
             </div>
@@ -199,8 +200,8 @@ export default function BillingPage() {
           )}
 
           {/* Pricing Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-            {/* FREE TIER */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+            {/* 1. FREE STARTER TIER */}
             <div className="bg-paper-raised rounded-3xl p-6 border border-line flex flex-col justify-between space-y-6 shadow-sm">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -233,11 +234,11 @@ export default function BillingPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-forest shrink-0" />
-                    <span>Basic Skills & Level Growth tracking</span>
+                    <span>Basic Skills &amp; Growth tracking</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-forest shrink-0" />
-                    <span>View-only Job & Internship Board</span>
+                    <span>View-only Job &amp; Internship Board</span>
                   </div>
                   <div className="flex items-center gap-2 text-ink-muted">
                     <X className="w-4 h-4 text-ink-muted shrink-0" />
@@ -265,24 +266,46 @@ export default function BillingPage() {
               )}
             </div>
 
-            {/* PRO PLAN */}
+            {/* 2. CAREER PRO PLAN (₹49) */}
             <SubscriptionCard
               badge="MOST POPULAR"
-              title="Edworld Co Pro"
-              price={billingCycle === "monthly" ? "₹1,499" : "₹11,990"}
-              period={billingCycle === "monthly" ? "/ month" : "/ year (Save 33%)"}
-              description="Full-throttle career preparation with unlimited mock sessions, JD AI keyword auditing, and direct recruiter applications."
+              title="Career Pro"
+              price={billingCycle === "monthly" ? "₹49" : "₹490"}
+              period={billingCycle === "monthly" ? "/ month" : "/ year"}
+              description="Full-throttle career preparation with unlimited mock sessions, live coding sandbox, and direct recruiter applications."
               features={[
-                "Unlimited ATS Resumes + AI JD Matcher",
+                "Unlimited ATS Resumes + AI Matcher",
                 "Unlimited Adaptive Mock Interviews",
-                "One-Click Applications to Jobs & Internships",
-                "Priority Speech Coaching & delivery analysis",
-                "Senior Mentor Messaging & peer reviews"
+                "One-Click Applications to Jobs",
+                "Live Coding Sandbox & Test Runner",
+                "STAR Behavior Evaluation & Scorecard"
               ]}
-              buttonText={isProcessing ? "Verifying with Razorpay..." : "Sign Up with Pro (UPI/Cards)"}
+              buttonText={isProcessing ? "Processing..." : "Upgrade to Pro (₹49)"}
               isActive={isPro}
               isLoading={isProcessing}
-              onAction={handleUpgrade}
+              onAction={() => handleUpgrade("pro")}
+              className="w-full max-w-none"
+            />
+
+            {/* 3. EXECUTIVE PREMIUM PLAN (₹99) */}
+            <SubscriptionCard
+              badge="VIP • BEST VALUE"
+              title="Executive Premium"
+              price={billingCycle === "monthly" ? "₹99" : "₹990"}
+              period={billingCycle === "monthly" ? "/ month" : "/ year"}
+              description="VIP career acceleration with direct senior engineering referrals and personalized AI appraisal coaching."
+              features={[
+                "Everything in Pro Tier",
+                "1:1 Verified Mentor Connect & Messaging",
+                "AI Multi-Persona Group Discussion Studio",
+                "Senior Executive Portfolio Showcase",
+                "Direct Engineering Referrals Generator",
+                "Priority 24/7 Fast-Track Support"
+              ]}
+              buttonText={isProcessing ? "Processing..." : "Upgrade to Premium (₹99)"}
+              isActive={false}
+              isLoading={isProcessing}
+              onAction={() => handleUpgrade("premium")}
               className="w-full max-w-none"
             />
           </div>

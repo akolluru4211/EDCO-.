@@ -32,20 +32,38 @@ export default async function PricingPage() {
     {
       id: "pro",
       name: dbPlans?.find(p => p.id === "pro")?.name || "Career Pro",
-      priceInr: dbPlans?.find(p => p.id === "pro")?.price_inr ?? 499,
+      priceInr: dbPlans?.find(p => p.id === "pro")?.price_inr ?? 49,
       period: "/ month",
       description: "Full-speed career transition with unlimited calibrated interviews and recruiter outreach.",
       features: dbPlans?.find(p => p.id === "pro")?.features || [
         "Unlimited ATS Resumes & tailoring",
         "Unlimited AI Mock Interviews (Voice + Video)",
         "Direct Job & Placement Applications",
-        "Direct Mentor Networking & Referral Tools",
-        "Self-Appraisal & Career Switch Assistants"
+        "Live Coding Sandbox & Test Runner",
+        "STAR Behavior Evaluation & Scorecard"
       ],
-      ctaLabel: "Upgrade to Pro",
-      ctaHref: "/billing",
+      ctaLabel: "Upgrade to Pro (₹49)",
+      ctaHref: "/billing?plan=pro",
       isPopular: true,
       badge: "Most Popular"
+    },
+    {
+      id: "premium",
+      name: dbPlans?.find(p => p.id === "premium")?.name || "Executive Premium",
+      priceInr: dbPlans?.find(p => p.id === "premium")?.price_inr ?? 99,
+      period: "/ month",
+      description: "VIP career acceleration with direct senior engineering referrals and personalized AI appraisal coaching.",
+      features: dbPlans?.find(p => p.id === "premium")?.features || [
+        "Everything in Pro Tier",
+        "1:1 Verified Mentor Connect & Messaging",
+        "AI Multi-Persona Group Discussion Studio",
+        "Senior Executive Portfolio at edworld.co/u/name",
+        "Direct Engineering Referrals Generator",
+        "Priority 24/7 Fast-Track Support"
+      ],
+      ctaLabel: "Upgrade to Premium (₹99)",
+      ctaHref: "/billing?plan=premium",
+      badge: "Best Value"
     },
     {
       id: "institutional",
@@ -66,7 +84,7 @@ export default async function PricingPage() {
 
   return (
     <div className="min-h-screen bg-paper py-16 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto space-y-12">
+      <div className="max-w-7xl mx-auto space-y-12">
         <div className="text-center space-y-4 max-w-2xl mx-auto">
           <span className="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-forest/10 text-forest border border-forest/20">
             Simple &amp; Transparent
@@ -79,7 +97,7 @@ export default async function PricingPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {plans.map((p) => (
             <PricingCard key={p.id} {...p} />
           ))}
