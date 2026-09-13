@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { MentorProfile } from "@/lib/types";
@@ -14,89 +14,68 @@ import {
   Sparkles,
   Users
 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { normalizeDisplayName } from "@/lib/services/user-profile";
 
 export const dynamic = "force-dynamic";
 
-const ALL_MENTORS: MentorProfile[] = [
-  {
-    id: "mentor-1",
-    userId: "user-mentor-1",
-    name: "Dr. Arvind Subramanian",
-    headline: "Principal Systems Architect @ CloudScale Labs",
-    bio: "12+ years designing high-throughput distributed engines. Helping candidates master Level 2 concurrency, Kafka topologies, and system scalability mocks.",
-    company: "CloudScale Labs",
-    role: "Principal Architect",
-    domains: ["Software Engineering", "System Design", "Distributed Systems"],
-    hourlyRate: 0,
-    isVerifiedMentor: true,
-    rating: 4.9,
-    reviewCount: 48,
-    availabilitySlots: ["Mon 6:30 PM IST", "Thu 7:00 PM IST", "Sat 11:00 AM IST"],
-    totalMenteesHelped: 124,
-    createdAt: "2026-01-15T00:00:00Z",
-  },
-  {
-    id: "mentor-2",
-    userId: "user-mentor-2",
-    name: "Pooja Hegde",
-    headline: "Senior Engineering Manager @ FinTech Innovations",
-    bio: "Ex-Stripe engineer passionate about behavioral STAR communication, behavioral leadership interviews, and junior engineering career acceleration.",
-    company: "FinTech Innovations",
-    role: "Senior Engineering Manager",
-    domains: ["Behavioral Leadership", "Frontend Architecture", "Career Growth"],
-    hourlyRate: 0,
-    isVerifiedMentor: true,
-    rating: 5.0,
-    reviewCount: 36,
-    availabilitySlots: ["Tue 6:00 PM IST", "Sun 4:00 PM IST"],
-    totalMenteesHelped: 89,
-    createdAt: "2026-02-10T00:00:00Z",
-  },
-  {
-    id: "mentor-3",
-    userId: "user-mentor-3",
-    name: "Karan Mehta",
-    headline: "Staff Machine Learning Engineer @ Nexus AI",
-    bio: "Specializing in Large Language Model fine-tuning, retrieval systems, and machine learning system design mock interviews.",
-    company: "Nexus AI",
-    role: "Staff ML Engineer",
-    domains: ["Machine Learning", "Python", "Data Science"],
-    hourlyRate: 0,
-    isVerifiedMentor: true,
-    rating: 4.8,
-    reviewCount: 22,
-    availabilitySlots: ["Wed 7:30 PM IST", "Sat 2:00 PM IST"],
-    totalMenteesHelped: 54,
-    createdAt: "2026-03-01T00:00:00Z",
-  },
-  {
-    id: "mentor-4",
-    userId: "user-mentor-4",
-    name: "Rachel Tan",
-    headline: "Lead Product Designer @ Canvas Interactive",
-    bio: "Portfolio design audits, Figma design system structuring, and product UX problem-solving mock reviews.",
-    company: "Canvas Interactive",
-    role: "Lead Product Designer",
-    domains: ["UI/UX Design", "Product Strategy", "Portfolio Review"],
-    hourlyRate: 0,
-    isVerifiedMentor: true,
-    rating: 4.9,
-    reviewCount: 19,
-    availabilitySlots: ["Mon 5:00 PM IST", "Fri 6:00 PM IST"],
-    totalMenteesHelped: 41,
-    createdAt: "2026-04-05T00:00:00Z",
-  },
-];
-
 export default function MentorsDirectoryPage() {
   const { user } = useAuth();
+  const [mentors, setMentors] = useState<MentorProfile[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDomain, setSelectedDomain] = useState<string>("all");
   const [selectedMentor, setSelectedMentor] = useState<MentorProfile | null>(null);
 
   const DOMAINS = ["all", "Software Engineering", "System Design", "Behavioral Leadership", "Machine Learning", "UI/UX Design"];
 
-  const filteredMentors = ALL_MENTORS.filter((m) => {
+  useEffect(() => {
+    async function loadMentors() {
+      setLoading(true);
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("is_mentor", true)
+          .eq("is_public", true);
+
+        if (data && data.length > 0) {
+          const mapped: MentorProfile[] = data.map((p) => {
+            const { displayName } = normalizeDisplayName(p.first_name, p.last_name, p.name || p.display_name);
+            return {
+              id: p.id || p.user_id,
+              userId: p.user_id || p.id,
+              name: displayName || p.name || "Engineering Mentor",
+              headline: p.headline || "Industry Mentor",
+              bio: p.bio || "Providing 1:1 mentorship and mock interview feedback.",
+              company: p.company || "Technology Partner",
+              role: p.headline || "Senior Engineer",
+              domains: (p.interests || []).map((i: any) => typeof i === "string" ? i : i.name),
+              hourlyRate: 0,
+              isVerifiedMentor: true,
+              rating: p.rating || 5.0,
+              reviewCount: p.review_count || 0,
+              availabilitySlots: ["Mon 6:30 PM IST", "Thu 7:00 PM IST", "Sat 11:00 AM IST"],
+              totalMenteesHelped: p.total_mentees_helped || 0,
+              createdAt: p.created_at || new Date().toISOString(),
+            };
+          });
+          setMentors(mapped);
+        } else {
+          setMentors([]);
+        }
+      } catch (err) {
+        console.warn("[Mentors Load Note]:", err);
+        setMentors([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadMentors();
+  }, []);
+
+  const filteredMentors = mentors.filter((m) => {
     const matchesSearch =
       m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       m.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -138,6 +117,13 @@ export default function MentorsDirectoryPage() {
                 Book calibrated 1:1 sessions for resume audits, architecture deep-dives, and mock interview guidance.
               </p>
             </div>
+
+            <Link
+              href="/networking/become-mentor"
+              className="px-4 py-2.5 rounded-xl bg-forest hover:opacity-90 text-white text-xs font-bold shadow-sm transition-all shrink-0"
+            >
+              Apply as Mentor
+            </Link>
           </div>
 
           {/* Search & Domain Filter Bar */}
@@ -148,7 +134,7 @@ export default function MentorsDirectoryPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search mentors by name, company (e.g. Stripe), or topic..."
+                placeholder="Search mentors by name, company, or domain..."
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-line bg-paper text-ink text-xs focus:ring-2 focus:ring-forest focus:outline-none"
               />
             </div>
@@ -171,16 +157,40 @@ export default function MentorsDirectoryPage() {
           </div>
         </div>
 
-        {/* Mentor Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredMentors.map((mentor) => (
-            <MentorCard
-              key={mentor.id}
-              mentor={mentor}
-              onBookSession={(m) => setSelectedMentor(m)}
-            />
-          ))}
-        </div>
+        {/* Mentor Cards Grid or Honest Empty State */}
+        {loading ? (
+          <div className="p-12 text-center">
+            <div className="w-8 h-8 border-4 border-forest border-t-transparent rounded-full animate-spin mx-auto" />
+          </div>
+        ) : filteredMentors.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredMentors.map((mentor) => (
+              <MentorCard
+                key={mentor.id}
+                mentor={mentor}
+                onBookSession={(m) => setSelectedMentor(m)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="bg-paper-raised rounded-3xl border border-line p-12 text-center space-y-4 shadow-sm">
+            <div className="w-14 h-14 rounded-2xl bg-paper-soft border border-line text-ink-muted flex items-center justify-center mx-auto">
+              <Users className="w-7 h-7" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-base font-bold font-display text-ink">No Verified Mentors Listed Yet</h3>
+              <p className="text-xs text-ink-soft max-w-sm mx-auto leading-relaxed">
+                Verified engineering mentors will appear here as they register and get approved. You can also apply to become a mentor.
+              </p>
+            </div>
+            <Link
+              href="/networking/become-mentor"
+              className="inline-block px-5 py-2.5 rounded-xl bg-forest text-white text-xs font-bold shadow-sm hover:opacity-90 transition-opacity"
+            >
+              Apply as a Mentor
+            </Link>
+          </div>
+        )}
 
         {/* Booking Modal */}
         <MentorshipBookingModal

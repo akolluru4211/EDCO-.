@@ -180,61 +180,14 @@ export default function DashboardPage() {
 
         // 4. College stage reference data
         const { data: drives } = await supabase.from("placement_drives").select("*");
-        if (drives && drives.length > 0) setPlacementDrives(drives);
-        else {
-          setPlacementDrives([
-            {
-              id: "d1",
-              company: "Google India",
-              role: "Software Engineer - Campus Grad",
-              drive_date: "2026-09-24",
-              eligibility_criteria: "B.Tech / M.Tech CS/IT with CGPA >= 8.0",
-              rounds: ["Online Assessment", "Technical Interview 1", "Technical Interview 2", "Googliness / HR"]
-            },
-            {
-              id: "d2",
-              company: "Microsoft",
-              role: "Support & Software Engineer",
-              drive_date: "2026-10-02",
-              eligibility_criteria: "CGPA >= 7.5, Zero active backlogs",
-              rounds: ["Coding Round", "System Design Drill", "Managerial Round"]
-            }
-          ]);
-        }
+        setPlacementDrives(drives && drives.length > 0 ? drives : []);
 
         const { data: hacks } = await supabase.from("hackathons").select("*");
-        if (hacks && hacks.length > 0) setHackathons(hacks);
-        else {
-          setHackathons([
-            {
-              id: "h1",
-              name: "AI & Distributed Cloud Hackathon 2026",
-              team_size_range: "2-4 Members",
-              description: "Build next-gen autonomous LLM agents and scalable cloud architectures.",
-              event_date: "2026-09-30",
-              registration_url: "https://hackathons.dev"
-            },
-            {
-              id: "h2",
-              name: "FinTech Security Sprint",
-              team_size_range: "Solo / Duo",
-              description: "Design zero-knowledge verification pipelines for real-time payment transactions.",
-              event_date: "2026-10-15",
-              registration_url: "https://hackathons.dev"
-            }
-          ]);
-        }
+        setHackathons(hacks && hacks.length > 0 ? hacks : []);
 
         // 5. Working Prof reference data
         const { data: salaries } = await supabase.from("salary_reference_data").select("*");
-        if (salaries && salaries.length > 0) setSalaryData(salaries);
-        else {
-          setSalaryData([
-            { id: "s1", role: "Senior Full Stack Engineer", city: "Bengaluru", experience_bracket: "4-7 Yrs", p25_inr: 2400000, p50_median_inr: 3200000, p75_inr: 4500000, data_source: "Aggregated Tech Market Benchmark" },
-            { id: "s2", role: "AI / ML Solutions Engineer", city: "Hyderabad", experience_bracket: "3-6 Yrs", p25_inr: 2800000, p50_median_inr: 3800000, p75_inr: 5200000, data_source: "Aggregated Tech Market Benchmark" },
-            { id: "s3", role: "Product Manager (Technical)", city: "Remote / Pan-India", experience_bracket: "5-8 Yrs", p25_inr: 2600000, p50_median_inr: 3500000, p75_inr: 4800000, data_source: "Aggregated Tech Market Benchmark" }
-          ]);
-        }
+        setSalaryData(salaries && salaries.length > 0 ? salaries : []);
 
       } catch (err) {
         console.warn("Dashboard data load note:", err);
@@ -818,24 +771,30 @@ export default function DashboardPage() {
                   </span>
                 </div>
 
-                <div className="space-y-3">
-                  {placementDrives.map((d, i) => (
-                    <div key={d.id || i} className="p-4 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] space-y-2">
-                      <div className="flex items-center justify-between text-xs font-black text-[#181920]">
-                        <span>{d.company} — {d.role}</span>
-                        <span className="text-[10px] font-mono text-[#7B57FF] bg-[#EDE8FD] px-2.5 py-0.5 rounded-full border border-[#7B57FF]/30">
-                          Date: {d.drive_date}
-                        </span>
+                {placementDrives.length > 0 ? (
+                  <div className="space-y-3">
+                    {placementDrives.map((d, i) => (
+                      <div key={d.id || i} className="p-4 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] space-y-2">
+                        <div className="flex items-center justify-between text-xs font-black text-[#181920]">
+                          <span>{d.company} — {d.role}</span>
+                          <span className="text-[10px] font-mono text-[#7B57FF] bg-[#EDE8FD] px-2.5 py-0.5 rounded-full border border-[#7B57FF]/30">
+                            Date: {d.drive_date}
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-[#767E94]">
+                          <strong className="text-[#181920]">Eligibility:</strong> {d.eligibility_criteria}
+                        </div>
+                        <div className="text-[11px] text-[#767E94] font-mono">
+                          <strong className="text-[#181920]">Rounds:</strong> {Array.isArray(d.rounds) ? d.rounds.join(" → ") : "Technical & HR"}
+                        </div>
                       </div>
-                      <div className="text-[11px] text-[#767E94]">
-                        <strong className="text-[#181920]">Eligibility:</strong> {d.eligibility_criteria}
-                      </div>
-                      <div className="text-[11px] text-[#767E94] font-mono">
-                        <strong className="text-[#181920]">Rounds:</strong> {Array.isArray(d.rounds) ? d.rounds.join(" → ") : "Technical & HR"}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6 text-xs text-[#8E95A5] italic bg-[#F4F6FB] rounded-2xl border border-[#E8ECF2]">
+                    No campus placement drives currently listed. Check back as new university drives are scheduled.
+                  </div>
+                )}
               </div>
 
               {/* Group Projects & Hackathon Finder */}
@@ -850,30 +809,36 @@ export default function DashboardPage() {
                   </span>
                 </div>
 
-                <div className="space-y-3">
-                  {hackathons.map((h, i) => (
-                    <div key={h.id || i} className="p-4 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] space-y-2">
-                      <div className="flex items-center justify-between text-xs font-black text-[#181920]">
-                        <span>{h.name}</span>
-                        <span className="text-[10px] font-mono text-[#FF7A50] bg-[#FFEFEA] px-2.5 py-0.5 rounded-full border border-[#FF7A50]/30">
-                          {h.team_size_range}
-                        </span>
+                {hackathons.length > 0 ? (
+                  <div className="space-y-3">
+                    {hackathons.map((h, i) => (
+                      <div key={h.id || i} className="p-4 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] space-y-2">
+                        <div className="flex items-center justify-between text-xs font-black text-[#181920]">
+                          <span>{h.name}</span>
+                          <span className="text-[10px] font-mono text-[#FF7A50] bg-[#FFEFEA] px-2.5 py-0.5 rounded-full border border-[#FF7A50]/30">
+                            {h.team_size_range}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-[#767E94] leading-relaxed">{h.description}</p>
+                        <div className="flex items-center justify-between pt-1">
+                          <span className="text-[10px] text-[#8E95A5]">Date: {h.event_date}</span>
+                          <a
+                            href={h.registration_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-xs font-bold text-[#7B57FF] hover:underline flex items-center gap-1"
+                          >
+                            Register / Details <ArrowRight className="w-3 h-3" />
+                          </a>
+                        </div>
                       </div>
-                      <p className="text-[11px] text-[#767E94] leading-relaxed">{h.description}</p>
-                      <div className="flex items-center justify-between pt-1">
-                        <span className="text-[10px] text-[#8E95A5]">Date: {h.event_date}</span>
-                        <a
-                          href={h.registration_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-xs font-bold text-[#7B57FF] hover:underline flex items-center gap-1"
-                        >
-                          Register / Details <ArrowRight className="w-3 h-3" />
-                        </a>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6 text-xs text-[#8E95A5] italic bg-[#F4F6FB] rounded-2xl border border-[#E8ECF2]">
+                    No upcoming hackathon sprints scheduled at this time.
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -992,18 +957,24 @@ export default function DashboardPage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {salaryData.map((s, i) => (
-                  <div key={s.id || i} className="p-5 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] space-y-2">
-                    <div className="text-sm font-black text-[#181920]">{s.role}</div>
-                    <div className="text-[11px] text-[#767E94]">{s.city} • {s.experience_bracket}</div>
-                    <div className="p-2.5 rounded-xl bg-white border border-[#E8ECF2] font-mono text-xs font-bold text-[#00D2B4]">
-                      ₹{(s.p25_inr / 100000).toFixed(1)}L – ₹{(s.p75_inr / 100000).toFixed(1)}L (Median: ₹{(s.p50_median_inr / 100000).toFixed(1)}L)
+              {salaryData.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {salaryData.map((s, i) => (
+                    <div key={s.id || i} className="p-5 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] space-y-2">
+                      <div className="text-sm font-black text-[#181920]">{s.role}</div>
+                      <div className="text-[11px] text-[#767E94]">{s.city} • {s.experience_bracket}</div>
+                      <div className="p-2.5 rounded-xl bg-white border border-[#E8ECF2] font-mono text-xs font-bold text-[#00D2B4]">
+                        ₹{(s.p25_inr / 100000).toFixed(1)}L – ₹{(s.p75_inr / 100000).toFixed(1)}L (Median: ₹{(s.p50_median_inr / 100000).toFixed(1)}L)
+                      </div>
+                      <div className="text-[9px] text-[#8E95A5]">Source: {s.data_source}</div>
                     </div>
-                    <div className="text-[9px] text-[#8E95A5]">Source: {s.data_source}</div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 text-xs text-[#8E95A5] italic bg-[#F4F6FB] rounded-2xl border border-[#E8ECF2]">
+                  No industry compensation reference data currently available.
+                </div>
+              )}
             </div>
           </div>
         )}

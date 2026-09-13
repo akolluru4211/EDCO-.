@@ -23,93 +23,14 @@ import {
   Sparkles, 
   FolderGit2, 
   AlertCircle,
-  ArrowRight
+  ArrowRight,
+  UserX
 } from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
 import { normalizeDisplayName } from "@/lib/services/user-profile";
 
 export const dynamic = "force-dynamic";
-
-// Seeded directory of public demo profiles for instant discovery & testing
-const DEMO_PUBLIC_PROFILES: Record<string, PublicUserProfile> = {
-  alexrivera: {
-    userId: "user-alex-18",
-    username: "alexrivera",
-    name: "Alex Rivera",
-    headline: "Full-Stack Software Engineer & Distributed Systems Enthusiast",
-    bio: "Passionate about high-throughput concurrency, TypeScript, and microservice architectures. Building scalable EdTech platforms.",
-    skills: ["TypeScript", "Next.js", "Node.js", "Redis", "Distributed Systems", "PostgreSQL"],
-    projects: [
-      {
-        id: "proj-1",
-        title: "Distributed Concurrency Engine",
-        description: "Optimistic concurrency control layer with Redis pub/sub for real-time state synchronization.",
-        technologies: ["TypeScript", "Redis", "Docker", "Node.js"],
-        githubRepo: "https://github.com/alexrivera/distributed-concurrency",
-        verificationStatus: "verified",
-      },
-      {
-        id: "proj-2",
-        title: "Autonomous Algorithmic Trading Simulator",
-        description: "Event-driven matching engine in Python with sub-millisecond order execution.",
-        technologies: ["Python", "AsyncIO", "FastAPI", "WebSockets"],
-        githubRepo: "https://github.com/alexrivera/trading-sim",
-        verificationStatus: "verified",
-      },
-    ],
-    isPublic: true,
-    isMentor: false,
-    ageBand: "18+",
-    showResume: true,
-  },
-  sarah_recruiting: {
-    userId: "demo-employer-user-789",
-    username: "sarah_recruiting",
-    name: "Sarah Jenkins",
-    headline: "Head of Engineering Talent @ TechCorp Labs",
-    bio: "Hiring verified early-career software engineers and systems apprentices.",
-    skills: ["Technical Recruiting", "System Design", "Engineering Leadership"],
-    isPublic: true,
-    isMentor: true,
-    mentorTags: ["Career Strategy", "Resume Reviews", "Behavioral Interview Prep"],
-    ageBand: "18+",
-  },
-  arvind_scale: {
-    userId: "user-mentor-1",
-    username: "arvind_scale",
-    name: "Dr. Arvind Subramanian",
-    headline: "Principal Systems Architect @ CloudScale Labs",
-    bio: "12+ years in high-volume distributed infrastructure. Mentoring candidates on Level 2 concurrency and system design.",
-    skills: ["Distributed Systems", "Kafka", "Go", "AWS", "High Availability"],
-    isPublic: true,
-    isMentor: true,
-    mentorTags: ["System Design", "Distributed Systems", "Staff Engineer Coaching"],
-    ageBand: "18+",
-  },
-  // Private Profile Demo (Testing zero-leakage)
-  private_user: {
-    userId: "user-private-99",
-    username: "private_user",
-    name: "Devon Reed",
-    headline: "Confidential Senior Architect",
-    bio: "Confidential bio details that must NEVER leak when isPublic is false.",
-    skills: ["Confidential Skills"],
-    isPublic: false,
-    ageBand: "18+",
-  },
-  // Minor Profile Demo (Testing under-18 inaccessible boundary)
-  samira_explorer: {
-    userId: "demo-minor-user-456",
-    username: "samira_explorer",
-    name: "Samira Patel",
-    headline: "Class 11 STEM Student",
-    bio: "High school learner exploring robotics.",
-    skills: ["Robotics"],
-    isPublic: false,
-    ageBand: "16-18",
-  },
-};
 
 export default function PublicProfileViewPage() {
   const params = useParams();
@@ -129,8 +50,9 @@ export default function PublicProfileViewPage() {
 
   useEffect(() => {
     const loadProfile = async () => {
-      // 1. Check live database first
+      setLoading(true);
       try {
+        // 1. Fetch live profile from Supabase
         const { data: dbProfile } = await supabase
           .from("profiles")
           .select("*")
@@ -138,45 +60,46 @@ export default function PublicProfileViewPage() {
           .maybeSingle();
 
         if (dbProfile) {
+          // Fetch real projects for this user
+          const { data: dbProjects } = await supabase
+            .from("projects")
+            .select("*")
+            .eq("user_id", dbProfile.id || dbProfile.user_id)
+            .eq("is_public", true);
+
           const { displayName } = normalizeDisplayName(dbProfile.first_name, dbProfile.last_name, dbProfile.name || dbProfile.display_name);
+
+          const mappedProjects = (dbProjects || []).map((p: any) => ({
+            id: p.id,
+            title: p.title || "Untitled Project",
+            description: p.description || "",
+            technologies: p.skills || [],
+            githubRepo: p.github_url || null,
+            liveDemoUrl: p.live_url || null,
+            verificationStatus: p.is_verified ? "verified" : "unverified",
+          }));
+
           const found: PublicUserProfile = {
             userId: dbProfile.id || dbProfile.user_id,
             username: dbProfile.username || usernameParam,
             name: displayName || dbProfile.name || "EdWorld Member",
-            headline: dbProfile.headline || "EdWorld Verified Learner",
-            bio: dbProfile.bio || "Building verifiable technical capabilities on EdWorld.",
+            headline: dbProfile.headline || "EdWorld Member",
+            bio: dbProfile.bio || "",
             skills: (dbProfile.interests || []).map((i: any) => typeof i === "string" ? i : i.name),
-            projects: [],
+            projects: mappedProjects,
             isPublic: Boolean(dbProfile.is_public),
             isMentor: Boolean(dbProfile.is_mentor),
             mentorTags: dbProfile.mentor_tags || [],
             ageBand: dbProfile.age_band || "18+",
           };
+
           setProfileData(found);
+          setLoading(false);
           return;
         }
-      } catch (err) {
-        console.warn("[Portfolio Load Note]", err);
-      }
 
-      // 2. Look up profile in demo profiles or localStorage
-      let foundProfile: PublicUserProfile | null = DEMO_PUBLIC_PROFILES[usernameParam.toLowerCase()] || null;
-
-      if (!foundProfile && typeof window !== "undefined") {
-        // Check local user data
-        const localUsersKey = "edworld_all_registered_profiles";
-        const cached = localStorage.getItem(localUsersKey);
-        if (cached) {
-          try {
-            const parsed = JSON.parse(cached);
-            if (parsed[usernameParam]) {
-              foundProfile = parsed[usernameParam];
-            }
-          } catch (e) {}
-        }
-
-        // Check current user if matching username
-        if (!foundProfile && user) {
+        // 2. Check local registered profiles if user is inspecting their own session
+        if (user) {
           const storedProfileKey = `edworld_profile_${user.uid}`;
           const userProf = localStorage.getItem(storedProfileKey);
           if (userProf) {
@@ -185,54 +108,35 @@ export default function PublicProfileViewPage() {
               const userRaw = JSON.parse(localStorage.getItem(`edworld_user_${user.uid}`) || "{}");
               if (p.username === usernameParam || user.name.toLowerCase().replace(/\s+/g, "_") === usernameParam) {
                 const { displayName } = normalizeDisplayName(undefined, undefined, user.name);
-                foundProfile = {
+                const ownProfile: PublicUserProfile = {
                   userId: user.uid,
                   username: p.username || user.name.toLowerCase().replace(/\s+/g, "_"),
                   name: displayName || user.name,
-                  headline: p.headline,
-                  bio: p.bio,
-                  skills: (p.interests || []).map((i: any) => i.name),
-                  projects: [
-                    {
-                      id: "local-proj-1",
-                      title: "Full-Stack Portfolio Project",
-                      description: "End-to-end full stack web application with authentication and database persistence.",
-                      technologies: ["Next.js", "TypeScript", "Tailwind CSS"],
-                      verificationStatus: "verified",
-                    },
-                  ],
-                  isPublic: p.isPublic || false,
-                  isMentor: p.isMentor || false,
+                  headline: p.headline || "Verified Member",
+                  bio: p.bio || "",
+                  skills: (p.interests || []).map((i: any) => typeof i === "string" ? i : i.name),
+                  projects: [],
+                  isPublic: Boolean(p.isPublic),
+                  isMentor: Boolean(p.isMentor),
                   mentorTags: p.mentorTags || [],
                   ageBand: userRaw.ageBand || "18+",
                 };
+                setProfileData(ownProfile);
+                setLoading(false);
+                return;
               }
             } catch (e) {}
           }
         }
+
+        // No profile found
+        setProfileData(null);
+      } catch (err) {
+        console.warn("[Portfolio Load Note]", err);
+        setProfileData(null);
+      } finally {
+        setLoading(false);
       }
-
-      setProfileData(foundProfile);
-
-      // Check connection and block status
-      if (user && foundProfile) {
-        const connections = JSON.parse(localStorage.getItem(`edworld_${user.uid}_connections`) || "[]");
-        const match = connections.find(
-          (c: any) =>
-            (c.requesterId === user.uid && c.recipientId === foundProfile?.userId) ||
-            (c.recipientId === user.uid && c.requesterId === foundProfile?.userId)
-        );
-        if (match) {
-          setConnectionStatus(match.status);
-        }
-
-        const blocks = JSON.parse(localStorage.getItem(`edworld_${user.uid}_blocks`) || "[]");
-        if (blocks.includes(foundProfile.userId)) {
-          setIsBlocked(true);
-        }
-      }
-
-      setLoading(false);
     };
 
     loadProfile();
@@ -250,116 +154,109 @@ export default function PublicProfileViewPage() {
       status: "pending",
       requestType: data.requestType,
       message: data.message,
-      createdAt: new Date().toISOString(),
+      sentAt: new Date().toISOString(),
     });
     localStorage.setItem(`edworld_${user.uid}_connections`, JSON.stringify(connections));
     setConnectionStatus("pending");
   };
 
-  const handleBlockUser = async () => {
+  const handleBlockUser = () => {
     if (!user || !profileData) return;
-    if (!confirm(`Are you sure you want to block ${profileData.name}? This will sever any connections and prevent future messages.`)) return;
-
     const blocks = JSON.parse(localStorage.getItem(`edworld_${user.uid}_blocks`) || "[]");
-    blocks.push(profileData.userId);
-    localStorage.setItem(`edworld_${user.uid}_blocks`, JSON.stringify(blocks));
-
-    // Remove connection
-    const connections = JSON.parse(localStorage.getItem(`edworld_${user.uid}_connections`) || "[]");
-    const filtered = connections.filter(
-      (c: any) =>
-        !(c.requesterId === profileData.userId || c.recipientId === profileData.userId)
-    );
-    localStorage.setItem(`edworld_${user.uid}_connections`, JSON.stringify(filtered));
-
+    if (!blocks.includes(profileData.userId)) {
+      blocks.push(profileData.userId);
+      localStorage.setItem(`edworld_${user.uid}_blocks`, JSON.stringify(blocks));
+    }
     setIsBlocked(true);
-    setConnectionStatus("none");
   };
 
-  const handleSubmitReport = async (reportData: any) => {
-    const reports = JSON.parse(localStorage.getItem("edworld_global_reports") || "[]");
+  const handleReportUser = async (reportData: any) => {
+    if (!user) return;
+    const reports = JSON.parse(localStorage.getItem(`edworld_reports`) || "[]");
     reports.push({
-      id: `rep-${Date.now()}`,
       ...reportData,
-      reportedBy: user?.uid || "anonymous",
-      createdAt: new Date().toISOString(),
+      reporterId: user.uid,
+      createdAt: new Date().toISOString()
     });
-    localStorage.setItem("edworld_global_reports", JSON.stringify(reports));
+    localStorage.setItem(`edworld_reports`, JSON.stringify(reports));
   };
 
   if (loading) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-paper text-ink">
-        <div className="text-center space-y-3 font-mono text-xs text-ink-muted">
-          <div className="w-6 h-6 border-2 border-forest border-t-transparent rounded-full animate-spin mx-auto" />
-          <p>Loading public profile...</p>
-        </div>
+      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-paper">
+        <div className="w-8 h-8 border-4 border-forest border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
-  // 1. Strict Youth Boundary: Minor profiles are NEVER public or reachable
-  if (!profileData || profileData.ageBand !== "18+") {
+  // 1. Profile Not Found State
+  if (!profileData) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-6 bg-paper text-ink">
-        <div className="max-w-md w-full bg-paper-raised rounded-3xl border border-line shadow-sm p-8 text-center space-y-6">
-          <div className="w-16 h-16 rounded-2xl bg-paper-soft border border-line text-ink-muted flex items-center justify-center mx-auto shadow-sm">
-            <Lock className="w-8 h-8" />
+      <div className="min-h-[calc(100vh-4rem)] bg-paper flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-paper-raised rounded-3xl border border-line p-8 text-center space-y-5 shadow-sm">
+          <div className="w-14 h-14 rounded-2xl bg-paper-soft border border-line text-ink-muted flex items-center justify-center mx-auto">
+            <UserX className="w-7 h-7" />
           </div>
-          <div className="space-y-2">
-            <h1 className="text-2xl font-bold font-display text-ink tracking-tight">Profile Not Found</h1>
+          <div className="space-y-1">
+            <h1 className="text-xl font-bold font-display text-ink">User Profile Not Found</h1>
             <p className="text-xs text-ink-soft leading-relaxed">
-              The user profile <strong>@{usernameParam}</strong> does not exist or is not publicly accessible.
+              The profile for &ldquo;{usernameParam}&rdquo; does not exist or has not been made publicly visible.
             </p>
           </div>
           <Link
             href="/"
-            className="inline-block px-6 py-2.5 rounded-xl bg-forest hover:bg-forest-light text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-colors"
+            className="inline-block px-5 py-2.5 rounded-xl bg-forest text-white text-xs font-bold shadow-sm hover:opacity-90 transition-opacity"
           >
-            Return Home
+            Return to Homepage
           </Link>
         </div>
       </div>
     );
   }
 
-  // 2. Strict Privacy Boundary: isPublic === false returns clean private state with zero data leakage
+  // 2. Private Profile or Minor Safety Isolation Gate
   if (!profileData.isPublic && !isOwnProfile) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-6 bg-paper text-ink">
-        <div className="max-w-md w-full bg-paper-raised rounded-3xl border border-line shadow-sm p-8 text-center space-y-6">
-          <div className="w-16 h-16 rounded-2xl bg-paper-soft border border-line text-ink-muted flex items-center justify-center mx-auto shadow-sm">
-            <Lock className="w-8 h-8" />
+      <div className="min-h-[calc(100vh-4rem)] bg-paper flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-paper-raised rounded-3xl border border-line p-8 text-center space-y-5 shadow-sm">
+          <div className="w-14 h-14 rounded-2xl bg-forest/10 border border-forest/20 text-forest flex items-center justify-center mx-auto">
+            <Lock className="w-7 h-7" />
           </div>
-          <div className="space-y-2">
-            <span className="px-3 py-0.5 rounded-full bg-paper-soft text-ink-soft border border-line text-xs font-mono font-bold">
-              @{profileData.username}
+          <div className="space-y-1">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-forest/10 text-forest">
+              Private Profile
             </span>
-            <h1 className="text-2xl font-bold font-display text-ink tracking-tight">This Profile is Private</h1>
+            <h1 className="text-xl font-bold font-display text-ink">This Profile is Private</h1>
             <p className="text-xs text-ink-soft leading-relaxed">
-              {profileData.name} has set their profile to private. Only connected users can view full career activity.
+              This learner has set their portfolio to private mode. Private information is strictly protected by database Row-Level Security.
             </p>
           </div>
+          <Link
+            href="/"
+            className="inline-block px-5 py-2.5 rounded-xl bg-forest text-white text-xs font-bold shadow-sm hover:opacity-90 transition-opacity"
+          >
+            Return to Home
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
-          {isCurrentUserAdult && !isBlocked && (
-            <button
-              onClick={() => setShowConnectModal(true)}
-              className="w-full py-3 px-4 rounded-xl bg-forest hover:bg-forest-light text-white text-xs font-bold uppercase tracking-wider shadow-sm flex items-center justify-center gap-2 transition-colors"
-            >
-              <UserPlus className="w-4 h-4" />
-              <span>Send Connection Request</span>
-            </button>
-          )}
-
-          <ConnectionRequestModal
-            isOpen={showConnectModal}
-            onClose={() => setShowConnectModal(false)}
-            targetUserId={profileData.userId}
-            targetName={profileData.name}
-            targetHeadline={profileData.headline}
-            isMentor={profileData.isMentor}
-            onSendRequest={handleSendConnection}
-          />
+  // 3. Blocked State
+  if (isBlocked) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] bg-paper flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-paper-raised rounded-3xl border border-line p-8 text-center space-y-4 shadow-sm">
+          <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto border border-rose-200">
+            <Ban className="w-7 h-7" />
+          </div>
+          <h1 className="text-xl font-bold font-display text-ink">User Blocked</h1>
+          <p className="text-xs text-ink-soft">
+            You have blocked interactions with this member.
+          </p>
+          <Link href="/networking" className="inline-block text-xs font-bold text-forest underline">
+            Return to Networking
+          </Link>
         </div>
       </div>
     );
@@ -367,218 +264,147 @@ export default function PublicProfileViewPage() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-paper py-8 px-4 sm:px-6 lg:px-8 text-ink">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Profile Header Card */}
-        <div className="bg-paper-raised rounded-3xl border border-line p-6 sm:p-8 shadow-sm space-y-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-            <div className="flex items-start gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-forest text-white font-black text-xl flex items-center justify-center shadow-sm shrink-0">
-                {profileData.name.slice(0, 2).toUpperCase()}
-              </div>
-              <div className="space-y-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-xl sm:text-2xl font-bold font-display text-ink tracking-tight">
-                    {profileData.name}
-                  </h1>
-                  <span className="text-xs font-mono text-ink-muted">@{profileData.username}</span>
-                  {profileData.isMentor && (
-                    <span className="px-2.5 py-0.5 rounded-full bg-forest/10 text-forest text-[10px] font-mono font-bold border border-forest/20 flex items-center gap-1">
-                      <ShieldCheck className="w-3 h-3 text-forest" />
-                      Verified Mentor
-                    </span>
-                  )}
-                </div>
+      <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in">
+        
+        {/* Navigation */}
+        <div className="flex items-center justify-between">
+          <Link href="/networking" className="text-xs font-bold text-ink-muted hover:text-ink flex items-center gap-1.5">
+            <span>&larr; Back to Directory</span>
+          </Link>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider bg-forest/10 text-forest px-2.5 py-1 rounded-full border border-forest/20">
+              Verified Public Portfolio
+            </span>
+          </div>
+        </div>
 
-                {profileData.headline && (
-                  <p className="text-xs sm:text-sm text-ink-soft font-medium leading-relaxed">
-                    {profileData.headline}
-                  </p>
+        {/* Profile Card */}
+        <div className="bg-paper-raised rounded-3xl border border-line p-6 sm:p-8 space-y-6 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-2xl sm:text-3xl font-bold font-display text-ink">{profileData.name}</h1>
+                {profileData.isMentor && (
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-forest text-white">
+                    Verified Mentor
+                  </span>
                 )}
               </div>
+              <p className="text-xs sm:text-sm text-forest font-bold font-mono">
+                @{profileData.username} &bull; {profileData.headline}
+              </p>
+              {profileData.bio && (
+                <p className="text-xs sm:text-sm text-ink-soft leading-relaxed max-w-xl">
+                  {profileData.bio}
+                </p>
+              )}
             </div>
 
-            {/* Actions for 18+ Logged-In Users */}
-            {!isOwnProfile && (
-              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                {isCurrentUserAdult && (
-                  <>
-                    {connectionStatus === "accepted" ? (
-                      <Button
-                        href={`/networking/messages/${[user?.uid, profileData.userId].sort().join("_")}`}
-                        variant="primary"
-                        size="sm"
-                        icon={<MessageSquare className="w-3.5 h-3.5" />}
-                      >
-                        <span>Message</span>
-                      </Button>
-                    ) : connectionStatus === "pending" ? (
-                      <button
-                        disabled
-                        className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-paper-soft border border-line text-ink-muted text-xs font-bold uppercase tracking-wider"
-                      >
-                        Request Pending
-                      </button>
-                    ) : isBlocked ? (
-                      <span className="text-xs font-mono text-rose-600 font-bold">User Blocked</span>
-                    ) : (
-                      <Button
-                        onClick={() => setShowConnectModal(true)}
-                        variant="primary"
-                        size="sm"
-                        icon={<UserPlus className="w-3.5 h-3.5" />}
-                      >
-                        <span>{profileData.isMentor ? "Request Mentorship" : "Connect"}</span>
-                      </Button>
-                    )}
-                  </>
-                )}
-
-                <button
-                  onClick={() => setShowReportModal(true)}
-                  title="Report Profile"
-                  className="p-2.5 rounded-xl border border-line text-ink-muted hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                >
-                  <Flag className="w-4 h-4" />
-                </button>
-
-                {user && !isBlocked && (
+            {/* Actions for other users */}
+            {!isOwnProfile && isCurrentUserAdult && (
+              <div className="flex items-center gap-2 shrink-0">
+                {connectionStatus === "none" && (
                   <button
-                    onClick={handleBlockUser}
-                    title="Block User"
-                    className="p-2.5 rounded-xl border border-line text-ink-muted hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                    onClick={() => setShowConnectModal(true)}
+                    className="px-4 py-2 rounded-xl bg-forest hover:opacity-90 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm"
                   >
-                    <Ban className="w-4 h-4" />
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span>Connect</span>
                   </button>
                 )}
+                {connectionStatus === "pending" && (
+                  <span className="px-3 py-1.5 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold">
+                    Request Pending
+                  </span>
+                )}
+                {connectionStatus === "accepted" && (
+                  <span className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Connected
+                  </span>
+                )}
+                <button
+                  onClick={() => setShowReportModal(true)}
+                  className="p-2 rounded-xl border border-line text-ink-muted hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                  title="Report Member"
+                >
+                  <Flag className="w-3.5 h-3.5" />
+                </button>
               </div>
             )}
           </div>
 
-          {/* Bio */}
-          {profileData.bio && (
-            <div className="space-y-2 pt-4 border-t border-line">
-              <h2 className="text-xs font-bold text-ink uppercase font-mono tracking-wider">About</h2>
-              <p className="text-xs sm:text-sm text-ink-soft leading-relaxed whitespace-pre-line">
-                {profileData.bio}
-              </p>
-            </div>
-          )}
-
-          {/* Mentor Specialization */}
-          {profileData.isMentor && profileData.mentorTags && profileData.mentorTags.length > 0 && (
-            <div className="space-y-2 pt-4 border-t border-line">
-              <h2 className="text-xs font-bold text-ink uppercase font-mono tracking-wider">
-                Mentorship Areas
-              </h2>
-              <div className="flex flex-wrap gap-1.5">
-                {profileData.mentorTags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-2.5 py-1 rounded-lg bg-forest/10 border border-forest/20 text-forest text-xs font-mono font-bold"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Skills */}
           {profileData.skills && profileData.skills.length > 0 && (
-            <div className="space-y-2 pt-4 border-t border-line">
-              <h2 className="text-xs font-bold text-ink uppercase font-mono tracking-wider">
-                Skills &amp; Technologies
-              </h2>
+            <div className="space-y-2 border-t border-line pt-4">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-ink-muted">Demonstrated Skills</span>
               <div className="flex flex-wrap gap-1.5">
-                {profileData.skills.map((skill) => (
-                  <span
-                    key={skill}
-                    className="px-3 py-1 rounded-lg bg-paper-soft text-ink-soft border border-line text-xs font-mono font-bold"
-                  >
+                {profileData.skills.map((skill, idx) => (
+                  <span key={idx} className="px-2.5 py-1 rounded-lg bg-paper-soft text-ink text-xs font-medium border border-line">
                     {skill}
                   </span>
                 ))}
               </div>
             </div>
           )}
-        </div>
 
-        {/* Public Projects from Project Studio */}
-        {profileData.projects && profileData.projects.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="text-base font-bold font-display text-ink flex items-center gap-2">
-              <FolderGit2 className="w-5 h-5 text-forest" />
-              <span>Verified Engineering Projects</span>
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {profileData.projects.map((proj) => (
-                <div
-                  key={proj.id}
-                  className="bg-paper-raised rounded-3xl border border-line p-5 shadow-sm flex flex-col justify-between space-y-3 hover:shadow-md hover:border-forest/30 transition-all"
-                >
-                  <div className="space-y-2">
+          {/* Projects */}
+          <div className="space-y-3 border-t border-line pt-4">
+            <span className="text-[10px] uppercase font-bold tracking-wider text-ink-muted">Published Projects</span>
+            {profileData.projects && profileData.projects.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {profileData.projects.map((proj) => (
+                  <div key={proj.id} className="p-4 rounded-2xl bg-paper-soft border border-line space-y-2">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-bold text-sm text-ink">{proj.title}</h3>
+                      <h3 className="text-sm font-bold text-ink">{proj.title}</h3>
                       {proj.verificationStatus === "verified" && (
-                        <span className="px-2 py-0.5 rounded-full bg-forest/10 text-forest text-[10px] font-mono font-bold border border-forest/20 flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3 text-forest" />
-                          GitHub Verified
+                        <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-forest/10 text-forest">
+                          Verified
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-ink-soft leading-relaxed">{proj.description}</p>
-                    <div className="flex flex-wrap gap-1 pt-1">
-                      {proj.technologies.map((t) => (
-                        <span
-                          key={t}
-                          className="px-2 py-0.5 bg-paper-soft border border-line rounded text-[10px] font-mono text-ink-soft"
-                        >
-                          {t}
-                        </span>
-                      ))}
-                    </div>
+                    {proj.description && (
+                      <p className="text-xs text-ink-soft line-clamp-2">{proj.description}</p>
+                    )}
+                    {proj.technologies && proj.technologies.length > 0 && (
+                      <div className="flex flex-wrap gap-1 pt-1">
+                        {proj.technologies.map((t: string, i: number) => (
+                          <span key={i} className="text-[10px] text-ink-muted font-mono bg-paper px-1.5 py-0.5 rounded">
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
-
-                  {proj.githubRepo && (
-                    <div className="pt-2 border-t border-line">
-                      <a
-                        href={proj.githubRepo}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs font-bold text-ink hover:text-forest flex items-center gap-1.5 transition-colors"
-                      >
-                        <GitBranch className="w-3.5 h-3.5" />
-                        <span>View Repository</span>
-                        <ExternalLink className="w-3 h-3 text-ink-muted" />
-                      </a>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-6 text-center text-xs text-ink-muted bg-paper-soft rounded-2xl border border-line">
+                No public projects published yet.
+              </div>
+            )}
           </div>
-        )}
+        </div>
 
         {/* Modals */}
         <ConnectionRequestModal
-          isOpen={showConnectModal}
-          onClose={() => setShowConnectModal(false)}
           targetUserId={profileData.userId}
           targetName={profileData.name}
           targetHeadline={profileData.headline}
           isMentor={profileData.isMentor}
+          isOpen={showConnectModal}
+          onClose={() => setShowConnectModal(false)}
           onSendRequest={handleSendConnection}
         />
 
         <ReportModal
-          isOpen={showReportModal}
-          onClose={() => setShowReportModal(false)}
           targetType="profile"
           targetId={profileData.userId}
-          targetName={`@${profileData.username} (${profileData.name})`}
-          onSubmitReport={handleSubmitReport}
+          targetName={profileData.name}
+          isOpen={showReportModal}
+          onClose={() => setShowReportModal(false)}
+          onSubmitReport={handleReportUser}
         />
+
       </div>
     </div>
   );

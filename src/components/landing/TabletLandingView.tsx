@@ -240,8 +240,8 @@ export default function TabletLandingView() {
 
               <div className="w-full grid grid-cols-2 gap-2 text-[10px] font-mono pt-2 border-t border-slate-200/70">
                 <div className="bg-white border border-slate-200/60 rounded-xl p-2 text-left">
-                  <span className="block text-slate-400">ATS Target</span>
-                  <strong className="text-emerald-700 font-black">90%+ Pass</strong>
+                  <span className="block text-slate-400">ATS Format</span>
+                  <strong className="text-emerald-700 font-black">Single-Col</strong>
                 </div>
                 <div className="bg-white border border-slate-200/60 rounded-xl p-2 text-left">
                   <span className="block text-slate-400">STAR Drills</span>

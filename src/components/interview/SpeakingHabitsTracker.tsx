@@ -43,15 +43,44 @@ export default function SpeakingHabitsTracker({
   metricsHistory = [],
   profileSummary
 }: SpeakingHabitsProps) {
-  // Use real metrics if available or sensible defaults from profile
-  const history = metricsHistory.length > 0 ? metricsHistory : [
-    { interviewId: "int-1", date: "Interview 1", languageScore: 68, clarityScore: 64, fillerCount: 16, wpm: 148 },
-    { interviewId: "int-2", date: "Interview 2", languageScore: 74, clarityScore: 72, fillerCount: 11, wpm: 136 },
-    { interviewId: "int-3", date: "Interview 3", languageScore: 82, clarityScore: 80, fillerCount: 6, wpm: 128 },
-  ];
+  const hasData = metricsHistory.length > 0 || !!profileSummary;
 
-  const currentScore = profileSummary?.languageScore || history[history.length - 1]?.languageScore || 78;
-  const currentFillers = profileSummary?.topFillers || ["actually", "basically"];
+  if (!hasData) {
+    return (
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-4 text-white shadow-xl">
+        <div className="flex items-center gap-2">
+          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 flex items-center gap-1.5">
+            <Activity className="w-3 h-3 text-indigo-400" />
+            <span>Cross-Interview Communication Tracker</span>
+          </span>
+        </div>
+        <h2 className="text-xl font-black text-white">Spoken English & Communication Habits</h2>
+        <p className="text-xs text-slate-400 leading-relaxed max-w-2xl">
+          Real speech telemetry tracked across your mock interviews to eliminate recurring filler words, optimize speaking pace (WPM), and master concise STAR structure.
+        </p>
+
+        <div className="p-6 rounded-2xl bg-slate-950 border border-dashed border-slate-800 text-center space-y-2">
+          <MessageSquare className="w-8 h-8 text-slate-600 mx-auto" />
+          <p className="text-xs font-bold text-slate-300">No Interview Audio Sessions Recorded Yet</p>
+          <p className="text-[11px] text-slate-500 max-w-md mx-auto">
+            Complete your first live mock interview drill to unlock personalized speech cadence, filler word reduction charts, and language recommendations.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const history = metricsHistory;
+  const currentScore = profileSummary?.languageScore || (history.length > 0 ? history[history.length - 1].languageScore : 0);
+  const currentFillers = profileSummary?.topFillers || [];
+
+  const fillerDelta = history.length >= 2 
+    ? Math.round(((history[0].fillerCount - history[history.length - 1].fillerCount) / Math.max(1, history[0].fillerCount)) * 100)
+    : null;
+
+  const clarityDelta = history.length >= 2
+    ? history[history.length - 1].clarityScore - history[0].clarityScore
+    : null;
 
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6 text-white shadow-xl">
@@ -87,10 +116,12 @@ export default function SpeakingHabitsTracker({
         <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-mono text-slate-400 uppercase">Filler Words Trend</span>
-            <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
-              <TrendingDown className="w-3.5 h-3.5" />
-              -62% Reduction
-            </span>
+            {fillerDelta !== null && (
+              <span className={`text-xs font-bold flex items-center gap-1 ${fillerDelta >= 0 ? "text-emerald-400" : "text-amber-400"}`}>
+                {fillerDelta >= 0 ? <TrendingDown className="w-3.5 h-3.5" /> : <TrendingUp className="w-3.5 h-3.5" />}
+                {fillerDelta >= 0 ? `-${fillerDelta}% Reduction` : `+${Math.abs(fillerDelta)}%`}
+              </span>
+            )}
           </div>
 
           <div className="space-y-2 pt-1">
@@ -110,20 +141,24 @@ export default function SpeakingHabitsTracker({
             ))}
           </div>
 
-          <div className="text-[11px] text-slate-400 border-t border-slate-800/80 pt-2 flex items-center gap-1.5">
-            <Sparkles className="w-3 h-3 text-indigo-400 shrink-0" />
-            <span>Top detected filler: <strong>"{currentFillers[0] || "um"}"</strong></span>
-          </div>
+          {currentFillers.length > 0 && (
+            <div className="text-[11px] text-slate-400 border-t border-slate-800/80 pt-2 flex items-center gap-1.5">
+              <Sparkles className="w-3 h-3 text-indigo-400 shrink-0" />
+              <span>Top detected filler: <strong>&ldquo;{currentFillers[0]}&rdquo;</strong></span>
+            </div>
+          )}
         </div>
 
         {/* 2. Clarity & Structure Score Trajectory */}
         <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-mono text-slate-400 uppercase">Clarity & STAR Growth</span>
-            <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
-              <TrendingUp className="w-3.5 h-3.5" />
-              +16 pts
-            </span>
+            {clarityDelta !== null && (
+              <span className={`text-xs font-bold flex items-center gap-1 ${clarityDelta >= 0 ? "text-emerald-400" : "text-amber-400"}`}>
+                <TrendingUp className="w-3.5 h-3.5" />
+                {clarityDelta >= 0 ? `+${clarityDelta} pts` : `${clarityDelta} pts`}
+              </span>
+            )}
           </div>
 
           <div className="space-y-2 pt-1">
@@ -145,7 +180,7 @@ export default function SpeakingHabitsTracker({
 
           <div className="text-[11px] text-slate-400 border-t border-slate-800/80 pt-2 flex items-center gap-1.5">
             <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
-            <span>Sentence length optimized from 34 &rarr; 16 words/sentence</span>
+            <span>Clarity evaluated against concise STAR framework structure</span>
           </div>
         </div>
 
@@ -155,7 +190,7 @@ export default function SpeakingHabitsTracker({
             <span className="text-[10px] font-mono text-slate-400 uppercase">Speaking Cadence</span>
             <span className="text-xs font-bold text-indigo-400 flex items-center gap-1">
               <Volume2 className="w-3.5 h-3.5" />
-              Ideal (125 WPM)
+              {profileSummary?.averageWpm ? `${profileSummary.averageWpm} WPM Avg` : "Real Pace"}
             </span>
           </div>
 
@@ -170,34 +205,40 @@ export default function SpeakingHabitsTracker({
 
           <div className="text-[11px] text-slate-400 border-t border-slate-800/80 pt-2 flex items-center gap-1.5">
             <Clock className="w-3 h-3 text-indigo-400 shrink-0" />
-            <span>Natural pauses between points allow technical comprehension.</span>
+            <span>Target range: 120–150 words per minute</span>
           </div>
         </div>
 
       </div>
 
       {/* Persistent Focus & Strengths Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 space-y-1 text-xs">
-          <span className="font-extrabold text-emerald-300 uppercase tracking-wider text-[10px] flex items-center gap-1.5">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Confirmed Speaking Strengths</span>
-          </span>
-          <p className="text-slate-200">
-            {profileSummary?.strengths?.join(" • ") || "Strong technical vocabulary • Excellent problem breakdown • Intelligible and clear pronunciation"}
-          </p>
-        </div>
+      {(profileSummary?.strengths?.length || profileSummary?.recommendedFocus?.length) ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+          {profileSummary?.strengths && profileSummary.strengths.length > 0 && (
+            <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 space-y-1 text-xs">
+              <span className="font-extrabold text-emerald-300 uppercase tracking-wider text-[10px] flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Confirmed Speaking Strengths</span>
+              </span>
+              <p className="text-slate-200">
+                {profileSummary.strengths.join(" • ")}
+              </p>
+            </div>
+          )}
 
-        <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 space-y-1 text-xs">
-          <span className="font-extrabold text-indigo-300 uppercase tracking-wider text-[10px] flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-            <span>Next Communication Focus</span>
-          </span>
-          <p className="text-slate-200">
-            {profileSummary?.recommendedFocus?.join(" • ") || "Pause for breath rather than using 'actually' • Anchor conclusion with 1 concrete metric"}
-          </p>
+          {profileSummary?.recommendedFocus && profileSummary.recommendedFocus.length > 0 && (
+            <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 space-y-1 text-xs">
+              <span className="font-extrabold text-indigo-300 uppercase tracking-wider text-[10px] flex items-center gap-1.5">
+                <Sparkles className="w-3 h-3 text-indigo-400" />
+                <span>Next Communication Focus</span>
+              </span>
+              <p className="text-slate-200">
+                {profileSummary.recommendedFocus.join(" • ")}
+              </p>
+            </div>
+          )}
         </div>
-      </div>
+      ) : null}
 
     </div>
   );
