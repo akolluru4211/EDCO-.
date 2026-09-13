@@ -12,9 +12,6 @@ import {
   GraduationCap,
   Briefcase,
   Layers,
-  Flame,
-  Star,
-  RefreshCw,
   ChevronRight
 } from "lucide-react";
 import Button from "@/components/ui/Button";
@@ -76,6 +73,33 @@ const SECTOR_META: Record<SectorType, {
   },
 };
 
+// Helper for cross-subdomain absolute URL resolution to main app domain
+function getMainAppUrl(pathWithQuery: string): string {
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname.toLowerCase();
+    const port = window.location.port ? `:${window.location.port}` : "";
+    const protocol = window.location.protocol;
+
+    // If on a subdomain in production (e.g. junior.edworldco.in), navigate to root app domain
+    if (host.includes(".edworldco.in")) {
+      const mainDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || "edworldco.in";
+      return `https://${mainDomain}${pathWithQuery}`;
+    }
+
+    // If testing on localhost subdomain (e.g. junior.localhost:3000), route to root localhost
+    if (host.endsWith(".localhost")) {
+      return `${protocol}//localhost${port}${pathWithQuery}`;
+    }
+  }
+
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    const base = process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
+    return `${base}${pathWithQuery}`;
+  }
+
+  return pathWithQuery;
+}
+
 export default function SectorLandingPage({
   sector,
   slug,
@@ -114,6 +138,9 @@ export default function SectorLandingPage({
     };
   }, [sector]);
 
+  const loginHref = getMainAppUrl("/login");
+  const ctaHref = getMainAppUrl(data.cta_href);
+
   return (
     <div className={`min-h-screen ${isMaximalist ? "bg-[#F4F6FB] text-[#13141B]" : "bg-[#0B0F17] text-slate-100"} selection:bg-[#D7FC51] selection:text-black font-sans`}>
       
@@ -121,7 +148,7 @@ export default function SectorLandingPage({
       <header className={`border-b sticky top-0 z-50 backdrop-blur-md ${isMaximalist ? "bg-white/90 border-[#E8ECF2]" : "bg-[#0B0F17]/90 border-slate-800"}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2">
+            <Link href={getMainAppUrl("/")} className="flex items-center gap-2">
               <EdworldLogo />
             </Link>
             <div className="hidden md:flex items-center gap-2 pl-4 border-l border-slate-300 dark:border-slate-800">
@@ -137,7 +164,7 @@ export default function SectorLandingPage({
 
           <div className="flex items-center gap-3">
             <Link
-              href="/login"
+              href={loginHref}
               className={`text-xs font-bold px-4 py-2 rounded-xl transition-all ${
                 isMaximalist
                   ? "text-[#5E6573] hover:text-[#13141B] hover:bg-[#F4F6FB]"
@@ -147,7 +174,7 @@ export default function SectorLandingPage({
               Sign In
             </Link>
             <Link
-              href={data.cta_href}
+              href={ctaHref}
               className={`text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all shadow-sm active:scale-95 ${
                 isMaximalist
                   ? "bg-[#13141B] text-white hover:bg-[#2A2C38]"
@@ -204,7 +231,7 @@ export default function SectorLandingPage({
           {/* Action CTA & Quick Trust Proofs */}
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
-              href={data.cta_href}
+              href={ctaHref}
               className={`w-full sm:w-auto px-8 py-4 rounded-2xl font-black text-sm tracking-wide uppercase transition-all flex items-center justify-center gap-2 shadow-xl hover:scale-105 active:scale-95 ${
                 isMaximalist
                   ? "bg-[#13141B] text-white hover:bg-[#2A2C38]"
@@ -216,7 +243,7 @@ export default function SectorLandingPage({
             </Link>
 
             <Link
-              href="/login"
+              href={loginHref}
               className={`w-full sm:w-auto px-6 py-4 rounded-2xl font-bold text-xs transition-all border ${
                 isMaximalist
                   ? "bg-white border-[#E8ECF2] text-[#13141B] hover:bg-[#F4F6FB]"
@@ -319,7 +346,7 @@ export default function SectorLandingPage({
                     Included in {meta.ageBand}
                   </span>
                   <Link
-                    href={data.cta_href}
+                    href={ctaHref}
                     className={`text-xs font-bold flex items-center gap-1 transition-transform group-hover:translate-x-1 ${
                       isMaximalist ? "text-[#7B57FF] hover:underline" : "text-[#D7FC51] hover:underline"
                     }`}
@@ -359,7 +386,7 @@ export default function SectorLandingPage({
 
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
-                href={data.cta_href}
+                href={ctaHref}
                 className={`w-full sm:w-auto px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-wider transition-all shadow-xl hover:scale-105 active:scale-95 flex items-center justify-center gap-2 ${
                   isMaximalist
                     ? "bg-[#D7FC51] text-black hover:bg-[#cbf738]"
@@ -384,13 +411,13 @@ export default function SectorLandingPage({
             <span>&bull; {meta.targetAudience} Track</span>
           </div>
           <div className="flex items-center gap-6">
-            <Link href="/" className="hover:underline">Home</Link>
-            <Link href="/for-junior" className="hover:underline">Junior</Link>
-            <Link href="/for-explorer" className="hover:underline">Explorer</Link>
-            <Link href="/for-college" className="hover:underline">College</Link>
-            <Link href="/for-professionals" className="hover:underline">Professionals</Link>
-            <Link href="/privacy" className="hover:underline">Privacy</Link>
-            <Link href="/terms" className="hover:underline">Terms</Link>
+            <Link href={getMainAppUrl("/")} className="hover:underline">Home</Link>
+            <Link href={getMainAppUrl("/for-junior")} className="hover:underline">Junior</Link>
+            <Link href={getMainAppUrl("/for-explorer")} className="hover:underline">Explorer</Link>
+            <Link href={getMainAppUrl("/for-college")} className="hover:underline">College</Link>
+            <Link href={getMainAppUrl("/for-professionals")} className="hover:underline">Professionals</Link>
+            <Link href={getMainAppUrl("/privacy")} className="hover:underline">Privacy</Link>
+            <Link href={getMainAppUrl("/terms")} className="hover:underline">Terms</Link>
           </div>
         </div>
       </footer>

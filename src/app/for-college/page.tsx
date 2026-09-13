@@ -6,6 +6,9 @@ import { Metadata } from "next";
 export const metadata: Metadata = {
   title: "College & Campus Placement Track | EdWorld Co.",
   description: "ATS-tested resume maker, STAR mock interviews, verified GitHub project studio, and campus placement tracking.",
+  alternates: {
+    canonical: "https://edworldco.in/for-college",
+  },
 };
 
 export default function ForCollegePage() {

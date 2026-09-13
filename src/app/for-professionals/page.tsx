@@ -6,6 +6,9 @@ import { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Working Professionals Track | EdWorld Co.",
   description: "Career-switch path recommendations, job search pipeline, referral requests, factual salary benchmarks, and performance appraisal assistant.",
+  alternates: {
+    canonical: "https://edworldco.in/for-professionals",
+  },
 };
 
 export default function ForProfessionalsPage() {
