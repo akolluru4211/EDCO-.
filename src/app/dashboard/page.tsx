@@ -38,6 +38,11 @@ import GrowthRing from "@/components/ui/GrowthRing";
 import GamificationHUD from "@/components/dashboard/GamificationHUD";
 import AuthGuard from "@/components/auth/AuthGuard";
 import UserGreeting from "@/components/ui/UserGreeting";
+import AnimatedCounter from "@/components/ui/AnimatedCounter";
+import SpotlightCard from "@/components/ui/SpotlightCard";
+import BorderBeam from "@/components/ui/BorderBeam";
+import StreakFlame from "@/components/ui/StreakFlame";
+import ShimmerBadge from "@/components/ui/ShimmerBadge";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -359,48 +364,56 @@ export default function DashboardPage() {
             }
           />
 
-          {/* Top 4 Metric Capsule Cards */}
+          {/* Top 4 Metric Capsule Cards with Animated Counters */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {/* 1. Points Pill */}
-            <div className="pill-stat">
+            <div className="pill-stat card-lift-glow hover:border-[#FFB800]/40 transition-all">
               <div className="w-10 h-10 rounded-2xl bg-[#FFF6DC] text-[#FFB800] flex items-center justify-center shadow-inner">
-                <Sparkles className="w-5 h-5 fill-[#FFB800]" />
+                <Sparkles className="w-5 h-5 fill-[#FFB800] animate-pulse" />
               </div>
               <div>
-                <div className="text-lg font-black text-[#181920] leading-none">{userStats.points}</div>
+                <div className="text-lg font-black text-[#181920] leading-none">
+                  <AnimatedCounter value={userStats.points} />
+                </div>
                 <span className="text-[11px] font-bold text-[#8E95A5]">Points</span>
               </div>
             </div>
 
             {/* 2. Courses / Drills Pill */}
-            <div className="pill-stat">
+            <div className="pill-stat card-lift-glow hover:border-[#7B57FF]/40 transition-all">
               <div className="w-10 h-10 rounded-2xl bg-[#EDE8FD] text-[#7B57FF] flex items-center justify-center shadow-inner">
                 <GraduationCap className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-lg font-black text-[#181920] leading-none">{completedDrillsCount}</div>
+                <div className="text-lg font-black text-[#181920] leading-none">
+                  <AnimatedCounter value={completedDrillsCount} />
+                </div>
                 <span className="text-[11px] font-bold text-[#8E95A5]">Drills Completed</span>
               </div>
             </div>
 
             {/* 3. Certificates / Badges Pill */}
-            <div className="pill-stat">
+            <div className="pill-stat card-lift-glow hover:border-[#FF7A50]/40 transition-all">
               <div className="w-10 h-10 rounded-2xl bg-[#FFEFEA] text-[#FF7A50] flex items-center justify-center shadow-inner">
                 <Award className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-lg font-black text-[#181920] leading-none">{earnedBadgesCount}</div>
+                <div className="text-lg font-black text-[#181920] leading-none">
+                  <AnimatedCounter value={earnedBadgesCount} />
+                </div>
                 <span className="text-[11px] font-bold text-[#8E95A5]">Badges Earned</span>
               </div>
             </div>
 
             {/* 4. Challenges / Streak Pill */}
-            <div className="pill-stat">
+            <div className="pill-stat card-lift-glow hover:border-[#00D2B4]/40 transition-all">
               <div className="w-10 h-10 rounded-2xl bg-[#E0FAF6] text-[#00D2B4] flex items-center justify-center shadow-inner">
-                <Flame className="w-5 h-5 fill-[#00D2B4]" />
+                <Flame className={`w-5 h-5 ${userStats.current_streak > 0 ? "fill-[#00D2B4] animate-bounce" : ""}`} />
               </div>
               <div>
-                <div className="text-lg font-black text-[#181920] leading-none">{userStats.current_streak}d</div>
+                <div className="text-lg font-black text-[#181920] leading-none">
+                  <AnimatedCounter value={userStats.current_streak} suffix="d" />
+                </div>
                 <span className="text-[11px] font-bold text-[#8E95A5]">Active Streak</span>
               </div>
             </div>
@@ -454,18 +467,24 @@ export default function DashboardPage() {
           {/* ---------------- LEFT COLUMN (8 Cols) ---------------- */}
           <div className="lg:col-span-7 xl:col-span-8 space-y-6 sm:space-y-8">
             
-            {/* 1. Continue Learning Hero Card (Wide with Lime Blob Accent) */}
+            {/* 1. Continue Learning Hero Card with Spotlight & Border Beam */}
             <div className="space-y-3">
               <h2 className="text-lg font-black text-[#181920]">Continue learning</h2>
               
-              <div className="card-quixel p-5 sm:p-7 relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                
+              <SpotlightCard
+                spotlightColor="rgba(123, 87, 255, 0.14)"
+                spotlightSize={400}
+                className="card-quixel p-5 sm:p-7 relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6 card-lift-glow"
+              >
+                {/* Border Beam subtle lighting */}
+                <BorderBeam size={220} duration={12} colorFrom="#7B57FF" colorTo="#00D2B4" />
+
                 {/* Left Section: 3D Blob Icon + Course Info */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5 z-10 w-full md:w-auto">
                   {/* Lime Blob Container with 3D Brain/Illustration */}
                   <div className="relative w-20 h-20 sm:w-28 sm:h-28 flex-shrink-0 flex items-center justify-center">
-                    <div className="absolute inset-0 bg-gradient-to-tr from-[#D7FC51] via-[#E2FF75] to-[#B8F218] rounded-3xl transform -rotate-3 shadow-md" />
-                    <div className="relative z-10 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#7B57FF] text-white flex items-center justify-center shadow-lg transform rotate-2">
+                    <div className="absolute inset-0 bg-gradient-to-tr from-[#D7FC51] via-[#E2FF75] to-[#B8F218] rounded-3xl transform -rotate-3 shadow-md animate-float-subtle" />
+                    <div className="relative z-10 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#7B57FF] text-white flex items-center justify-center shadow-lg transform rotate-2 transition-transform duration-300 hover:rotate-6">
                       <Brain className="w-8 h-8 sm:w-10 sm:h-10 text-[#D7FC51]" />
                     </div>
                   </div>
@@ -489,10 +508,10 @@ export default function DashboardPage() {
                           : "0% of 100% Completed • Ready to begin"
                         }
                       </span>
-                      {/* Segmented Progress Bar */}
+                      {/* Segmented Progress Bar with animated gradient */}
                       <div className="w-full sm:w-64 h-2 bg-[#F0F2F6] rounded-full overflow-hidden">
                         <div 
-                          className="h-full bg-gradient-to-r from-[#7B57FF] to-[#00D2B4] rounded-full transition-all duration-500" 
+                          className="h-full bg-gradient-to-r from-[#7B57FF] to-[#00D2B4] rounded-full transition-all duration-700 ease-out" 
                           style={{ width: `${latestSession ? (latestSession.score || 80) : 0}%` }}
                         />
                       </div>
@@ -504,26 +523,26 @@ export default function DashboardPage() {
                 <div className="flex items-center sm:flex-col lg:flex-row gap-2 z-10 w-full md:w-auto justify-end">
                   <Link
                     href="/interviews"
-                    className="flex-1 md:flex-initial px-5 py-3 rounded-2xl bg-[#13141B] hover:bg-[#252632] text-white text-xs font-bold shadow-md hover:scale-105 transition-all text-center"
+                    className="btn-shine flex-1 md:flex-initial px-5 py-3 rounded-2xl bg-[#13141B] hover:bg-[#252632] text-white text-xs font-bold shadow-md hover:scale-105 active:scale-95 transition-all text-center"
                   >
                     {latestSession ? "Practice Next Drill" : "Start learning"}
                   </Link>
                   <div className="flex items-center gap-1.5">
                     <button 
                       aria-label="Notifications"
-                      className="w-10 h-10 rounded-2xl bg-[#F4F6FB] hover:bg-[#E8ECF2] border border-[#E8ECF2] flex items-center justify-center text-[#181920] transition-colors"
+                      className="w-10 h-10 rounded-2xl bg-[#F4F6FB] hover:bg-[#E8ECF2] border border-[#E8ECF2] flex items-center justify-center text-[#181920] transition-colors hover:scale-105 active:scale-95"
                     >
                       <Bell className="w-4 h-4" />
                     </button>
                     <button 
                       aria-label="Options"
-                      className="w-10 h-10 rounded-2xl bg-[#F4F6FB] hover:bg-[#E8ECF2] border border-[#E8ECF2] flex items-center justify-center text-[#181920] transition-colors"
+                      className="w-10 h-10 rounded-2xl bg-[#F4F6FB] hover:bg-[#E8ECF2] border border-[#E8ECF2] flex items-center justify-center text-[#181920] transition-colors hover:scale-105 active:scale-95"
                     >
                       <MoreHorizontal className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
-              </div>
+              </SpotlightCard>
             </div>
 
             {/* 2. Recommended For You Section (Filter Tabs + 2x2 Grid) */}
@@ -648,23 +667,25 @@ export default function DashboardPage() {
           {/* ---------------- RIGHT COLUMN (4 / 5 Cols) ---------------- */}
           <div className="lg:col-span-5 xl:col-span-4 space-y-6">
             
-            {/* 1. Floating Streak & Domain XP Card (Matching Screenshot) */}
-            <div className="floating-streak-card p-6 sm:p-7 space-y-6">
+            {/* 1. Floating Streak & Domain XP Card */}
+            <div className="floating-streak-card p-6 sm:p-7 space-y-6 card-lift-glow">
               
               {/* Header: Dynamic streak based on real activity */}
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-xl font-black text-[#181920] leading-tight">
                     {userStats.current_streak > 0 ? (
-                      <>You&apos;re on a<br />{userStats.current_streak}-day streak</>
+                      <>You&apos;re on a<br /><AnimatedCounter value={userStats.current_streak} suffix="-day" /> streak</>
                     ) : (
                       <>Start your<br />learning streak</>
                     )}
                   </h3>
                 </div>
-                <div className="flex items-center gap-1 px-3 py-1.5 rounded-2xl bg-[#FFF6DC] text-[#FFB800] border border-[#FFB800]/30 shadow-sm">
-                  <Flame className="w-5 h-5 fill-[#FFB800]" />
-                  <span className="text-lg font-black text-[#181920]">{userStats.points}</span>
+                <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-[#FFF6DC] text-[#FFB800] border border-[#FFB800]/30 shadow-sm transition-transform duration-200 hover:scale-105">
+                  <StreakFlame streakDays={userStats.current_streak} size="sm" showSparks={true} />
+                  <span className="text-lg font-black text-[#181920]">
+                    <AnimatedCounter value={userStats.points} />
+                  </span>
                 </div>
               </div>
 
@@ -676,12 +697,12 @@ export default function DashboardPage() {
                   return (
                     <div
                       key={idx}
-                      className={`w-9 h-9 rounded-2xl flex items-center justify-center text-xs font-black transition-transform ${
+                      className={`w-9 h-9 rounded-2xl flex items-center justify-center text-xs font-black transition-all duration-200 ${
                         isCompleted
                           ? "bg-[#D7FC51] text-[#13141B] shadow-sm transform hover:scale-110"
                           : idx === todayDayIndex
-                          ? "bg-white text-[#181920] border-2 border-[#13141B]"
-                          : "bg-[#F4F6FB] text-[#8E95A5] border border-[#E8ECF2]"
+                          ? "bg-white text-[#181920] border-2 border-[#13141B] scale-105"
+                          : "bg-[#F4F6FB] text-[#8E95A5] border border-[#E8ECF2] hover:bg-slate-100"
                       }`}
                     >
                       {isCompleted ? <Zap className="w-4 h-4 fill-[#13141B]" /> : day}

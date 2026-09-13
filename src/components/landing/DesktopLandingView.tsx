@@ -7,10 +7,15 @@ import {
   ArrowRight, 
   ShieldCheck, 
   CheckCircle2, 
-  Award
+  Award,
+  Sparkles
 } from "lucide-react";
 import EdworldLogo from "@/components/ui/EdworldLogo";
 import Interactive3DCard from "@/components/ui/Interactive3DCard";
+import SpotlightCard from "@/components/ui/SpotlightCard";
+import BorderBeam from "@/components/ui/BorderBeam";
+import ShimmerBadge from "@/components/ui/ShimmerBadge";
+import AmbientMeshBackground from "@/components/ui/AmbientMeshBackground";
 
 type StageKey = "junior" | "student" | "pro";
 
@@ -168,13 +173,13 @@ export default function DesktopLandingView() {
             <div className="h-4 w-px bg-slate-200" />
             <Link
               href="/auth/login"
-              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-800 hover:bg-slate-100 border border-slate-200 transition-all"
+              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-800 hover:bg-slate-100 border border-slate-200 transition-all hover:scale-105 active:scale-95"
             >
               Sign In
             </Link>
             <Link
               href="/auth/signup"
-              className="px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-slate-950 hover:bg-black text-[#D7FC51] shadow-md transition-all hover:scale-105 active:scale-95"
+              className="btn-shine px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-slate-950 hover:bg-black text-[#D7FC51] shadow-md transition-all hover:scale-105 active:scale-95"
             >
               Get Started
             </Link>
@@ -182,25 +187,23 @@ export default function DesktopLandingView() {
         </div>
       </header>
 
-      {/* 2. Full-Screen Cinematic Hero Section with Massive Typography */}
+      {/* 2. Full-Screen Cinematic Hero Section with Animated Mesh & Micro-Interactions */}
       <section className="relative overflow-hidden pt-20 pb-28 border-b border-slate-200/80">
         
-        {/* Soft Organic Ambient Lighting */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[1000px] h-[450px] bg-gradient-to-b from-[#00D2B4]/10 via-[#7B57FF]/8 to-transparent rounded-full blur-3xl pointer-events-none -z-10 animate-float-subtle" />
-        <div className="absolute -bottom-20 right-10 w-[600px] h-[600px] bg-gradient-to-tr from-[#D7FC51]/15 via-emerald-500/5 to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
+        {/* Dynamic GPU-accelerated Ambient Mesh Orbs */}
+        <AmbientMeshBackground intensity="subtle" />
 
-        <div className="max-w-6xl mx-auto px-8 text-center space-y-8">
+        <div className="max-w-6xl mx-auto px-8 text-center space-y-8 relative z-10">
           
-          {/* Top Pill */}
-          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white border border-slate-200 shadow-xs backdrop-blur-sm">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-800">
-              Human-First Skills &amp; Career Operating System
-            </span>
+          {/* Top Pill with Shimmer Sweep */}
+          <div className="inline-flex">
+            <ShimmerBadge variant="slate" icon={<Sparkles className="w-3.5 h-3.5 text-emerald-600" />}>
+              HUMAN-FIRST SKILLS &amp; CAREER OPERATING SYSTEM
+            </ShimmerBadge>
           </div>
 
           {/* Screen-Filling Giant Heading */}
-          <h1 className="text-6xl sm:text-7xl lg:text-8xl xl:text-[92px] font-black font-display text-slate-950 tracking-[-0.035em] leading-[0.98] mx-auto">
+          <h1 className="text-6xl sm:text-7xl lg:text-8xl xl:text-[92px] font-black font-display text-slate-950 tracking-[-0.035em] leading-[0.98] mx-auto animate-fade-in-up">
             Real adaptability <br />
             <span className="text-slate-900 bg-gradient-to-r from-slate-950 via-slate-800 to-slate-700 bg-clip-text">
               for every career stage.
@@ -216,14 +219,14 @@ export default function DesktopLandingView() {
           <div className="flex items-center justify-center gap-4 pt-4">
             <Link
               href="/auth/signup"
-              className="px-8 py-4 rounded-2xl bg-slate-950 hover:bg-black text-[#D7FC51] text-sm font-black uppercase tracking-wider flex items-center gap-3 shadow-xl hover:shadow-2xl transition-all hover:scale-105 active:scale-95"
+              className="btn-shine px-8 py-4 rounded-2xl bg-slate-950 hover:bg-black text-[#D7FC51] text-sm font-black uppercase tracking-wider flex items-center gap-3 shadow-xl hover:shadow-2xl transition-all hover:scale-105 active:scale-95"
             >
               <span>Get Started Free</span>
-              <ArrowRight className="w-5 h-5" />
+              <ArrowRight className="w-5 h-5 transition-transform duration-200 group-hover:translate-x-1" />
             </Link>
             <Link
               href="/auth/login"
-              className="px-8 py-4 rounded-2xl bg-white hover:bg-slate-50 text-slate-800 text-sm font-bold border border-slate-200/90 shadow-xs transition-all hover:border-slate-300"
+              className="px-8 py-4 rounded-2xl bg-white hover:bg-slate-50 text-slate-800 text-sm font-bold border border-slate-200/90 shadow-xs transition-all hover:border-slate-300 hover:scale-105 active:scale-95"
             >
               Sign In to Workspace
             </Link>
@@ -231,15 +234,15 @@ export default function DesktopLandingView() {
 
           {/* Trust & Compliance Bar */}
           <div className="flex items-center justify-center gap-8 text-xs font-mono text-slate-500 pt-6">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 transition-transform duration-200 hover:scale-105">
               <ShieldCheck className="w-4 h-4 text-emerald-600" />
               <span>DPDP Act Minor Protection</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 transition-transform duration-200 hover:scale-105">
               <CheckCircle2 className="w-4 h-4 text-[#00D2B4]" />
               <span>Real ATS Calibration</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 transition-transform duration-200 hover:scale-105">
               <Award className="w-4 h-4 text-amber-500" />
               <span>STAR Interview Metrics</span>
             </div>
@@ -248,13 +251,13 @@ export default function DesktopLandingView() {
         </div>
       </section>
 
-      {/* 3. Three-Pillar Architecture Section with Full-Width 3D Depth Cards */}
+      {/* 3. Three-Pillar Architecture Section with Interactive Spotlight 3D Depth Cards */}
       <section className="py-24 max-w-7xl mx-auto px-8 space-y-16">
         
         <div className="text-center space-y-4 max-w-3xl mx-auto">
-          <span className="text-xs font-mono font-bold uppercase tracking-widest text-[#7B57FF]">
-            Purpose-Built For Every Generation
-          </span>
+          <ShimmerBadge variant="violet">
+            PURPOSE-BUILT FOR EVERY GENERATION
+          </ShimmerBadge>
           <h2 className="text-4xl lg:text-5xl font-black font-display text-slate-950 tracking-tight">
             One platform. Three dedicated career operating systems.
           </h2>
@@ -268,11 +271,15 @@ export default function DesktopLandingView() {
           {/* Pillar 1: Junior */}
           <div id="junior-lab" className="scroll-mt-24">
             <Interactive3DCard maxTilt={6} depth={14} className="h-full">
-              <div className="bg-white rounded-3xl p-8 border border-slate-200/90 shadow-sm hover:shadow-xl flex flex-col justify-between h-full space-y-6 transition-all">
+              <SpotlightCard
+                spotlightColor="rgba(123, 87, 255, 0.15)"
+                spotlightSize={340}
+                className="bg-white rounded-3xl p-8 border border-slate-200/90 shadow-sm hover:shadow-xl flex flex-col justify-between h-full space-y-6 card-lift-glow"
+              >
                 <div className="space-y-5">
                   <div className="flex items-center justify-between">
                     <div className="w-12 h-12 rounded-2xl bg-violet-100 text-violet-700 flex items-center justify-center shadow-xs">
-                      <Compass className="w-6 h-6" />
+                      <Compass className="w-6 h-6 animate-float-gentle" />
                     </div>
                     <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-violet-50 text-violet-700 border border-violet-200">
                       Ages 13–15 • Junior Lab
@@ -300,7 +307,7 @@ export default function DesktopLandingView() {
                   {/* Stats */}
                   <div className="grid grid-cols-3 gap-2 pt-1">
                     {DESKTOP_STAGES.junior.stats.map((s, idx) => (
-                      <div key={idx} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/60 text-center">
+                      <div key={idx} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/60 text-center transition-transform duration-200 hover:scale-105">
                         <span className="block text-[9px] font-mono font-bold uppercase text-slate-400">
                           {s.label}
                         </span>
@@ -325,7 +332,7 @@ export default function DesktopLandingView() {
                 <div className="pt-4 border-t border-slate-100 space-y-2">
                   <Link
                     href={DESKTOP_STAGES.junior.ctaUrl}
-                    className="w-full py-3.5 rounded-2xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-black uppercase tracking-wider text-center transition-all shadow-md flex items-center justify-center gap-2"
+                    className="btn-shine w-full py-3.5 rounded-2xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-black uppercase tracking-wider text-center transition-all shadow-md flex items-center justify-center gap-2 hover:scale-102 active:scale-98"
                   >
                     <span>Launch Junior Lab</span>
                     <ArrowRight className="w-4 h-4" />
@@ -337,18 +344,22 @@ export default function DesktopLandingView() {
                     Sign In to Junior Track
                   </Link>
                 </div>
-              </div>
+              </SpotlightCard>
             </Interactive3DCard>
           </div>
 
           {/* Pillar 2: Student */}
           <div id="student-campus" className="scroll-mt-24">
             <Interactive3DCard maxTilt={6} depth={14} className="h-full">
-              <div className="bg-white rounded-3xl p-8 border border-slate-200/90 shadow-sm hover:shadow-xl flex flex-col justify-between h-full space-y-6 transition-all">
+              <SpotlightCard
+                spotlightColor="rgba(0, 210, 180, 0.16)"
+                spotlightSize={340}
+                className="bg-white rounded-3xl p-8 border border-slate-200/90 shadow-sm hover:shadow-xl flex flex-col justify-between h-full space-y-6 card-lift-glow"
+              >
                 <div className="space-y-5">
                   <div className="flex items-center justify-between">
                     <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center shadow-xs">
-                      <GraduationCap className="w-6 h-6" />
+                      <GraduationCap className="w-6 h-6 animate-float-gentle" />
                     </div>
                     <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
                       Ages 16–18 • College &amp; Campus
@@ -376,7 +387,7 @@ export default function DesktopLandingView() {
                   {/* Stats */}
                   <div className="grid grid-cols-3 gap-2 pt-1">
                     {DESKTOP_STAGES.student.stats.map((s, idx) => (
-                      <div key={idx} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/60 text-center">
+                      <div key={idx} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/60 text-center transition-transform duration-200 hover:scale-105">
                         <span className="block text-[9px] font-mono font-bold uppercase text-slate-400">
                           {s.label}
                         </span>
@@ -401,7 +412,7 @@ export default function DesktopLandingView() {
                 <div className="pt-4 border-t border-slate-100 space-y-2">
                   <Link
                     href={DESKTOP_STAGES.student.ctaUrl}
-                    className="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider text-center transition-all shadow-md flex items-center justify-center gap-2"
+                    className="btn-shine w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider text-center transition-all shadow-md flex items-center justify-center gap-2 hover:scale-102 active:scale-98"
                   >
                     <span>Launch Student Track</span>
                     <ArrowRight className="w-4 h-4" />
@@ -413,18 +424,25 @@ export default function DesktopLandingView() {
                     Sign In to Student Track
                   </Link>
                 </div>
-              </div>
+              </SpotlightCard>
             </Interactive3DCard>
           </div>
 
           {/* Pillar 3: Professional */}
           <div id="pro-acceleration" className="scroll-mt-24">
             <Interactive3DCard maxTilt={6} depth={14} className="h-full">
-              <div className="bg-slate-950 text-white rounded-3xl p-8 border border-slate-800 shadow-xl hover:shadow-2xl flex flex-col justify-between h-full space-y-6 transition-all">
+              <SpotlightCard
+                spotlightColor="rgba(215, 252, 81, 0.22)"
+                spotlightSize={360}
+                className="relative bg-slate-950 text-white rounded-3xl p-8 border border-slate-800 shadow-xl hover:shadow-2xl flex flex-col justify-between h-full space-y-6 card-lift-glow overflow-hidden"
+              >
+                {/* Border Beam Animation around featured Pro Card */}
+                <BorderBeam size={220} duration={10} colorFrom="#D7FC51" colorTo="#00D2B4" />
+
                 <div className="space-y-5">
                   <div className="flex items-center justify-between">
                     <div className="w-12 h-12 rounded-2xl bg-white/10 text-[#D7FC51] flex items-center justify-center shadow-xs">
-                      <Briefcase className="w-6 h-6" />
+                      <Briefcase className="w-6 h-6 animate-float-gentle" />
                     </div>
                     <span className="text-[10px] font-mono font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-400/20 text-[#D7FC51] border border-amber-400/30">
                       Ages 18+ • Career OS
@@ -452,7 +470,7 @@ export default function DesktopLandingView() {
                   {/* Stats */}
                   <div className="grid grid-cols-3 gap-2 pt-1">
                     {DESKTOP_STAGES.pro.stats.map((s, idx) => (
-                      <div key={idx} className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-center">
+                      <div key={idx} className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-center transition-transform duration-200 hover:scale-105">
                         <span className="block text-[9px] font-mono font-bold uppercase text-slate-400">
                           {s.label}
                         </span>
@@ -477,7 +495,7 @@ export default function DesktopLandingView() {
                 <div className="pt-4 border-t border-slate-800 space-y-2">
                   <Link
                     href={DESKTOP_STAGES.pro.ctaUrl}
-                    className="w-full py-3.5 rounded-2xl bg-[#D7FC51] hover:bg-[#E9FFA4] text-slate-950 text-xs font-black uppercase tracking-wider text-center transition-all shadow-md flex items-center justify-center gap-2"
+                    className="btn-shine w-full py-3.5 rounded-2xl bg-[#D7FC51] hover:bg-[#E9FFA4] text-slate-950 text-xs font-black uppercase tracking-wider text-center transition-all shadow-md flex items-center justify-center gap-2 hover:scale-102 active:scale-98"
                   >
                     <span>Start Professional OS</span>
                     <ArrowRight className="w-4 h-4" />
@@ -489,7 +507,7 @@ export default function DesktopLandingView() {
                     Sign In to Pro Track
                   </Link>
                 </div>
-              </div>
+              </SpotlightCard>
             </Interactive3DCard>
           </div>
 

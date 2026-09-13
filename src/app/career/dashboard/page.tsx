@@ -34,6 +34,10 @@ import Button from "@/components/ui/Button";
 import ClaudeAnalysisModal from "@/components/ai/ClaudeAnalysisModal";
 import { ClaudeAnalysisType } from "@/app/api/claude/analyze/route";
 import { supabase } from "@/lib/supabase";
+import SpotlightCard from "@/components/ui/SpotlightCard";
+import BorderBeam from "@/components/ui/BorderBeam";
+import AnimatedCounter from "@/components/ui/AnimatedCounter";
+import ShimmerBadge from "@/components/ui/ShimmerBadge";
 
 export default function CareerDashboardPage() {
   const { user, profile } = useAuth();
@@ -270,11 +274,11 @@ Thanks so much for your time!`);
           </div>
         </div>
 
-        {/* 1-Click Career Velocity Action Bar */}
-        <div className="p-6 rounded-3xl bg-white border border-slate-200/90 shadow-sm space-y-4">
+        {/* 1-Click Career Velocity Action Bar with Micro-Interactions */}
+        <div className="p-6 rounded-3xl bg-white border border-slate-200/90 shadow-sm space-y-4 card-lift-glow">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-slate-950 text-[#D7FC51] flex items-center justify-center font-black text-xs">
+              <div className="w-8 h-8 rounded-xl bg-slate-950 text-[#D7FC51] flex items-center justify-center font-black text-xs animate-bounce">
                 ⚡
               </div>
               <div>
@@ -282,44 +286,44 @@ Thanks so much for your time!`);
                 <p className="text-xs text-slate-500">Instant shortcuts to ATS optimization, AI mock screens, and verified jobs.</p>
               </div>
             </div>
-            <span className="text-[10px] font-mono font-bold uppercase text-slate-700 bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200">
-              1-Click Velocity
-            </span>
+            <ShimmerBadge variant="slate">
+              1-CLICK VELOCITY
+            </ShimmerBadge>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
             <Link
               href="/resumes"
-              className="p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-900 hover:text-white group border border-slate-200 transition-all text-left"
+              className="p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-900 hover:text-white group border border-slate-200 transition-all text-left hover:scale-102 active:scale-98"
             >
-              <FileText className="w-5 h-5 text-emerald-600 group-hover:text-[#D7FC51] mb-2" />
+              <FileText className="w-5 h-5 text-emerald-600 group-hover:text-[#D7FC51] mb-2 transition-transform group-hover:scale-110" />
               <div className="text-xs font-bold text-slate-900 group-hover:text-white">ATS Resume Maker</div>
               <div className="text-[11px] text-slate-500 group-hover:text-slate-300">Single-column ATS scorer</div>
             </Link>
 
             <Link
               href="/interviews"
-              className="p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-900 hover:text-white group border border-slate-200 transition-all text-left"
+              className="p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-900 hover:text-white group border border-slate-200 transition-all text-left hover:scale-102 active:scale-98"
             >
-              <Video className="w-5 h-5 text-rose-600 group-hover:text-[#D7FC51] mb-2" />
+              <Video className="w-5 h-5 text-rose-600 group-hover:text-[#D7FC51] mb-2 transition-transform group-hover:scale-110" />
               <div className="text-xs font-bold text-slate-900 group-hover:text-white">AI STAR Simulator</div>
               <div className="text-[11px] text-slate-500 group-hover:text-slate-300">Audio/video mock feedback</div>
             </Link>
 
             <Link
               href="/jobs"
-              className="p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-900 hover:text-white group border border-slate-200 transition-all text-left"
+              className="p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-900 hover:text-white group border border-slate-200 transition-all text-left hover:scale-102 active:scale-98"
             >
-              <Briefcase className="w-5 h-5 text-indigo-600 group-hover:text-[#D7FC51] mb-2" />
+              <Briefcase className="w-5 h-5 text-indigo-600 group-hover:text-[#D7FC51] mb-2 transition-transform group-hover:scale-110" />
               <div className="text-xs font-bold text-slate-900 group-hover:text-white">High-Growth Tech Jobs</div>
               <div className="text-[11px] text-slate-500 group-hover:text-slate-300">Curated &amp; verified roles</div>
             </Link>
 
             <Link
               href="/networking"
-              className="p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-900 hover:text-white group border border-slate-200 transition-all text-left"
+              className="p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-900 hover:text-white group border border-slate-200 transition-all text-left hover:scale-102 active:scale-98"
             >
-              <Users className="w-5 h-5 text-amber-600 group-hover:text-[#D7FC51] mb-2" />
+              <Users className="w-5 h-5 text-amber-600 group-hover:text-[#D7FC51] mb-2 transition-transform group-hover:scale-110" />
               <div className="text-xs font-bold text-slate-900 group-hover:text-white">1:1 Mentorship Hub</div>
               <div className="text-[11px] text-slate-500 group-hover:text-slate-300">Verified peer referrals</div>
             </Link>

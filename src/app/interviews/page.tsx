@@ -25,6 +25,10 @@ import {
 import EventTicket from "@/components/ui/EventTicket";
 import AuthGuard from "@/components/auth/AuthGuard";
 import UserGreeting from "@/components/ui/UserGreeting";
+import SpotlightCard from "@/components/ui/SpotlightCard";
+import BorderBeam from "@/components/ui/BorderBeam";
+import ShimmerBadge from "@/components/ui/ShimmerBadge";
+import AnimatedCounter from "@/components/ui/AnimatedCounter";
 
 export const dynamic = "force-dynamic";
 
@@ -194,10 +198,26 @@ export default function InterviewsHubPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {/* Format 1: Standard Mock Interview */}
-            <div className="card-quixel p-6 sm:p-7 border-2 border-[#13141B] shadow-quixel space-y-4 flex flex-col justify-between">
-              <div className="space-y-2">
-                <div className="w-11 h-11 rounded-2xl bg-[#EDE8FD] text-[#7B57FF] flex items-center justify-center">
-                  <Video className="w-6 h-6" />
+            <SpotlightCard
+              spotlightColor="rgba(123, 87, 255, 0.16)"
+              spotlightSize={320}
+              className="card-quixel p-6 sm:p-7 border-2 border-[#13141B] shadow-quixel space-y-4 flex flex-col justify-between card-lift-glow"
+            >
+              <BorderBeam size={180} duration={10} colorFrom="#7B57FF" colorTo="#00D2B4" />
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-11 h-11 rounded-2xl bg-[#EDE8FD] text-[#7B57FF] flex items-center justify-center relative">
+                    <span className="radar-pulse-ring text-[#7B57FF]" />
+                    <Video className="w-6 h-6 animate-float-gentle" />
+                  </div>
+                  {/* Animated Waveform Simulation */}
+                  <div className="waveform-bars-container">
+                    <div className="waveform-bar bg-[#7B57FF]" />
+                    <div className="waveform-bar bg-[#7B57FF]" />
+                    <div className="waveform-bar bg-[#7B57FF]" />
+                    <div className="waveform-bar bg-[#7B57FF]" />
+                    <div className="waveform-bar bg-[#7B57FF]" />
+                  </div>
                 </div>
                 <h3 className="font-black text-[#181920] text-lg">Standard Verbal Studio</h3>
                 <p className="text-xs text-[#767E94] leading-relaxed">
@@ -206,18 +226,22 @@ export default function InterviewsHubPage() {
               </div>
               <Link
                 href="/interviews/swe"
-                className="w-full py-3 rounded-2xl bg-[#13141B] hover:bg-[#252632] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md transition-all"
+                className="btn-shine w-full py-3 rounded-2xl bg-[#13141B] hover:bg-[#252632] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md transition-all hover:scale-102 active:scale-98"
               >
                 <span>Launch Verbal Session</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
-            </div>
+            </SpotlightCard>
 
             {/* Format 2: Sandboxed Coding Round */}
-            <div className="card-quixel card-quixel-interactive p-6 sm:p-7 space-y-4 flex flex-col justify-between">
-              <div className="space-y-2">
+            <SpotlightCard
+              spotlightColor="rgba(0, 210, 180, 0.16)"
+              spotlightSize={320}
+              className="card-quixel card-quixel-interactive p-6 sm:p-7 space-y-4 flex flex-col justify-between card-lift-glow"
+            >
+              <div className="space-y-3">
                 <div className="w-11 h-11 rounded-2xl bg-[#E0FAF6] text-[#00D2B4] flex items-center justify-center">
-                  <Zap className="w-6 h-6 text-[#00D2B4]" />
+                  <Zap className="w-6 h-6 text-[#00D2B4] animate-bounce" />
                 </div>
                 <div className="flex items-center gap-2">
                   <h3 className="font-black text-[#181920] text-lg">Live Coding Sandbox</h3>
@@ -231,18 +255,22 @@ export default function InterviewsHubPage() {
               </div>
               <Link
                 href="/interviews/swe?format=coding"
-                className="w-full py-3 rounded-2xl bg-[#13141B] hover:bg-[#252632] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md transition-all"
+                className="btn-shine w-full py-3 rounded-2xl bg-[#13141B] hover:bg-[#252632] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md transition-all hover:scale-102 active:scale-98"
               >
                 <span>Launch Coding Round</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
-            </div>
+            </SpotlightCard>
 
             {/* Format 3: AI Group Discussion */}
-            <div className="card-quixel card-quixel-interactive p-6 sm:p-7 space-y-4 flex flex-col justify-between">
-              <div className="space-y-2">
+            <SpotlightCard
+              spotlightColor="rgba(255, 184, 0, 0.18)"
+              spotlightSize={320}
+              className="card-quixel card-quixel-interactive p-6 sm:p-7 space-y-4 flex flex-col justify-between card-lift-glow"
+            >
+              <div className="space-y-3">
                 <div className="w-11 h-11 rounded-2xl bg-[#FFF6DC] text-[#FFB800] flex items-center justify-center">
-                  <Sparkles className="w-6 h-6 text-[#FFB800]" />
+                  <Sparkles className="w-6 h-6 text-[#FFB800] animate-pulse" />
                 </div>
                 <div className="flex items-center gap-2">
                   <h3 className="font-black text-[#181920] text-lg">AI Group Discussion</h3>
@@ -256,12 +284,12 @@ export default function InterviewsHubPage() {
               </div>
               <Link
                 href="/interviews/behavioral?format=group_discussion"
-                className="w-full py-3 rounded-2xl bg-[#13141B] hover:bg-[#252632] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md transition-all"
+                className="btn-shine w-full py-3 rounded-2xl bg-[#13141B] hover:bg-[#252632] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md transition-all hover:scale-102 active:scale-98"
               >
                 <span>Launch Discussion</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
-            </div>
+            </SpotlightCard>
           </div>
         </div>
 

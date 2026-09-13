@@ -92,6 +92,61 @@ const config: Config = {
         '3xl': '1.75rem',
         '4xl': '2.25rem',
       },
+      keyframes: {
+        shimmer: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(200%)' },
+        },
+        'border-beam': {
+          '100%': { 'offset-distance': '100%' },
+        },
+        'float-slow': {
+          '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+          '50%': { transform: 'translateY(-10px) rotate(1deg)' },
+        },
+        'float-gentle': {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-6px)' },
+        },
+        'pulse-ring': {
+          '0%': { transform: 'scale(0.95)', opacity: '0.8' },
+          '50%': { transform: 'scale(1.25)', opacity: '0' },
+          '100%': { transform: 'scale(0.95)', opacity: '0' },
+        },
+        'glow-pulse': {
+          '0%, 100%': { opacity: '0.4', filter: 'blur(20px)' },
+          '50%': { opacity: '0.8', filter: 'blur(28px)' },
+        },
+        'flame-flicker': {
+          '0%': { transform: 'scale(1) rotate(-1deg)', filter: 'drop-shadow(0 0 6px rgba(255, 122, 80, 0.6))' },
+          '50%': { transform: 'scale(1.08) rotate(2deg)', filter: 'drop-shadow(0 0 14px rgba(255, 184, 0, 0.8))' },
+          '100%': { transform: 'scale(0.96) rotate(-2deg)', filter: 'drop-shadow(0 0 8px rgba(255, 75, 43, 0.7))' },
+        },
+        'fade-in-up': {
+          '0%': { opacity: '0', transform: 'translateY(16px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'fade-in-scale': {
+          '0%': { opacity: '0', transform: 'scale(0.94)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+        'gradient-x': {
+          '0%, 100%': { 'background-size': '200% 200%', 'background-position': 'left center' },
+          '50%': { 'background-size': '200% 200%', 'background-position': 'right center' },
+        },
+      },
+      animation: {
+        shimmer: 'shimmer 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'border-beam': 'border-beam calc(var(--duration)*1s) infinite linear',
+        'float-slow': 'float-slow 6s ease-in-out infinite',
+        'float-gentle': 'float-gentle 4s ease-in-out infinite',
+        'pulse-ring': 'pulse-ring 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'glow-pulse': 'glow-pulse 4s ease-in-out infinite',
+        'flame-flicker': 'flame-flicker 1.8s ease-in-out infinite alternate',
+        'fade-in-up': 'fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'fade-in-scale': 'fade-in-scale 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'gradient-x': 'gradient-x 8s ease infinite',
+      },
     },
   },
   plugins: [],
