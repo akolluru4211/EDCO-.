@@ -20,9 +20,22 @@ export async function GET(req: NextRequest) {
       console.warn("[Connected Accounts Fetch Warning]:", error.message);
     }
 
+    const normalizedAccounts = (data || []).map((a: any) => ({
+      id: a.id,
+      userId: a.user_id,
+      provider: (a.provider || "").toUpperCase(),
+      username: a.provider_username || a.username || "",
+      profileUrl: a.profile_url || a.profileUrl || "",
+      status: a.sync_status || a.status || "CONNECTED",
+      syncStatus: a.sync_status || a.syncStatus || "SYNCED",
+      lastSyncedAt: a.last_synced_at || a.lastSyncedAt || a.updated_at,
+      data: a.synced_data || a.data || {},
+      updatedAt: a.updated_at
+    }));
+
     return NextResponse.json({
       success: true,
-      accounts: data || []
+      accounts: normalizedAccounts
     });
   } catch (err: any) {
     console.error("[Connected Accounts GET Error]:", err);
@@ -39,41 +52,46 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "User ID, provider, and username are required" }, { status: 400 });
     }
 
-    const newAccount: Partial<ConnectedAccount> = {
-      userId,
-      provider,
-      username,
-      profileUrl: profileUrl || (provider === "GITHUB" ? `https://github.com/${username}` : provider === "LEETCODE" ? `https://leetcode.com/u/${username}` : username),
-      status: "CONNECTED",
-      syncStatus: "SYNCED",
-      lastSyncedAt: new Date().toISOString(),
-      data,
-      updatedAt: new Date().toISOString()
+    const upperProvider = provider.toUpperCase();
+    const cleanUrl = profileUrl || (upperProvider === "GITHUB" ? `https://github.com/${username}` : upperProvider === "LEETCODE" ? `https://leetcode.com/u/${username}` : `https://linkedin.com/in/${username}`);
+
+    const { data: existing } = await supabase
+      .from("connected_accounts")
+      .select("id")
+      .eq("user_id", userId)
+      .ilike("provider", upperProvider)
+      .maybeSingle();
+
+    const payload = {
+      user_id: userId,
+      provider: upperProvider,
+      provider_username: username,
+      profile_url: cleanUrl,
+      sync_status: "active",
+      synced_data: data || {},
+      last_synced_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
 
-    const { data: saved, error } = await supabase
-      .from("connected_accounts")
-      .upsert(
-        {
-          id: `${userId}-${provider.toLowerCase()}`,
-          user_id: userId,
-          provider,
-          username,
-          profile_url: newAccount.profileUrl,
-          status: "CONNECTED",
-          sync_status: "SYNCED",
-          last_synced_at: newAccount.lastSyncedAt,
-          data,
-          updated_at: newAccount.updatedAt
-        },
-        { onConflict: "id" }
-      )
-      .select()
-      .maybeSingle();
+    let saved = null;
+    if (existing?.id) {
+      const { data: res } = await supabase.from("connected_accounts").update(payload).eq("id", existing.id).select().maybeSingle();
+      saved = res;
+    } else {
+      const { data: res } = await supabase.from("connected_accounts").insert(payload).select().maybeSingle();
+      saved = res;
+    }
+
+    // Sync to profiles table
+    const profileField = upperProvider === "GITHUB" ? "github_url" : upperProvider === "LINKEDIN" ? "linkedin_url" : "leetcode_url";
+    await supabase.from("profiles").update({
+      [profileField]: cleanUrl,
+      updated_at: new Date().toISOString()
+    }).or(`id.eq.${userId},user_id.eq.${userId}`);
 
     return NextResponse.json({
       success: true,
-      account: saved || newAccount
+      account: saved || payload
     });
   } catch (err: any) {
     console.error("[Connected Accounts POST Error]:", err);
@@ -91,11 +109,19 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "User ID and provider are required" }, { status: 400 });
     }
 
+    const upperProvider = provider.toUpperCase();
     await supabase
       .from("connected_accounts")
       .delete()
       .eq("user_id", userId)
-      .eq("provider", provider.toUpperCase());
+      .ilike("provider", upperProvider);
+
+    // Clear URL in profiles table
+    const profileField = upperProvider === "GITHUB" ? "github_url" : upperProvider === "LINKEDIN" ? "linkedin_url" : "leetcode_url";
+    await supabase.from("profiles").update({
+      [profileField]: null,
+      updated_at: new Date().toISOString()
+    }).or(`id.eq.${userId},user_id.eq.${userId}`);
 
     return NextResponse.json({
       success: true,

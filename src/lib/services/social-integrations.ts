@@ -13,7 +13,11 @@ import {
  * Retrieves real profile, repositories, languages, stars, and topics.
  */
 export async function fetchGitHubProfileData(username: string): Promise<{ success: boolean; data?: GitHubProfileData; error?: string }> {
-  const cleanUsername = username.trim().replace(/^https?:\/\/github\.com\//i, "").replace(/\/+$/, "");
+  let cleanUsername = (username || "").trim();
+  cleanUsername = cleanUsername.replace(/^@/, "");
+  cleanUsername = cleanUsername.split("?")[0].split("#")[0];
+  cleanUsername = cleanUsername.replace(/^(?:https?:\/\/)?(?:www\.)?github\.com\//i, "").replace(/\/+$/, "");
+
   if (!cleanUsername) {
     return { success: false, error: "Invalid GitHub username provided." };
   }
@@ -220,18 +224,44 @@ export async function fetchLeetCodeProfileData(username: string): Promise<{ succ
  * Validates public URL format and verifies vanity URL structure safely without scraping or password collection.
  */
 export function verifyLinkedInProfile(profileUrl: string): { success: boolean; data?: LinkedInProfileData; error?: string } {
-  const trimmed = (profileUrl || "").trim();
-  const urlPattern = /^https?:\/\/(www\.)?linkedin\.com\/in\/([a-zA-Z0-9_-]{3,100})\/?$/i;
-  const match = trimmed.match(urlPattern);
-
-  if (!match) {
+  let trimmed = (profileUrl || "").trim();
+  if (!trimmed) {
     return {
       success: false,
-      error: "Please enter a valid public LinkedIn profile URL (e.g., https://linkedin.com/in/username)."
+      error: "Please enter a valid LinkedIn profile URL or username."
     };
   }
 
-  const username = match[2];
+  // Remove leading @ or /
+  trimmed = trimmed.replace(/^@/, "");
+
+  // Strip query parameters and hash fragments (e.g. ?trk=..., #...)
+  trimmed = trimmed.split("?")[0].split("#")[0].replace(/\/+$/, "");
+
+  // Extract username from various formats:
+  // 1. https://www.linkedin.com/in/username
+  // 2. https://in.linkedin.com/in/username
+  // 3. linkedin.com/in/username
+  // 4. in/username
+  // 5. raw username (e.g. 'adarsh-kolluru')
+  let username = "";
+  const fullUrlMatch = trimmed.match(/(?:https?:\/\/)?(?:[a-zA-Z0-9-]+\.)?linkedin\.com\/in\/([a-zA-Z0-9_-]+)/i);
+  if (fullUrlMatch) {
+    username = fullUrlMatch[1];
+  } else if (/^in\/([a-zA-Z0-9_-]+)$/i.test(trimmed)) {
+    const m = trimmed.match(/^in\/([a-zA-Z0-9_-]+)$/i);
+    username = m ? m[1] : "";
+  } else if (/^[a-zA-Z0-9_-]{3,100}$/.test(trimmed)) {
+    username = trimmed;
+  }
+
+  if (!username || username.length < 3) {
+    return {
+      success: false,
+      error: "Please enter a valid LinkedIn profile URL (e.g., https://linkedin.com/in/username) or public username."
+    };
+  }
+
   return {
     success: true,
     data: {

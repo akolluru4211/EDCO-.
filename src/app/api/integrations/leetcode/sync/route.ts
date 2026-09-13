@@ -21,23 +21,38 @@ export async function POST(req: NextRequest) {
     // Persist to database if userId provided
     if (userId) {
       try {
-        await supabase
+        const { data: existing } = await supabase
           .from("connected_accounts")
-          .upsert(
-            {
-              id: `${userId}-leetcode`,
-              user_id: userId,
-              provider: "LEETCODE",
-              username: result.data.username,
-              profile_url: result.data.profileUrl,
-              status: "CONNECTED",
-              sync_status: "SYNCED",
-              last_synced_at: new Date().toISOString(),
-              data: { leetcode: result.data },
-              updated_at: new Date().toISOString()
-            },
-            { onConflict: "id" }
-          );
+          .select("id")
+          .eq("user_id", userId)
+          .ilike("provider", "leetcode")
+          .maybeSingle();
+
+        const accountPayload = {
+          user_id: userId,
+          provider: "LEETCODE",
+          provider_username: result.data.username,
+          profile_url: result.data.profileUrl,
+          sync_status: "active",
+          synced_data: { leetcode: result.data },
+          last_synced_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+
+        if (existing?.id) {
+          await supabase.from("connected_accounts").update(accountPayload).eq("id", existing.id);
+        } else {
+          await supabase.from("connected_accounts").insert(accountPayload);
+        }
+
+        // Also update profiles table
+        await supabase
+          .from("profiles")
+          .update({
+            leetcode_url: result.data.profileUrl,
+            updated_at: new Date().toISOString()
+          })
+          .or(`id.eq.${userId},user_id.eq.${userId}`);
       } catch (dbErr) {
         console.warn("[LeetCode DB sync note]:", dbErr);
       }

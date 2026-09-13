@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { 
   User, 
@@ -57,8 +57,85 @@ export default function ProfilePage() {
     leetcode: { connected: false, username: "", problemsSolved: { easy: 0, medium: 0, hard: 0, total: 0 }, isSelfReported: false, lastUpdatedAt: "" }
   });
 
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    const loadSyncedAccounts = async () => {
+      // 1. Check local cache
+      const cached = localStorage.getItem(`edworld_${user.uid}_synced_accounts`);
+      if (cached) {
+        try {
+          setSyncedAccounts(JSON.parse(cached));
+        } catch (e) {}
+      }
+
+      // 2. Fetch live connected accounts from database
+      try {
+        const res = await fetch(`/api/integrations/connected-accounts?userId=${encodeURIComponent(user.uid)}`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && Array.isArray(json.accounts)) {
+            const mapped: SyncedAccounts = {
+              github: { connected: false, username: "", contributionsThisYear: 0, recentRepos: [], lastSyncedAt: "" },
+              linkedin: { connected: false, profileUrl: "", verified: false },
+              leetcode: { connected: false, username: "", problemsSolved: { easy: 0, medium: 0, hard: 0, total: 0 }, isSelfReported: false, lastUpdatedAt: "" }
+            };
+
+            json.accounts.forEach((acc: any) => {
+              const prov = (acc.provider || "").toUpperCase();
+              if (prov === "GITHUB") {
+                const ghData = acc.data?.github || acc.data || {};
+                mapped.github = {
+                  connected: true,
+                  username: acc.username || ghData.username || "",
+                  contributionsThisYear: ghData.totalStars || 0,
+                  recentRepos: (ghData.repositories || []).slice(0, 3).map((r: any) => ({
+                    name: r.name,
+                    stars: r.stars,
+                    language: r.language || "Code"
+                  })),
+                  lastSyncedAt: acc.lastSyncedAt || new Date().toISOString()
+                };
+              } else if (prov === "LINKEDIN") {
+                mapped.linkedin = {
+                  connected: true,
+                  profileUrl: acc.profileUrl || `https://linkedin.com/in/${acc.username}`,
+                  verified: true
+                };
+              } else if (prov === "LEETCODE") {
+                const lcData = acc.data?.leetcode || acc.data || {};
+                mapped.leetcode = {
+                  connected: true,
+                  username: acc.username || lcData.username || "",
+                  problemsSolved: {
+                    easy: lcData.easySolved || 0,
+                    medium: lcData.mediumSolved || 0,
+                    hard: lcData.hardSolved || 0,
+                    total: lcData.totalSolved || 0
+                  },
+                  isSelfReported: false,
+                  lastUpdatedAt: acc.lastSyncedAt || new Date().toISOString()
+                };
+              }
+            });
+
+            setSyncedAccounts(mapped);
+            localStorage.setItem(`edworld_${user.uid}_synced_accounts`, JSON.stringify(mapped));
+          }
+        }
+      } catch (err) {
+        console.warn("[loadSyncedAccounts note]:", err);
+      }
+    };
+
+    loadSyncedAccounts();
+  }, [user?.uid]);
+
   const handleUpdateAccounts = async (updated: SyncedAccounts) => {
     setSyncedAccounts(updated);
+    if (user?.uid) {
+      localStorage.setItem(`edworld_${user.uid}_synced_accounts`, JSON.stringify(updated));
+    }
   };
 
   const handleChangePassword = async (e: React.FormEvent) => {

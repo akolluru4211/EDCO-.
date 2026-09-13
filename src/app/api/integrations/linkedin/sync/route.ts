@@ -21,23 +21,38 @@ export async function POST(req: NextRequest) {
     // Persist to database if userId provided
     if (userId) {
       try {
-        await supabase
+        const { data: existing } = await supabase
           .from("connected_accounts")
-          .upsert(
-            {
-              id: `${userId}-linkedin`,
-              user_id: userId,
-              provider: "LINKEDIN",
-              username: result.data.username || result.data.profileUrl,
-              profile_url: result.data.profileUrl,
-              status: "VERIFIED",
-              sync_status: "SYNCED",
-              last_synced_at: new Date().toISOString(),
-              data: { linkedin: result.data },
-              updated_at: new Date().toISOString()
-            },
-            { onConflict: "id" }
-          );
+          .select("id")
+          .eq("user_id", userId)
+          .ilike("provider", "linkedin")
+          .maybeSingle();
+
+        const accountPayload = {
+          user_id: userId,
+          provider: "LINKEDIN",
+          provider_username: result.data.username || "",
+          profile_url: result.data.profileUrl,
+          sync_status: "active",
+          synced_data: { linkedin: result.data },
+          last_synced_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+
+        if (existing?.id) {
+          await supabase.from("connected_accounts").update(accountPayload).eq("id", existing.id);
+        } else {
+          await supabase.from("connected_accounts").insert(accountPayload);
+        }
+
+        // Also update profiles table
+        await supabase
+          .from("profiles")
+          .update({
+            linkedin_url: result.data.profileUrl,
+            updated_at: new Date().toISOString()
+          })
+          .or(`id.eq.${userId},user_id.eq.${userId}`);
       } catch (dbErr) {
         console.warn("[LinkedIn DB sync note]:", dbErr);
       }

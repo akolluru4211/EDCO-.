@@ -86,6 +86,9 @@ export default function SyncedAccountsCard({
         }
       };
 
+      if (userId) {
+        localStorage.setItem(`edworld_${userId}_synced_accounts`, JSON.stringify(updated));
+      }
       if (onUpdateAccounts) await onUpdateAccounts(updated);
       setShowGitHubModal(false);
     } catch (err: any) {
@@ -135,6 +138,9 @@ export default function SyncedAccountsCard({
         }
       };
 
+      if (userId) {
+        localStorage.setItem(`edworld_${userId}_synced_accounts`, JSON.stringify(updated));
+      }
       if (onUpdateAccounts) await onUpdateAccounts(updated);
       setShowLeetCodeModal(false);
     } catch (err: any) {
@@ -148,7 +154,7 @@ export default function SyncedAccountsCard({
   const handleSyncLinkedIn = async (customUrl?: string) => {
     const targetUrl = (customUrl || liUrl || syncedAccounts.linkedin?.profileUrl || "").trim();
     if (!targetUrl) {
-      setLiError("Please enter a valid LinkedIn profile URL.");
+      setLiError("Please enter a valid LinkedIn profile URL or username.");
       return;
     }
 
@@ -177,6 +183,9 @@ export default function SyncedAccountsCard({
         }
       };
 
+      if (userId) {
+        localStorage.setItem(`edworld_${userId}_synced_accounts`, JSON.stringify(updated));
+      }
       if (onUpdateAccounts) await onUpdateAccounts(updated);
       setShowLinkedInModal(false);
     } catch (err: any) {
@@ -197,6 +206,9 @@ export default function SyncedAccountsCard({
       updated.leetcode.connected = false;
     }
 
+    if (userId) {
+      localStorage.setItem(`edworld_${userId}_synced_accounts`, JSON.stringify(updated));
+    }
     if (onUpdateAccounts) await onUpdateAccounts(updated);
 
     if (userId) {

@@ -21,23 +21,38 @@ export async function POST(req: NextRequest) {
     // Persist to database if userId provided
     if (userId) {
       try {
-        await supabase
+        const { data: existing } = await supabase
           .from("connected_accounts")
-          .upsert(
-            {
-              id: `${userId}-github`,
-              user_id: userId,
-              provider: "GITHUB",
-              username: result.data.username,
-              profile_url: `https://github.com/${result.data.username}`,
-              status: "CONNECTED",
-              sync_status: "SYNCED",
-              last_synced_at: new Date().toISOString(),
-              data: { github: result.data },
-              updated_at: new Date().toISOString()
-            },
-            { onConflict: "id" }
-          );
+          .select("id")
+          .eq("user_id", userId)
+          .ilike("provider", "github")
+          .maybeSingle();
+
+        const accountPayload = {
+          user_id: userId,
+          provider: "GITHUB",
+          provider_username: result.data.username,
+          profile_url: `https://github.com/${result.data.username}`,
+          sync_status: "active",
+          synced_data: { github: result.data },
+          last_synced_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+
+        if (existing?.id) {
+          await supabase.from("connected_accounts").update(accountPayload).eq("id", existing.id);
+        } else {
+          await supabase.from("connected_accounts").insert(accountPayload);
+        }
+
+        // Also update profiles table
+        await supabase
+          .from("profiles")
+          .update({
+            github_url: `https://github.com/${result.data.username}`,
+            updated_at: new Date().toISOString()
+          })
+          .or(`id.eq.${userId},user_id.eq.${userId}`);
       } catch (dbErr) {
         console.warn("[GitHub DB sync note]:", dbErr);
       }
