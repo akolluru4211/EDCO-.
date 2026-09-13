@@ -24,7 +24,8 @@ import {
   FolderGit2, 
   AlertCircle,
   ArrowRight,
-  UserX
+  UserX,
+  Users
 } from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
@@ -40,8 +41,9 @@ export default function PublicProfileViewPage() {
 
   const [profileData, setProfileData] = useState<PublicUserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [connectionStatus, setConnectionStatus] = useState<"none" | "pending" | "accepted" | "declined">("none");
+  const [connectionStatus, setConnectionStatus] = useState<"none" | "pending_sent" | "pending_received" | "accepted" | "declined" | "blocked">("none");
   const [isBlocked, setIsBlocked] = useState(false);
+  const [mutualCount, setMutualCount] = useState<number>(0);
   const [showConnectModal, setShowConnectModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
 
@@ -60,12 +62,74 @@ export default function PublicProfileViewPage() {
           .maybeSingle();
 
         if (dbProfile) {
+          const targetId = dbProfile.id || dbProfile.user_id;
+
+          // Check if user is blocked
+          if (user) {
+            const { data: blockRecord } = await supabase
+              .from("user_blocks")
+              .select("id")
+              .or(`and(blocker_id.eq.${user.uid},blocked_id.eq.${targetId}),and(blocker_id.eq.${targetId},blocked_id.eq.${user.uid})`)
+              .maybeSingle();
+
+            if (blockRecord) {
+              setIsBlocked(true);
+              setLoading(false);
+              return;
+            }
+          }
+
           // Fetch real projects for this user
           const { data: dbProjects } = await supabase
             .from("projects")
             .select("*")
-            .eq("user_id", dbProfile.id || dbProfile.user_id)
+            .eq("user_id", targetId)
             .eq("is_public", true);
+
+          // Fetch connection status with current user
+          if (user && user.uid !== targetId) {
+            const { data: conn } = await supabase
+              .from("connections")
+              .select("id, requester_id, receiver_id, status")
+              .or(`and(requester_id.eq.${user.uid},receiver_id.eq.${targetId}),and(requester_id.eq.${targetId},receiver_id.eq.${user.uid})`)
+              .maybeSingle();
+
+            if (conn) {
+              const norm = (conn.status || "").toUpperCase();
+              if (norm === "ACCEPTED") setConnectionStatus("accepted");
+              else if (norm === "PENDING") {
+                setConnectionStatus(conn.requester_id === user.uid ? "pending_sent" : "pending_received");
+              } else if (norm === "DECLINED") setConnectionStatus("declined");
+              else if (norm === "BLOCKED") setConnectionStatus("blocked");
+            }
+
+            // Fetch mutual connections count
+            const { data: userConns } = await supabase
+              .from("connections")
+              .select("requester_id, receiver_id")
+              .eq("status", "ACCEPTED")
+              .or(`requester_id.eq.${user.uid},receiver_id.eq.${user.uid}`);
+
+            const { data: targetConns } = await supabase
+              .from("connections")
+              .select("requester_id, receiver_id")
+              .eq("status", "ACCEPTED")
+              .or(`requester_id.eq.${targetId},receiver_id.eq.${targetId}`);
+
+            if (userConns && targetConns) {
+              const myFriends = new Set(
+                userConns.map((c: any) => (c.requester_id === user.uid ? c.receiver_id : c.requester_id))
+              );
+              const targetFriends = new Set(
+                targetConns.map((c: any) => (c.requester_id === targetId ? c.receiver_id : c.requester_id))
+              );
+              let mutuals = 0;
+              myFriends.forEach((fId) => {
+                if (fId !== targetId && targetFriends.has(fId)) mutuals++;
+              });
+              setMutualCount(mutuals);
+            }
+          }
 
           const { displayName } = normalizeDisplayName(dbProfile.first_name, dbProfile.last_name, dbProfile.name || dbProfile.display_name);
 
@@ -79,54 +143,58 @@ export default function PublicProfileViewPage() {
             verificationStatus: p.is_verified ? "verified" : "unverified",
           }));
 
+          let parsedSkills: string[] = [];
+          if (Array.isArray(dbProfile.skills)) {
+            parsedSkills = dbProfile.skills;
+          } else if (Array.isArray(dbProfile.interests)) {
+            parsedSkills = dbProfile.interests.map((i: any) => typeof i === "string" ? i : i.name || i.id);
+          }
+
+          const rawRole = (dbProfile.role || "").toUpperCase();
+          const rawStage = (dbProfile.career_stage || "").toUpperCase();
+          const isStudent =
+            rawRole === "STUDENT" ||
+            rawStage === "STUDENT" ||
+            rawStage === "COLLEGE" ||
+            Boolean(dbProfile.college && !dbProfile.company);
+
           const found: PublicUserProfile = {
-            userId: dbProfile.id || dbProfile.user_id,
+            userId: targetId,
             username: dbProfile.username || usernameParam,
             name: displayName || dbProfile.name || "EdWorld Member",
-            headline: dbProfile.headline || "EdWorld Member",
+            avatarUrl: dbProfile.avatar_url || null,
+            headline: dbProfile.headline || (isStudent ? "Student & Emerging Technologist" : "Working Professional"),
             bio: dbProfile.bio || "",
-            skills: (dbProfile.interests || []).map((i: any) => typeof i === "string" ? i : i.name),
+            role: rawRole || (isStudent ? "STUDENT" : "WORKING_PROFESSIONAL"),
+            userType: isStudent ? "STUDENT" : "WORKING_PROFESSIONAL",
+            college: dbProfile.college || (dbProfile.grade_level ? dbProfile.grade_level : undefined),
+            degree: dbProfile.degree || undefined,
+            branch: dbProfile.branch || undefined,
+            graduationYear: dbProfile.graduation_year || undefined,
+            currentRole: dbProfile.job_title || undefined,
+            company: dbProfile.company || undefined,
+            industry: dbProfile.industry || undefined,
+            experienceYears: dbProfile.experience_years || undefined,
+            location: dbProfile.location || undefined,
+            isLocationVisible: dbProfile.is_location_visible !== false,
+            skills: parsedSkills,
             projects: mappedProjects,
-            isPublic: Boolean(dbProfile.is_public),
+            githubUrl: dbProfile.github_url || undefined,
+            linkedinUrl: dbProfile.linkedin_url || undefined,
+            leetcodeUrl: dbProfile.leetcode_url || undefined,
+            portfolioUrl: dbProfile.portfolio_url || undefined,
+            isPublic: dbProfile.is_public !== false,
+            visibility: dbProfile.visibility || "PUBLIC",
             isMentor: Boolean(dbProfile.is_mentor),
             mentorTags: dbProfile.mentor_tags || [],
             ageBand: dbProfile.age_band || "18+",
+            mutualConnectionsCount: mutualCount,
+            connectionStatus
           };
 
           setProfileData(found);
           setLoading(false);
           return;
-        }
-
-        // 2. Check local registered profiles if user is inspecting their own session
-        if (user) {
-          const storedProfileKey = `edworld_profile_${user.uid}`;
-          const userProf = localStorage.getItem(storedProfileKey);
-          if (userProf) {
-            try {
-              const p = JSON.parse(userProf);
-              const userRaw = JSON.parse(localStorage.getItem(`edworld_user_${user.uid}`) || "{}");
-              if (p.username === usernameParam || user.name.toLowerCase().replace(/\s+/g, "_") === usernameParam) {
-                const { displayName } = normalizeDisplayName(undefined, undefined, user.name);
-                const ownProfile: PublicUserProfile = {
-                  userId: user.uid,
-                  username: p.username || user.name.toLowerCase().replace(/\s+/g, "_"),
-                  name: displayName || user.name,
-                  headline: p.headline || "Verified Member",
-                  bio: p.bio || "",
-                  skills: (p.interests || []).map((i: any) => typeof i === "string" ? i : i.name),
-                  projects: [],
-                  isPublic: Boolean(p.isPublic),
-                  isMentor: Boolean(p.isMentor),
-                  mentorTags: p.mentorTags || [],
-                  ageBand: userRaw.ageBand || "18+",
-                };
-                setProfileData(ownProfile);
-                setLoading(false);
-                return;
-              }
-            } catch (e) {}
-          }
         }
 
         // No profile found
@@ -144,41 +212,64 @@ export default function PublicProfileViewPage() {
 
   const handleSendConnection = async (data: any) => {
     if (!user || !profileData) return;
-    const connections = JSON.parse(localStorage.getItem(`edworld_${user.uid}_connections`) || "[]");
-    connections.push({
-      id: `${user.uid}_${profileData.userId}`,
-      requesterId: user.uid,
-      requesterName: user.name,
-      recipientId: profileData.userId,
-      recipientName: profileData.name,
-      status: "pending",
-      requestType: data.requestType,
-      message: data.message,
-      sentAt: new Date().toISOString(),
-    });
-    localStorage.setItem(`edworld_${user.uid}_connections`, JSON.stringify(connections));
-    setConnectionStatus("pending");
+    try {
+      const res = await fetch("/api/network/connections", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": user.uid
+        },
+        body: JSON.stringify({
+          receiverId: profileData.userId,
+          message: data.message,
+          requestType: data.requestType
+        })
+      });
+      const resJson = await res.json();
+      if (resJson.success) {
+        setConnectionStatus("pending_sent");
+      }
+    } catch (e) {
+      console.error("Connection error:", e);
+    }
   };
 
-  const handleBlockUser = () => {
+  const handleBlockUser = async () => {
     if (!user || !profileData) return;
-    const blocks = JSON.parse(localStorage.getItem(`edworld_${user.uid}_blocks`) || "[]");
-    if (!blocks.includes(profileData.userId)) {
-      blocks.push(profileData.userId);
-      localStorage.setItem(`edworld_${user.uid}_blocks`, JSON.stringify(blocks));
+    if (!confirm(`Are you sure you want to block ${profileData.name}?`)) return;
+    try {
+      await fetch("/api/network/block", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": user.uid
+        },
+        body: JSON.stringify({ blockedId: profileData.userId })
+      });
+      setIsBlocked(true);
+    } catch (e) {
+      console.error("Block error:", e);
     }
-    setIsBlocked(true);
   };
 
   const handleReportUser = async (reportData: any) => {
-    if (!user) return;
-    const reports = JSON.parse(localStorage.getItem(`edworld_reports`) || "[]");
-    reports.push({
-      ...reportData,
-      reporterId: user.uid,
-      createdAt: new Date().toISOString()
-    });
-    localStorage.setItem(`edworld_reports`, JSON.stringify(reports));
+    if (!user || !profileData) return;
+    try {
+      await fetch("/api/network/report", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": user.uid
+        },
+        body: JSON.stringify({
+          reportedId: profileData.userId,
+          category: reportData.type,
+          reason: reportData.reason
+        })
+      });
+    } catch (e) {
+      console.error("Report error:", e);
+    }
   };
 
   if (loading) {
@@ -298,10 +389,16 @@ export default function PublicProfileViewPage() {
                   {profileData.bio}
                 </p>
               )}
+              {mutualCount > 0 && (
+                <div className="text-[11px] font-mono text-forest font-bold flex items-center gap-1 pt-1">
+                  <Users className="w-3.5 h-3.5" />
+                  <span>{mutualCount} mutual connection{mutualCount === 1 ? "" : "s"}</span>
+                </div>
+              )}
             </div>
 
             {/* Actions for other users */}
-            {!isOwnProfile && isCurrentUserAdult && (
+            {!isOwnProfile && user && (
               <div className="flex items-center gap-2 shrink-0">
                 {connectionStatus === "none" && (
                   <button
@@ -312,15 +409,24 @@ export default function PublicProfileViewPage() {
                     <span>Connect</span>
                   </button>
                 )}
-                {connectionStatus === "pending" && (
+                {connectionStatus === "pending_sent" && (
                   <span className="px-3 py-1.5 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold">
                     Request Pending
                   </span>
                 )}
-                {connectionStatus === "accepted" && (
-                  <span className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Connected
+                {connectionStatus === "pending_received" && (
+                  <span className="px-3 py-1.5 rounded-xl bg-purple-50 text-purple-800 border border-purple-200 text-xs font-bold">
+                    Request Received
                   </span>
+                )}
+                {connectionStatus === "accepted" && (
+                  <Link
+                    href={`/networking/messages/${[user.uid, profileData.userId].sort().join("_")}`}
+                    className="px-4 py-2 rounded-xl bg-forest text-white text-xs font-bold flex items-center gap-1.5 shadow-sm"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span>Message</span>
+                  </Link>
                 )}
                 <button
                   onClick={() => setShowReportModal(true)}
@@ -329,12 +435,103 @@ export default function PublicProfileViewPage() {
                 >
                   <Flag className="w-3.5 h-3.5" />
                 </button>
+                <button
+                  onClick={handleBlockUser}
+                  className="p-2 rounded-xl border border-line text-ink-muted hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                  title="Block Member"
+                >
+                  <Ban className="w-3.5 h-3.5" />
+                </button>
               </div>
             )}
           </div>
 
+          {/* Academic & Professional Information */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-line pt-4 text-xs">
+            <div className="space-y-2">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-ink-muted">
+                {profileData.userType === "STUDENT" ? "Academic Details" : "Professional Overview"}
+              </span>
+              <div className="space-y-1">
+                {profileData.userType === "STUDENT" ? (
+                  <>
+                    <p className="font-medium text-ink">
+                      {profileData.college || "College not added"}
+                    </p>
+                    {profileData.degree && (
+                      <p className="text-[11px] text-ink-soft">
+                        {profileData.degree} {profileData.branch ? `• ${profileData.branch}` : ""} {profileData.graduationYear ? `(Class of ${profileData.graduationYear})` : ""}
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <p className="font-medium text-ink">
+                      {profileData.currentRole || "Working Professional"} {profileData.company ? `at ${profileData.company}` : ""}
+                    </p>
+                    {profileData.industry && (
+                      <p className="text-[11px] text-ink-soft">
+                        Industry: {profileData.industry} {profileData.experienceYears ? `• ${profileData.experienceYears} years exp` : ""}
+                      </p>
+                    )}
+                  </>
+                )}
+                {profileData.location && (
+                  <p className="text-ink-soft text-[11px]">
+                    Location: {profileData.location}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* External Links */}
+            <div className="space-y-2">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-ink-muted">Connected Profiles</span>
+              <div className="flex flex-col gap-1.5">
+                {profileData.githubUrl ? (
+                  <a
+                    href={profileData.githubUrl.startsWith("http") ? profileData.githubUrl : `https://github.com/${profileData.githubUrl}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-forest hover:underline font-mono"
+                  >
+                    GitHub: {profileData.githubUrl}
+                  </a>
+                ) : (
+                  <span className="text-[11px] text-ink-muted italic">GitHub not connected</span>
+                )}
+
+                {profileData.linkedinUrl ? (
+                  <a
+                    href={profileData.linkedinUrl.startsWith("http") ? profileData.linkedinUrl : `https://linkedin.com/in/${profileData.linkedinUrl}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-forest hover:underline font-mono"
+                  >
+                    LinkedIn Profile
+                  </a>
+                ) : (
+                  <span className="text-[11px] text-ink-muted italic">LinkedIn not connected</span>
+                )}
+
+                {profileData.leetcodeUrl ? (
+                  <a
+                    href={profileData.leetcodeUrl.startsWith("http") ? profileData.leetcodeUrl : `https://leetcode.com/${profileData.leetcodeUrl}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-forest hover:underline font-mono"
+                  >
+                    LeetCode Profile
+                  </a>
+                ) : (
+                  <span className="text-[11px] text-ink-muted italic">LeetCode not connected</span>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Skills */}
-          {profileData.skills && profileData.skills.length > 0 && (
+          {profileData.skills && profileData.skills.length > 0 ? (
             <div className="space-y-2 border-t border-line pt-4">
               <span className="text-[10px] uppercase font-bold tracking-wider text-ink-muted">Demonstrated Skills</span>
               <div className="flex flex-wrap gap-1.5">
@@ -344,6 +541,11 @@ export default function PublicProfileViewPage() {
                   </span>
                 ))}
               </div>
+            </div>
+          ) : (
+            <div className="space-y-2 border-t border-line pt-4">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-ink-muted">Demonstrated Skills</span>
+              <p className="text-xs text-ink-muted italic">No skills added.</p>
             </div>
           )}
 
@@ -379,7 +581,7 @@ export default function PublicProfileViewPage() {
               </div>
             ) : (
               <div className="p-6 text-center text-xs text-ink-muted bg-paper-soft rounded-2xl border border-line">
-                No public projects published yet.
+                No public projects.
               </div>
             )}
           </div>

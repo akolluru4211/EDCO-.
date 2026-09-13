@@ -750,8 +750,21 @@ export interface PublicUserProfile {
   userId: string;
   username: string;
   name: string;
+  avatarUrl?: string;
   headline?: string;
   bio?: string;
+  role?: string;
+  userType?: "STUDENT" | "WORKING_PROFESSIONAL" | "student" | "professional";
+  college?: string;
+  degree?: string;
+  branch?: string;
+  graduationYear?: string;
+  currentRole?: string;
+  company?: string;
+  industry?: string;
+  experienceYears?: number | string;
+  location?: string;
+  isLocationVisible?: boolean;
   skills?: string[];
   projects?: Array<{
     id: string;
@@ -762,12 +775,21 @@ export interface PublicUserProfile {
     demoUrl?: string;
     verificationStatus?: string;
   }>;
+  githubUrl?: string;
+  linkedinUrl?: string;
+  leetcodeUrl?: string;
+  portfolioUrl?: string;
   isPublic: boolean;
+  visibility?: "PUBLIC" | "EDWORLD_USERS_ONLY" | "PRIVATE" | string;
+  showInNetwork?: boolean;
   isMentor?: boolean;
   mentorTags?: string[];
   ageBand: AgeBand;
   showResume?: boolean;
   publicResumeId?: string;
+  mutualConnectionsCount?: number;
+  connectionStatus?: "none" | "pending_sent" | "pending_received" | "accepted" | "declined" | "blocked";
+  connectionId?: string;
 }
 
 // ============================================================

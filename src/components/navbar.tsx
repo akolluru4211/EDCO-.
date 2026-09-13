@@ -153,6 +153,7 @@ export default function Navbar() {
     { href: "/student/explorer/dashboard", label: "Explorer Dashboard", shortLabel: "Dashboard", icon: LayoutDashboard },
     { href: "/school", label: "Pathways & Exam Tracker", shortLabel: "Pathways", icon: Compass },
     { href: "/projects", label: "Micro-Project Studio", shortLabel: "Projects", icon: Layers },
+    { href: "/network", label: "Student Network", shortLabel: "Network", icon: Users },
   ];
 
   const clientCareerPortals: PortalLink[] = [
@@ -160,7 +161,7 @@ export default function Navbar() {
     { href: "/resumes", label: "ATS Resume Maker", shortLabel: "Resumes", icon: FileText },
     { href: "/interviews", label: "AI Mock Interviews", shortLabel: "Interviews", icon: Video },
     { href: "/jobs", label: "Job Board", shortLabel: "Jobs", icon: Briefcase },
-    { href: "/projects", label: "Project Studio", shortLabel: "Projects", icon: Layers },
+    { href: "/network", label: "Professional Network", shortLabel: "Network", icon: Users },
   ];
 
   const activePortals: PortalLink[] = isStaff
