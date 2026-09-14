@@ -157,9 +157,10 @@ export default function Navbar() {
   ];
 
   const clientCareerPortals: PortalLink[] = [
-    { href: "/dashboard", label: "Career Dashboard", shortLabel: "Dashboard", icon: LayoutDashboard },
-    { href: "/resumes", label: "ATS Resume Maker", shortLabel: "Resumes", icon: FileText },
-    { href: "/interviews", label: "AI Mock Interviews", shortLabel: "Interviews", icon: Video },
+    { href: "/dashboard", label: "Dashboard", shortLabel: "Dashboard", icon: LayoutDashboard },
+    { href: "/resumes", label: "Resume Maker", shortLabel: "Resumes", icon: FileText },
+    { href: "/interviews", label: "Mock Interviews", shortLabel: "Interviews", icon: Video },
+    { href: "/projects", label: "Projects", shortLabel: "Projects", icon: Layers },
     { href: "/jobs", label: "Job Board", shortLabel: "Jobs", icon: Briefcase },
     { href: "/network", label: "Professional Network", shortLabel: "Network", icon: Users },
   ];
@@ -168,8 +169,6 @@ export default function Navbar() {
     ? internalStaffPortals
     : isJunior
     ? clientJuniorPortals
-    : isExplorer
-    ? clientExplorerPortals
     : clientCareerPortals;
 
   return (
@@ -204,7 +203,7 @@ export default function Navbar() {
                   Edworld <span className="text-[#D7FC51] font-black text-xl leading-none">{isStaff ? "OS" : "Co."}</span>
                 </span>
                 <span className="text-[8px] font-bold text-[#8E95A5] uppercase tracking-wider mt-0.5 leading-none">
-                  {isStaff ? "Organization Portal" : isJunior ? "Junior Track" : isExplorer ? "Student Track" : "Career Track"}
+                  {isStaff ? "Organization Portal" : isJunior ? "Junior Track" : "Student & Career OS"}
                 </span>
               </div>
             </Link>
