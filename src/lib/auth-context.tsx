@@ -17,6 +17,42 @@ import {
 import { calculateAgeBandFromDob } from "./utils";
 import { normalizeDisplayName, updateCanonicalUserProfile } from "./services/user-profile";
 
+/**
+ * Human-friendly error translation for Supabase / Auth exceptions.
+ * Converts raw AuthApiError / error messages into clear, actionable guidance.
+ */
+export function translateAuthError(err: any): string {
+  if (!err) return "An unexpected error occurred. Please try again.";
+  const msg = typeof err === "string" ? err : err?.message || err?.error_description || "";
+  const code = err?.code || err?.status;
+
+  const lower = msg.toLowerCase();
+
+  if (lower.includes("invalid login credentials") || lower.includes("invalid_grant") || lower.includes("wrong password")) {
+    return "Email or password is incorrect. Please check your credentials and try again.";
+  }
+  if (lower.includes("email not confirmed") || lower.includes("email_not_confirmed")) {
+    return "Please verify your email address before signing in. Check your inbox for the confirmation link.";
+  }
+  if (lower.includes("user already registered") || lower.includes("already exists") || lower.includes("unique violation")) {
+    return "An account with this email already exists. Please sign in instead.";
+  }
+  if (lower.includes("password should be at least") || lower.includes("weak_password") || lower.includes("password must be")) {
+    return "Password must be at least 8 characters long and contain both letters and numbers.";
+  }
+  if (lower.includes("over_email_send_rate_limit") || lower.includes("rate limit") || lower.includes("too many requests") || code === 429) {
+    return "Too many attempts. Please wait a few moments before trying again.";
+  }
+  if (lower.includes("network") || lower.includes("fetch") || lower.includes("504") || lower.includes("gateway timeout") || lower.includes("timeout")) {
+    return "Connection issue. Please verify your internet connection and try again.";
+  }
+  if (lower.includes("session expired") || lower.includes("jwt expired") || lower.includes("invalid token")) {
+    return "Your session has expired. Please sign in again.";
+  }
+
+  return msg || "Authentication failed. Please verify your details and try again.";
+}
+
 interface AuthContextType {
   user: AppUser | null;
   profile: UserProfile | null;
@@ -39,9 +75,12 @@ interface AuthContextType {
   isPro: boolean;
   sendOtp: (identifier: string, purpose?: "login" | "signup") => Promise<{ success: boolean; maskedIdentifier: string; cooldownSeconds: number; devOtp?: string }>;
   verifyOtp: (identifier: string, otp: string, purpose?: "login" | "signup", metaData?: any) => Promise<{ role: UserRole; redirectUrl: string }>;
-  loginWithEmail: (emailOrPhone: string, pass: string) => Promise<{ role: UserRole; redirectUrl: string; careerStage?: CareerStage }>;
-  signupWithEmail: (name: string, email: string, pass: string, dob: string, gradeLevel?: string, phone?: string, careerStage?: CareerStage) => Promise<void>;
+  loginWithEmail: (emailOrPhone: string, pass: string) => Promise<{ role: UserRole; redirectUrl: string; careerStage?: CareerStage; onboardingCompleted?: boolean }>;
+  loginWithGoogle: () => Promise<void>;
+  signupWithEmail: (name: string, email: string, pass: string, dob?: string, gradeLevel?: string, phone?: string, careerStage?: CareerStage) => Promise<{ needsEmailVerification?: boolean }>;
   resetPassword: (email: string) => Promise<void>;
+  requestPasswordReset: (email: string) => Promise<void>;
+  updateUserPassword: (newPassword: string) => Promise<void>;
   submitGuardianConsent: (guardianName: string, guardianEmail: string, relationship?: "parent" | "legal_guardian") => Promise<{ success: boolean; token?: string }>;
   logout: () => Promise<void>;
   updateUserProfile: (data: Partial<UserProfile>) => Promise<void>;
@@ -83,6 +122,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               phone: sessionData.user.phone,
               careerStage: sessionData.user.careerStage,
               primaryGoal: "EdWorld Skills & Career OS",
+              onboarding_completed: true,
               interests: [
                 { id: "swe", name: "Software Engineering", category: "Tech", selfLevel: 0, effectiveLevel: 0 },
                 { id: "behavioral", name: "Behavioral & Communication", category: "Career", selfLevel: 0, effectiveLevel: 0 },
@@ -96,7 +136,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
 
-        // 2. Check Supabase auth session fallback
+        // 2. Check Supabase auth session
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user && isMounted) {
           await syncUserData(session.user);
@@ -113,6 +153,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setUser(parsedUser);
               const storedRole = localStorage.getItem(`edworld_active_role_${parsedUser.uid}`) as UserRole | null;
               if (storedRole) setActiveRole(storedRole);
+              const cachedProfile = localStorage.getItem("edworld_user_profile");
+              if (cachedProfile) {
+                setProfile(JSON.parse(cachedProfile));
+              }
               setLoading(false);
               return;
             } catch {}
@@ -138,6 +182,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user && isMounted) {
         await syncUserData(session.user);
+      } else if (!session && isMounted) {
+        // If logged out externally
+        // Keep current state unless explicitly logged out
       }
     });
 
@@ -189,16 +236,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const rawStage = profileData?.career_stage || userMeta.career_stage;
       const computedCareerStage: CareerStage = rawStage === "JUNIOR" || rawStage === "junior" 
-        ? "JUNIOR" 
+        ? "STUDENT" 
         : rawStage === "STUDENT" || rawStage === "student" || rawStage === "college" 
         ? "STUDENT" 
-        : derivedBand === "13-15" 
-        ? "JUNIOR" 
-        : derivedBand === "16-18" 
+        : derivedBand === "13-15" || derivedBand === "16-18"
         ? "STUDENT" 
         : "PROFESSIONAL";
 
-      const rawNameCandidate = profileData?.name || profileData?.display_name || userMeta.full_name || userMeta.name || userMeta.displayName || (supabaseUser.email ? supabaseUser.email.split("@")[0] : "");
+      const rawNameCandidate = profileData?.name || profileData?.display_name || userMeta.full_name || userMeta.name || userMeta.displayName || (supabaseUser.email ? supabaseUser.email.split("@")[0] : "Learner");
       const { displayName: normalizedName } = normalizeDisplayName(
         profileData?.first_name || userMeta.first_name,
         profileData?.last_name || userMeta.last_name,
@@ -231,7 +276,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (profileData) {
-        setProfile({
+        const fullProfile: UserProfile = {
           name: normalizedName,
           phone: userPhone,
           username: profileData.username,
@@ -239,7 +284,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           bio: profileData.bio,
           gradeLevel: profileData.grade_level,
           careerStage: computedCareerStage,
-          primaryGoal: profileData.primary_goal || "EdWorld Internal Organization Workspace",
+          primaryGoal: profileData.primary_goal || "Build skills & practice interview drills on EdWorld.",
           interests: profileData.interests || [
             { id: "swe", name: "Software Engineering", category: "Tech", selfLevel: 0, effectiveLevel: 0 },
             { id: "behavioral", name: "General Behavioral & Leadership", category: "Career", selfLevel: 0, effectiveLevel: 0 },
@@ -250,13 +295,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           targetRole: profileData.target_role,
           isTeacher: Boolean(profileData.is_teacher),
           isSchoolAdmin: Boolean(profileData.is_school_admin),
-        });
+          onboarding_completed: profileData.onboarding_completed ?? false,
+          institution: profileData.institution,
+          degree: profileData.degree,
+          field_of_study: profileData.field_of_study,
+          graduation_year: profileData.graduation_year,
+          experience_level: profileData.experience_level,
+          current_company: profileData.current_company,
+        };
+        setProfile(fullProfile);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("edworld_user_profile", JSON.stringify(fullProfile));
+          localStorage.setItem("edworld_auth_session", JSON.stringify(appUser));
+        }
       } else {
         // Fast optimistic profile state
-        setProfile({
+        const initialProfile: UserProfile = {
           name: appUser.name,
           phone: userPhone,
-          primaryGoal: "EdWorld Internal Organization Workspace",
+          primaryGoal: "Build skills & practice interview drills on EdWorld.",
+          onboarding_completed: false,
           interests: [
             { id: "swe", name: "Software Engineering", category: "Tech", selfLevel: 0, effectiveLevel: 0 },
             { id: "behavioral", name: "General Behavioral & Leadership", category: "Career", selfLevel: 0, effectiveLevel: 0 },
@@ -264,13 +322,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           isPublic: false,
           isMentor: false,
           mentorTags: [],
-        });
+        };
+        setProfile(initialProfile);
 
-        // Background write without blocking
+        // Background write
         supabase.from("profiles").upsert({
           id: supabaseUser.id,
           user_id: supabaseUser.id,
           name: appUser.name,
+          display_name: appUser.name,
           email: appUser.email,
           phone: userPhone || null,
           dob: userDob,
@@ -279,6 +339,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           is_employer: false,
           is_admin: determinedRole === "ADMIN",
           role: determinedRole,
+          onboarding_completed: false,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         }).then(() => {});
@@ -312,7 +373,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const getRedirectForRole = (userRole: UserRole, stage?: CareerStage): string => {
+  const getRedirectForRole = (userRole: UserRole, stage?: CareerStage, onboardingCompleted?: boolean): string => {
     switch (userRole) {
       case "HR":
         return "/hr";
@@ -331,19 +392,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return "/employee";
       case "CLIENT":
       default:
-        if (stage === "JUNIOR") return "/student/junior/dashboard";
-        if (stage === "STUDENT") return "/dashboard";
-        return "/career/dashboard";
+        if (onboardingCompleted === false) {
+          return "/onboarding";
+        }
+        return "/dashboard";
     }
   };
 
-  const loginWithEmail = async (emailOrPhone: string, pass: string): Promise<{ role: UserRole; redirectUrl: string; careerStage?: CareerStage }> => {
+  const loginWithGoogle = async () => {
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${origin}/dashboard`,
+      },
+    });
+    if (error) throw error;
+  };
+
+  const loginWithEmail = async (emailOrPhone: string, pass: string): Promise<{ role: UserRole; redirectUrl: string; careerStage?: CareerStage; onboardingCompleted?: boolean }> => {
     setLoading(true);
     try {
       const credential = emailOrPhone.trim();
       const isCorporate = credential.toLowerCase().endsWith("@edworld.co.in");
 
-      // Default role estimation
       let targetRole: UserRole = "CLIENT";
       if (isCorporate) {
         if (credential.toLowerCase().startsWith("hr@") || credential.toLowerCase().includes("hr.")) targetRole = "HR";
@@ -354,52 +426,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         else targetRole = "EMPLOYEE";
       }
       
-      const loginPromise = supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: credential,
         password: pass,
       });
 
-      const timeoutPromise = new Promise<any>((_, reject) =>
-        setTimeout(() => reject(new Error("GATEWAY_TIMEOUT")), 4000)
-      );
-
-      try {
-        const { data, error } = await Promise.race([loginPromise, timeoutPromise]);
-        if (error) throw error;
-        if (data?.user) {
-          const syncedUser = await syncUserData(data.user);
-          setActiveRole(targetRole);
-          if (typeof window !== "undefined") {
-            localStorage.setItem(`edworld_active_role_${data.user.id}`, targetRole);
-          }
-          const userStage: CareerStage = syncedUser?.careerStage || (syncedUser?.ageBand === "13-15" ? "JUNIOR" : syncedUser?.ageBand === "16-18" ? "STUDENT" : "PROFESSIONAL");
-          return { role: targetRole, redirectUrl: getRedirectForRole(targetRole, userStage), careerStage: userStage };
-        }
-      } catch (remoteErr: any) {
-        // Fallback for 504 / timeout / network disruption
-        if (typeof window !== "undefined") {
-          const cachedSession = localStorage.getItem("edworld_auth_session");
-          if (cachedSession) {
-            const parsedUser: AppUser = JSON.parse(cachedSession);
-            if (parsedUser.email.toLowerCase() === credential.toLowerCase()) {
-              setUser(parsedUser);
-              setActiveRole(targetRole);
-              localStorage.setItem(`edworld_active_role_${parsedUser.uid}`, targetRole);
-              const cachedProfile = localStorage.getItem("edworld_user_profile");
-              if (cachedProfile) {
-                setProfile(JSON.parse(cachedProfile));
-              }
-              const userStage: CareerStage = parsedUser.careerStage || (parsedUser.ageBand === "13-15" ? "JUNIOR" : parsedUser.ageBand === "16-18" ? "STUDENT" : "PROFESSIONAL");
-              return { role: targetRole, redirectUrl: getRedirectForRole(targetRole, userStage), careerStage: userStage };
-            }
-          }
-        }
-        if (remoteErr?.message !== "GATEWAY_TIMEOUT" && !remoteErr?.message?.includes("504")) {
-          throw remoteErr;
-        }
+      if (error) {
+        throw error;
       }
 
-      return { role: targetRole, redirectUrl: getRedirectForRole(targetRole, "PROFESSIONAL"), careerStage: "PROFESSIONAL" };
+      if (data?.user) {
+        const syncedUser = await syncUserData(data.user);
+        setActiveRole(targetRole);
+        if (typeof window !== "undefined") {
+          localStorage.setItem(`edworld_active_role_${data.user.id}`, targetRole);
+        }
+        
+        // Fetch current profile to know onboarding status
+        const { data: prof } = await supabase.from("profiles").select("onboarding_completed").eq("id", data.user.id).maybeSingle();
+        const isOnboarded = prof?.onboarding_completed ?? false;
+
+        const userStage: CareerStage = syncedUser?.careerStage || "STUDENT";
+        return { 
+          role: targetRole, 
+          redirectUrl: getRedirectForRole(targetRole, userStage, isOnboarded), 
+          careerStage: userStage,
+          onboardingCompleted: isOnboarded
+        };
+      }
+
+      return { role: targetRole, redirectUrl: "/dashboard", careerStage: "STUDENT" };
     } finally {
       setLoading(false);
     }
@@ -409,84 +465,59 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     name: string,
     email: string,
     pass: string,
-    dob: string,
+    dob?: string,
     gradeLevel?: string,
     phone?: string,
     careerStage?: CareerStage
-  ) => {
-    // Client-side Password Strength Enforcement
+  ): Promise<{ needsEmailVerification?: boolean }> => {
     if (!pass || pass.length < 8) {
       throw new Error("Password must be at least 8 characters long.");
     }
-    if (!/[a-zA-Z]/.test(pass) || !/\d/.test(pass)) {
+    if (!/[a-zA-Z]/.test(pass) || !/d/.test(pass)) {
       throw new Error("Password must contain at least one letter and one number.");
     }
 
     setLoading(true);
     try {
-      const ageBand = calculateAgeBandFromDob(dob) || "18+";
+      const defaultDob = dob || "2002-01-01";
+      const ageBand = calculateAgeBandFromDob(defaultDob) || "18+";
       const cleanPhone = phone?.trim() || null;
       const cleanEmail = email.trim().toLowerCase();
-      const resolvedStage: CareerStage = careerStage || (ageBand === "13-15" ? "JUNIOR" : ageBand === "16-18" ? "STUDENT" : "PROFESSIONAL");
-      let userId = `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      const resolvedStage: CareerStage = careerStage || (ageBand === "18+" ? "PROFESSIONAL" : "STUDENT");
 
-      // Attempt Supabase signUp with 4-second timeout race to prevent 504 blocking
-      try {
-        const signUpPromise = supabase.auth.signUp({
-          email: cleanEmail,
-          password: pass,
-          options: {
-            data: {
-              full_name: name,
-              name,
-              dob,
-              phone: cleanPhone,
-              age_band: ageBand,
-              grade_level: gradeLevel || "College",
-              career_stage: resolvedStage,
-            },
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
+
+      const { data, error } = await supabase.auth.signUp({
+        email: cleanEmail,
+        password: pass,
+        options: {
+          emailRedirectTo: `${origin}/onboarding`,
+          data: {
+            full_name: name.trim(),
+            name: name.trim(),
+            display_name: name.trim(),
+            dob: defaultDob,
+            phone: cleanPhone,
+            age_band: ageBand,
+            grade_level: gradeLevel || "College",
+            career_stage: resolvedStage,
           },
-        });
+        },
+      });
 
-        const timeoutPromise = new Promise<{ data: { user: null }; error: null }>((resolve) =>
-          setTimeout(() => resolve({ data: { user: null }, error: null }), 4000)
-        );
-
-        const { data, error } = await Promise.race([signUpPromise, timeoutPromise]);
-        
-        if (error) {
-          // If error is 504 / gateway timeout, gracefully continue with local session
-          const errStatus = (error as any)?.status;
-          const errMsg = error.message || "";
-          if (errStatus !== 504 && !errMsg.includes("504") && !errMsg.includes("Gateway Timeout")) {
-            throw error;
-          }
-        }
-
-        if (data?.user?.id) {
-          userId = data.user.id;
-        }
-      } catch (remoteErr: any) {
-        const isTimeoutOr504 =
-          remoteErr?.status === 504 ||
-          remoteErr?.message?.includes("504") ||
-          remoteErr?.message?.includes("Gateway Timeout");
-
-        if (!isTimeoutOr504 && remoteErr?.message && !remoteErr?.message?.includes("fetch")) {
-          throw remoteErr;
-        }
-        console.warn("[Auth Resilience Active]: Remote auth gateway timed out. Establishing local authenticated session.");
+      if (error) {
+        throw error;
       }
 
+      const userId = data?.user?.id || `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
       const { displayName: cleanName, firstName, lastName } = normalizeDisplayName(undefined, undefined, name);
 
-      // Optimistic instant state update & persistent cache
       const appUser: AppUser = {
         uid: userId,
         name: cleanName,
         email: cleanEmail,
         phone: cleanPhone || undefined,
-        dob,
+        dob: defaultDob,
         ageBand,
         gradeLevel: gradeLevel || "College",
         careerStage: resolvedStage,
@@ -500,11 +531,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         name: cleanName,
         phone: cleanPhone || undefined,
         careerStage: resolvedStage,
-        primaryGoal: resolvedStage === "JUNIOR"
-          ? "Explore technology concepts and beginner STEM discovery quests."
-          : resolvedStage === "STUDENT"
-          ? "Build foundational coding projects and prepare for upcoming college tracks."
-          : "Prepare for competitive full-time industry interviews and optimize ATS resume keyword alignment.",
+        onboarding_completed: false,
+        primaryGoal: "Build skills and prepare for career opportunities on EdWorld.",
         interests: [
           { id: "swe", name: "Software Engineering", category: "Tech", selfLevel: 0, effectiveLevel: 0 },
           { id: "behavioral", name: "General Behavioral & Leadership", category: "Career", selfLevel: 0, effectiveLevel: 0 }
@@ -523,55 +551,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         document.cookie = `edworld_session=${userId}; path=/; max-age=2592000; SameSite=Lax`;
       }
 
-      // Non-blocking background sync across relational tables
-      Promise.allSettled([
-        supabase.from("users").upsert({
-          id: userId,
-          name: cleanName,
-          email: cleanEmail,
-          phone: cleanPhone,
-          age_band: ageBand,
-          grade: gradeLevel || "College",
-          career_stage: resolvedStage,
-          is_employer: false,
-          is_admin: false,
-          is_mentor: false,
-        }),
-        dob ? supabase.from("user_dob_records").upsert({ user_id: userId, dob }) : Promise.resolve(),
-        supabase.from("profiles").upsert({
-          id: userId,
-          user_id: userId,
-          name: cleanName,
-          display_name: cleanName,
-          first_name: firstName,
-          last_name: lastName,
-          email: cleanEmail,
-          phone: cleanPhone,
-          dob,
-          age_band: ageBand,
-          career_stage: resolvedStage,
-          grade_level: gradeLevel || "College",
-          username: cleanName.toLowerCase().replace(/\s+/g, "_") + "_" + userId.substring(0, 4),
-          primary_goal: userProfile.primaryGoal,
-          is_public: false,
-        }),
-        supabase.from("user_interests").upsert([
-          { user_id: userId, interest_id: "swe", self_level: 0, effective_level: 0 },
-          { user_id: userId, interest_id: "behavioral", self_level: 0, effective_level: 0 }
-        ])
-      ]).catch((dbErr) => {
-        console.warn("Background post-signup sync note:", dbErr);
-      });
+      // Sync into profiles table
+      supabase.from("profiles").upsert({
+        id: userId,
+        user_id: userId,
+        name: cleanName,
+        display_name: cleanName,
+        first_name: firstName,
+        last_name: lastName,
+        email: cleanEmail,
+        phone: cleanPhone,
+        dob: defaultDob,
+        age_band: ageBand,
+        career_stage: resolvedStage,
+        grade_level: gradeLevel || "College",
+        username: cleanName.toLowerCase().replace(/\s+/g, "_") + "_" + userId.substring(0, 4),
+        primary_goal: userProfile.primaryGoal,
+        onboarding_completed: false,
+        is_public: false,
+      }).then(() => {});
+
+      // If user is returned with identities or without session, email confirmation may be required
+      const needsEmailVerification = !data?.session;
+      return { needsEmailVerification };
     } finally {
       setLoading(false);
     }
   };
 
-  const resetPassword = async (email: string) => {
+  const requestPasswordReset = async (email: string) => {
     const origin = typeof window !== "undefined" ? window.location.origin : "";
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${origin}/auth/login`,
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${origin}/auth/reset-password`,
     });
+    if (error) throw error;
+  };
+
+  const resetPassword = async (email: string) => {
+    return requestPasswordReset(email);
+  };
+
+  const updateUserPassword = async (newPassword: string) => {
+    if (!newPassword || newPassword.length < 8) {
+      throw new Error("Password must be at least 8 characters long.");
+    }
+    if (!/[a-zA-Z]/.test(newPassword) || !/\d/.test(newPassword)) {
+      throw new Error("Password must contain at least one letter and one number.");
+    }
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
     if (error) throw error;
   };
 
@@ -654,6 +681,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem("edworld_auth_session");
       localStorage.removeItem("edworld_user_profile");
       sessionStorage.clear();
+      
       // Clear active role keys
       Object.keys(localStorage).forEach((key) => {
         if (key.startsWith("edworld_active_role_")) {
@@ -666,7 +694,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       document.cookie = "sb-access-token=; path=/; max-age=0; SameSite=Lax";
       document.cookie = "edworld_auth=; path=/; max-age=0; SameSite=Lax";
       
-      // Replace window location to prevent browser back navigation cache
       window.location.replace("/auth/login");
     }
     setLoading(false);
@@ -710,6 +737,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (data.isMentor !== undefined) updatePayload.is_mentor = data.isMentor && user.ageBand === "18+";
     if (data.mentorTags !== undefined) updatePayload.mentor_tags = data.mentorTags;
     if (data.targetRole !== undefined) updatePayload.target_role = data.targetRole;
+    if (data.onboarding_completed !== undefined) updatePayload.onboarding_completed = data.onboarding_completed;
+    if (data.institution !== undefined) updatePayload.institution = data.institution;
+    if (data.degree !== undefined) updatePayload.degree = data.degree;
+    if (data.field_of_study !== undefined) updatePayload.field_of_study = data.field_of_study;
+    if (data.graduation_year !== undefined) updatePayload.graduation_year = data.graduation_year;
+    if (data.experience_level !== undefined) updatePayload.experience_level = data.experience_level;
+    if (data.current_company !== undefined) updatePayload.current_company = data.current_company;
 
     await supabase.from("profiles").update(updatePayload).eq("id", user.uid);
     if (normalizedName !== undefined || data.phone !== undefined) {
@@ -805,8 +839,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Entitlement & Role Helpers
   const isMinor = user?.ageBand === "13-15" || user?.ageBand === "16-18";
-  const isStudent = isMinor;
-  const isWorkingProfessional = user?.ageBand === "18+";
+  const isStudent = isMinor || user?.careerStage === "STUDENT";
+  const isWorkingProfessional = user?.careerStage === "PROFESSIONAL";
   const isEmployer = Boolean(user?.isEmployer);
   const isSuperAdmin = activeRole === "SUPER_ADMIN";
   const isAdmin = Boolean(user?.isAdmin || activeRole === "ADMIN" || isSuperAdmin);
@@ -830,13 +864,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isPro = subscription?.plan === "pro" && subscription?.status === "active";
 
   const canCreateResume = (currentCount: number) => {
-    if (isMinor) return currentCount < 1;
     if (isPro) return true;
     return currentCount < 1;
   };
 
   const canRunMockInterview = (usedThisMonth: number) => {
-    if (isMinor) return usedThisMonth < 2;
     if (isPro) return true;
     return usedThisMonth < 2;
   };
@@ -871,8 +903,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         sendOtp,
         verifyOtp,
         loginWithEmail,
+        loginWithGoogle,
         signupWithEmail,
         resetPassword,
+        requestPasswordReset,
+        updateUserPassword,
         submitGuardianConsent,
         logout,
         updateUserProfile,

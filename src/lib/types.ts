@@ -33,6 +33,16 @@ export interface UserProfile {
   mentorTags: string[];        // Career Track only, empty for minors
   targetRole?: string;
   careerStage?: CareerStage | "college" | "working_professional";
+  onboarding_completed?: boolean;
+  institution?: string;
+  degree?: string;
+  field_of_study?: string;
+  graduation_year?: string;
+  experience_level?: string;
+  current_company?: string;
+  github_url?: string;
+  linkedin_url?: string;
+  leetcode_url?: string;
   isTeacher?: boolean;         // Educator role
   isSchoolAdmin?: boolean;     // Institutional Admin role
   updatedAt?: string;
