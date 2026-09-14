@@ -27,7 +27,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { SupabaseClient } from "@supabase/supabase-js";
 
-export type SectorType = "junior" | "explorer" | "college" | "working_professional";
+export type SectorType = "junior" | "explorer" | "college" | "working_professional" | "career";
 export type VisualMode = "maximalist" | "career";
 
 export interface LandingFeatureHighlight {
@@ -154,13 +154,30 @@ export const SEED_SECTOR_DATA: Record<SectorType, LandingSectorPageData> = {
       { sector: "working_professional", display_order: 6, icon_key: "award", title: "Certification Tracker", description: "Keep a running record of what you've earned" },
     ],
   },
+  career: {
+    sector: "career",
+    slug: "for-career",
+    hero_headline: "From college coursework to high-impact career seniority.",
+    hero_subtext: "The unified career acceleration OS for students and working professionals. ATS resume builder, full-stack STAR mock drills with live code execution, salary benchmarks, and verified GitHub portfolios.",
+    cta_label: "Build Career OS Free",
+    cta_href: "/signup?intent=college",
+    visual_mode: "career",
+    features: [
+      { sector: "career", display_order: 1, icon_key: "file-text", title: "ATS Resume Maker", description: "Built to pass single-column ATS parsers with quantifiable impact metrics" },
+      { sector: "career", display_order: 2, icon_key: "video", title: "STAR Mock Interviews", description: "Practice with real speech cadence analysis and coding execution" },
+      { sector: "career", display_order: 3, icon_key: "folder-git-2", title: "GitHub Project Studio", description: "Verifiable engineering portfolio extracted directly from your repos" },
+      { sector: "career", display_order: 4, icon_key: "trending-up", title: "Career Switch & Placement Roadmap", description: "Pinpoint real skill gaps for campus drives or senior transitions" },
+      { sector: "career", display_order: 5, icon_key: "target", title: "Job Application Pipeline", description: "Track every application and interview stage in one structured workspace" },
+      { sector: "career", display_order: 6, icon_key: "dollar-sign", title: "Salary & Peer Benchmarks", description: "Sourced, factual compensation ranges and peer resume feedback" },
+    ],
+  },
 };
 
 export async function fetchSectorLandingData(
   sector: SectorType,
   supabaseClient?: SupabaseClient
 ): Promise<LandingSectorPageData> {
-  const fallback = SEED_SECTOR_DATA[sector];
+  const fallback = SEED_SECTOR_DATA[sector] || SEED_SECTOR_DATA.career;
   if (!supabaseClient) {
     return fallback;
   }

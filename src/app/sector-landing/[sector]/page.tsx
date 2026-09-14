@@ -15,47 +15,42 @@ interface SectorLandingProps {
 }
 
 const VALID_SECTOR_MAP: Record<string, { sector: SectorType; slug: string; title: string; description: string }> = {
-  junior: {
-    sector: "junior",
-    slug: "for-junior",
-    title: "Junior School Track (Ages 13–15) | EdWorld Co.",
-    description: "Explore AI literacy, stream & subject guidance, curiosity quests, and private growth journal in a 100% safe workspace.",
+  career: {
+    sector: "career",
+    slug: "for-career",
+    title: "Career Track (College & Working Professionals) | EdWorld Co.",
+    description: "The unified career acceleration OS for students and working professionals. ATS resume maker, STAR mock interviews, GitHub project studio, and salary benchmarks.",
   },
-  explorer: {
-    sector: "explorer",
-    slug: "for-explorer",
-    title: "Explorer Track (Ages 16–18) | EdWorld Co.",
-    description: "Low-pressure communication training, scholarship and exam finder, honest college comparisons, and guided micro-projects.",
-  },
+  // Subdomain / legacy aliases consolidate directly into unified Career sector
   college: {
-    sector: "college",
-    slug: "for-college",
-    title: "College & Campus Placement Track | EdWorld Co.",
-    description: "ATS-tested resume maker, STAR mock interviews, verified GitHub project studio, and campus placement tracking.",
-  },
-  working_professional: {
-    sector: "working_professional",
-    slug: "for-professionals",
-    title: "Working Professionals Track | EdWorld Co.",
-    description: "Career-switch path recommendations, job search pipeline, referral requests, factual salary benchmarks, and performance appraisal assistant.",
-  },
-  "working-professional": {
-    sector: "working_professional",
-    slug: "for-professionals",
-    title: "Working Professionals Track | EdWorld Co.",
-    description: "Career-switch path recommendations, job search pipeline, referral requests, factual salary benchmarks, and performance appraisal assistant.",
-  },
-  working: {
-    sector: "working_professional",
-    slug: "for-professionals",
-    title: "Working Professionals Track | EdWorld Co.",
-    description: "Career-switch path recommendations, job search pipeline, referral requests, factual salary benchmarks, and performance appraisal assistant.",
+    sector: "career",
+    slug: "for-career",
+    title: "Career Track (College & Working Professionals) | EdWorld Co.",
+    description: "The unified career acceleration OS for students and working professionals. ATS resume maker, STAR mock interviews, GitHub project studio, and salary benchmarks.",
   },
   student: {
-    sector: "college",
-    slug: "for-college",
-    title: "College & Campus Placement Track | EdWorld Co.",
-    description: "ATS-tested resume maker, STAR mock interviews, verified GitHub project studio, and campus placement tracking.",
+    sector: "career",
+    slug: "for-career",
+    title: "Career Track (College & Working Professionals) | EdWorld Co.",
+    description: "The unified career acceleration OS for students and working professionals. ATS resume maker, STAR mock interviews, GitHub project studio, and salary benchmarks.",
+  },
+  working_professional: {
+    sector: "career",
+    slug: "for-career",
+    title: "Career Track (College & Working Professionals) | EdWorld Co.",
+    description: "The unified career acceleration OS for students and working professionals. ATS resume maker, STAR mock interviews, GitHub project studio, and salary benchmarks.",
+  },
+  "working-professional": {
+    sector: "career",
+    slug: "for-career",
+    title: "Career Track (College & Working Professionals) | EdWorld Co.",
+    description: "The unified career acceleration OS for students and working professionals. ATS resume maker, STAR mock interviews, GitHub project studio, and salary benchmarks.",
+  },
+  working: {
+    sector: "career",
+    slug: "for-career",
+    title: "Career Track (College & Working Professionals) | EdWorld Co.",
+    description: "The unified career acceleration OS for students and working professionals. ATS resume maker, STAR mock interviews, GitHub project studio, and salary benchmarks.",
   },
 };
 
@@ -63,7 +58,7 @@ export async function generateMetadata({ params }: SectorLandingProps): Promise<
   const conf = VALID_SECTOR_MAP[params.sector.toLowerCase()];
   if (!conf) {
     return {
-      title: "Sector Track | EdWorld Co.",
+      title: "Career OS | EdWorld Co.",
     };
   }
 
@@ -85,7 +80,7 @@ export default function SectorLandingRoute({ params }: SectorLandingProps) {
     notFound();
   }
 
-  const initialData: LandingSectorPageData = SEED_SECTOR_DATA[conf.sector];
+  const initialData: LandingSectorPageData = SEED_SECTOR_DATA[conf.sector] || SEED_SECTOR_DATA.career;
 
   return (
     <SectorLandingPage

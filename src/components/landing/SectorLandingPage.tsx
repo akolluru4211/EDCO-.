@@ -71,6 +71,14 @@ const SECTOR_META: Record<SectorType, {
     targetAudience: "Working Professionals",
     ageBand: "18+ Career",
   },
+  career: {
+    badgeLabel: "College & Professional Career OS &bull; Placement to Seniority",
+    accentColor: "#D7FC51",
+    secondaryAccent: "#13141B",
+    trackIcon: Briefcase,
+    targetAudience: "College & Career Track",
+    ageBand: "College & 18+ Career",
+  },
 };
 
 // Helper for cross-subdomain absolute URL resolution to main app domain

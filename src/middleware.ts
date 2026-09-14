@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Subdomain to Sector Map
+// Subdomain to Sector Map (Main App handles Career track; Junior/Explorer deployed standalone)
 const SUBDOMAIN_SECTOR_MAP: Record<string, string> = {
-  "junior.edworldco.in": "junior",
-  "explorer.edworldco.in": "explorer",
-  "student.edworldco.in": "college",
-  "working.edworldco.in": "working_professional",
+  "career.edworldco.in": "career",
+  "career.edworld.co.in": "career",
+  "student.edworldco.in": "career",
+  "student.edworld.co.in": "career",
+  "working.edworldco.in": "career",
+  "working.edworld.co.in": "career",
   // Local development / test aliases
-  "junior.localhost": "junior",
-  "explorer.localhost": "explorer",
-  "student.localhost": "college",
-  "working.localhost": "working_professional",
+  "career.localhost": "career",
+  "student.localhost": "career",
+  "working.localhost": "career",
 };
 
 // Public page paths accessible without authentication
@@ -21,8 +22,7 @@ const PUBLIC_PAGE_PREFIXES = [
   "/auth/signup",
   "/auth/forgot-password",
   "/auth/reset-password",
-  "/for-junior",
-  "/for-explorer",
+  "/for-career",
   "/for-college",
   "/for-professionals",
   "/sector-landing",
