@@ -18,11 +18,11 @@ import {
   LogIn
 } from "lucide-react";
 
-export type CareerStageId = "junior" | "student" | "professional";
+export type CareerStageId = "student" | "professional";
 
 interface StageOption {
   id: CareerStageId;
-  trackKey: "junior" | "student" | "pro";
+  trackKey: "student" | "pro";
   badge: string;
   title: string;
   tagline: string;
@@ -50,36 +50,9 @@ interface StageOption {
 
 const STAGES: StageOption[] = [
   {
-    id: "junior",
-    trackKey: "junior",
-    badge: "AGES 13–15",
-    title: "Junior School Lab",
-    tagline: "Explore & Discover",
-    description: "Build curiosity, digital confidence, and future-ready skills.",
-    confirmationMessage: "Your EdWorld workspace will be personalized for junior exploration, digital confidence, and youth-safe learning.",
-    icon: Compass,
-    ctaLabel: "Explore Junior",
-    colorScheme: {
-      accent: "violet",
-      border: "border-slate-200",
-      borderHover: "hover:border-violet-400 active:border-violet-500",
-      bgHover: "hover:bg-violet-50/40",
-      badgeBg: "bg-violet-50",
-      badgeText: "text-violet-700",
-      badgeBorder: "border-violet-200/80",
-      iconBg: "bg-violet-100",
-      iconText: "text-violet-700",
-      iconHoverBg: "group-hover:bg-violet-600 group-hover:text-white",
-      pillHoverBg: "group-hover:bg-violet-600",
-      pillHoverText: "group-hover:text-white",
-      modalPillBg: "bg-violet-100 text-violet-800 border-violet-200",
-      modalPillText: "text-violet-700",
-    },
-  },
-  {
     id: "student",
     trackKey: "student",
-    badge: "AGES 16–18 • COLLEGE",
+    badge: "COLLEGE & STUDENTS",
     title: "Student & Campus",
     tagline: "Build & Prepare",
     description: "Build skills, projects, career readiness, and your professional profile.",
@@ -292,14 +265,6 @@ export default function CareerStageSection() {
                 {selectedStage.confirmationMessage}
               </p>
             </div>
-
-            {/* Youth safety notice for Junior stage */}
-            {selectedStage.id === "junior" && (
-              <div className="flex items-center gap-2 text-[11px] text-violet-700 font-bold px-1">
-                <ShieldCheck className="w-4 h-4 text-violet-600 shrink-0" />
-                <span>Youth-Safe &amp; DPDP Compliant with Parent/Guardian Consent</span>
-              </div>
-            )}
 
             {/* Action Buttons */}
             <div className="space-y-2.5 pt-1">

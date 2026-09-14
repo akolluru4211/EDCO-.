@@ -51,9 +51,7 @@ function LoginForm() {
         router.push(redirectUrl);
       } else {
         // Strictly route based on the account's real registered career stage & age band
-        if (careerStage === "JUNIOR") {
-          router.push("/student/junior/dashboard");
-        } else if (careerStage === "STUDENT") {
+        if (careerStage === "STUDENT") {
           router.push("/dashboard");
         } else if (careerStage === "PROFESSIONAL") {
           router.push("/career/dashboard");

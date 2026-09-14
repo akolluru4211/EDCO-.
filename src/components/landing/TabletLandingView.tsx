@@ -21,7 +21,7 @@ import GrowthRing from "@/components/ui/GrowthRing";
 
 import Interactive3DCard from "@/components/ui/Interactive3DCard";
 
-type StageKey = "junior" | "student" | "pro";
+type StageKey = "student" | "pro";
 
 interface TabletStageConfig {
   key: StageKey;
@@ -40,24 +40,9 @@ interface TabletStageConfig {
 }
 
 const TABLET_STAGES: Record<StageKey, TabletStageConfig> = {
-  junior: {
-    key: "junior",
-    badge: "Ages 13–15 • Junior Lab",
-    badgeClass: "bg-violet-50 text-violet-700 border-violet-200",
-    accentClass: "text-violet-600",
-    title: "Junior School Lab",
-    subtitle: "STEM Curiosity Quests & Safe Reflection",
-    description: "Hands-on discovery quests, digital literacy foundation, and private journals built under strict DPDP Act minor safety.",
-    keyFeature: "Curiosity Quest Labs across AI & Robotics",
-    secondaryFeature: "School Communication Trainer & Minor Privacy Gate",
-    targetDashboard: "/student/junior/dashboard",
-    ctaUrl: "/auth/signup?track=junior&stage=junior",
-    loginUrl: "/auth/login?track=junior",
-    icon: Compass,
-  },
   student: {
     key: "student",
-    badge: "Ages 16–18 • College",
+    badge: "College & Students",
     badgeClass: "bg-emerald-50 text-emerald-800 border-emerald-200",
     accentClass: "text-emerald-600",
     title: "Student & Campus OS",
@@ -65,14 +50,14 @@ const TABLET_STAGES: Record<StageKey, TabletStageConfig> = {
     description: "Build verified project portfolios, practice technical mock interviews, and access calibrated engineering roadmaps.",
     keyFeature: "Micro-Project Studio with GitHub Sync",
     secondaryFeature: "Live Coding IDE Drills & College Benchmarks",
-    targetDashboard: "/student/explorer/dashboard",
+    targetDashboard: "/dashboard",
     ctaUrl: "/auth/signup?track=student&stage=student",
     loginUrl: "/auth/login?track=student",
     icon: GraduationCap,
   },
   pro: {
     key: "pro",
-    badge: "Ages 18+ • Career OS",
+    badge: "Working Professionals",
     badgeClass: "bg-amber-50 text-amber-900 border-amber-200",
     accentClass: "text-[#D7FC51]",
     title: "Working Professional OS",
@@ -80,7 +65,7 @@ const TABLET_STAGES: Record<StageKey, TabletStageConfig> = {
     description: "Single-column ATS resume maker, multimodal STAR AI mock interview studio, and verified public showcase profiles.",
     keyFeature: "Single-Column ATS Scoring & Keyword Calibration",
     secondaryFeature: "STAR Video AI Interview Drills & Salary Radar",
-    targetDashboard: "/dashboard",
+    targetDashboard: "/career/dashboard",
     ctaUrl: "/auth/signup?track=pro&stage=professional",
     loginUrl: "/auth/login?track=pro",
     icon: Briefcase,
@@ -143,7 +128,7 @@ export default function TabletLandingView() {
         </div>
 
         {/* Tablet Stage Switcher Tabs */}
-        <div className="grid grid-cols-3 gap-3 p-1.5 bg-white rounded-2xl border border-slate-200 shadow-xs">
+        <div className="grid grid-cols-2 gap-3 p-1.5 bg-white rounded-2xl border border-slate-200 shadow-xs">
           {(Object.keys(TABLET_STAGES) as StageKey[]).map((key) => {
             const item = TABLET_STAGES[key];
             const Icon = item.icon;
@@ -154,16 +139,14 @@ export default function TabletLandingView() {
                 onClick={() => setActiveStage(key)}
                 className={`py-3 px-2 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1.5 ${
                   isSelected
-                    ? key === "junior"
-                      ? "bg-violet-600 text-white shadow-sm font-black"
-                      : key === "student"
+                    ? key === "student"
                       ? "bg-emerald-600 text-white shadow-sm font-black"
                       : "bg-slate-950 text-[#D7FC51] shadow-sm font-black"
                     : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                 }`}
               >
                 <Icon className="w-4 h-4" />
-                <span className="truncate">{key === "junior" ? "Junior (13–15)" : key === "student" ? "Student (16–18)" : "Career (18+)"}</span>
+                <span className="truncate">{key === "student" ? "College & Students" : "Working Professionals"}</span>
               </button>
             );
           })}
@@ -226,7 +209,7 @@ export default function TabletLandingView() {
               </div>
 
               <GrowthRing
-                level={activeStage === "junior" ? 1 : activeStage === "student" ? 2 : 3}
+                level={activeStage === "student" ? 2 : 3}
                 size={90}
                 streakDays={12}
               />
@@ -234,7 +217,7 @@ export default function TabletLandingView() {
               <div className="space-y-1">
                 <span className="text-xs font-bold text-slate-900">Proven Skill Index</span>
                 <p className="text-[10px] text-slate-600 font-mono">
-                  {activeStage === "junior" ? "Level 1 • Curious Explorer" : activeStage === "student" ? "Level 2 • Applied Builder" : "Level 3 • Industry Master"}
+                  {activeStage === "student" ? "Level 2 • Applied Builder" : "Level 3 • Industry Master"}
                 </p>
               </div>
 

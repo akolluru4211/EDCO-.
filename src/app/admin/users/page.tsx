@@ -358,10 +358,8 @@ export default function AdminUsersPage() {
 
     const matchesTrack = 
       trackFilter === "all" || 
-      (trackFilter === "junior" && u.age_band === "13-15") ||
-      (trackFilter === "explorer" && u.age_band === "16-18") ||
-      (trackFilter === "college" && (u.career_stage === "college" || u.grade?.toLowerCase().includes("college"))) ||
-      (trackFilter === "pro" && (u.career_stage === "working_professional" || u.grade?.toLowerCase().includes("working")));
+      (trackFilter === "student" && (u.career_stage === "STUDENT" || u.career_stage === "college" || u.grade?.toLowerCase().includes("college") || u.grade?.toLowerCase().includes("year"))) ||
+      (trackFilter === "pro" && (u.career_stage === "PROFESSIONAL" || u.career_stage === "working_professional" || u.grade?.toLowerCase().includes("working")));
 
     const matchesRole = 
       roleFilter === "all" ||
@@ -507,28 +505,16 @@ export default function AdminUsersPage() {
                   All Stages
                 </button>
                 <button
-                  onClick={() => setTrackFilter("junior")}
-                  className={`px-3 py-1.5 rounded-lg transition-all ${trackFilter === "junior" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900"}`}
+                  onClick={() => setTrackFilter("student")}
+                  className={`px-3 py-1.5 rounded-lg transition-all ${trackFilter === "student" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900"}`}
                 >
-                  Junior (13-15)
-                </button>
-                <button
-                  onClick={() => setTrackFilter("explorer")}
-                  className={`px-3 py-1.5 rounded-lg transition-all ${trackFilter === "explorer" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900"}`}
-                >
-                  Explorer (16-18)
-                </button>
-                <button
-                  onClick={() => setTrackFilter("college")}
-                  className={`px-3 py-1.5 rounded-lg transition-all ${trackFilter === "college" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900"}`}
-                >
-                  College
+                  College &amp; Student
                 </button>
                 <button
                   onClick={() => setTrackFilter("pro")}
                   className={`px-3 py-1.5 rounded-lg transition-all ${trackFilter === "pro" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900"}`}
                 >
-                  Pro (18+)
+                  Working Professional
                 </button>
               </div>
 

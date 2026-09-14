@@ -17,7 +17,7 @@ import BorderBeam from "@/components/ui/BorderBeam";
 import ShimmerBadge from "@/components/ui/ShimmerBadge";
 import AmbientMeshBackground from "@/components/ui/AmbientMeshBackground";
 
-type StageKey = "junior" | "student" | "pro";
+type StageKey = "student" | "pro";
 
 interface DesktopStageInfo {
   key: StageKey;
@@ -37,31 +37,6 @@ interface DesktopStageInfo {
 }
 
 const DESKTOP_STAGES: Record<StageKey, DesktopStageInfo> = {
-  junior: {
-    key: "junior",
-    badge: "AGES 13–15 • JUNIOR LAB",
-    badgeColor: "bg-violet-50 text-violet-700 border-violet-200",
-    accentColor: "#7B57FF",
-    title: "Junior School Curiosity Lab",
-    subtitle: "STEM Discovery, Digital Literacy & Youth Confidence",
-    description: "A private, safe environment for young learners (Grades 8–10) to build creative technology projects, master clear speaking, and explore passions without exam pressure.",
-    humanQuote: "“Build foundational projects, master clear speaking, and develop self-reflection in a private environment.”",
-    humanAuthor: "Junior Learner Pathway",
-    stats: [
-      { label: "Minor Protection", value: "100% DPDP" },
-      { label: "Curiosity Quests", value: "Hands-on" },
-      { label: "Growth Journals", value: "Private" },
-    ],
-    features: [
-      "Zero open public networking & guardian verification portal",
-      "Hands-on curiosity quests across AI, Robotics & Space",
-      "Communication trainer for confident school presentations",
-      "Private self-reflection journal for continuous discovery",
-    ],
-    ctaUrl: "/auth/signup?track=junior&stage=junior",
-    loginUrl: "/auth/login?track=junior",
-    icon: Compass,
-  },
   student: {
     key: "student",
     badge: "AGES 16–18 • COLLEGE & CAMPUS",
@@ -137,22 +112,16 @@ export default function DesktopLandingView() {
 
             <nav className="hidden xl:flex items-center gap-2 pl-6 border-l border-slate-200">
               <a
-                href="#junior-lab"
-                className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all"
-              >
-                Junior Lab (13–15)
-              </a>
-              <a
                 href="#student-campus"
                 className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all"
               >
-                Student &amp; Campus (16–18)
+                Student &amp; College
               </a>
               <a
                 href="#pro-acceleration"
                 className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all"
               >
-                Working Professional (18+)
+                Working Professional
               </a>
             </nav>
           </div>
@@ -251,104 +220,24 @@ export default function DesktopLandingView() {
         </div>
       </section>
 
-      {/* 3. Three-Pillar Architecture Section with Interactive Spotlight 3D Depth Cards */}
+      {/* 3. Two-Pillar Architecture Section with Interactive Spotlight 3D Depth Cards */}
       <section className="py-24 max-w-7xl mx-auto px-8 space-y-16">
         
         <div className="text-center space-y-4 max-w-3xl mx-auto">
-          <ShimmerBadge variant="violet">
-            PURPOSE-BUILT FOR EVERY GENERATION
+          <ShimmerBadge variant="emerald">
+            PURPOSE-BUILT FOR STUDENTS &amp; PROFESSIONALS
           </ShimmerBadge>
           <h2 className="text-4xl lg:text-5xl font-black font-display text-slate-950 tracking-tight">
-            One platform. Three dedicated career operating systems.
+            One platform. Two unified career operating systems.
           </h2>
           <p className="text-base text-slate-600 leading-relaxed font-medium">
-            Edworld strictly segments user experiences to ensure age-appropriate safety, calibrated rigor, and lifelong career progression.
+            Edworld strictly segments user experiences to ensure calibrated rigor, real portfolio evidence, and lifelong career progression.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           
-          {/* Pillar 1: Junior */}
-          <div id="junior-lab" className="scroll-mt-24">
-            <Interactive3DCard maxTilt={6} depth={14} className="h-full">
-              <SpotlightCard
-                spotlightColor="rgba(123, 87, 255, 0.15)"
-                spotlightSize={340}
-                className="bg-white rounded-3xl p-8 border border-slate-200/90 shadow-sm hover:shadow-xl flex flex-col justify-between h-full space-y-6 card-lift-glow"
-              >
-                <div className="space-y-5">
-                  <div className="flex items-center justify-between">
-                    <div className="w-12 h-12 rounded-2xl bg-violet-100 text-violet-700 flex items-center justify-center shadow-xs">
-                      <Compass className="w-6 h-6 animate-float-gentle" />
-                    </div>
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-violet-50 text-violet-700 border border-violet-200">
-                      Ages 13–15 • Junior Lab
-                    </span>
-                  </div>
-
-                  <div className="space-y-2">
-                    <h3 className="text-2xl font-black text-slate-900">Junior School Curiosity Lab</h3>
-                    <p className="text-xs text-slate-500 font-semibold">{DESKTOP_STAGES.junior.subtitle}</p>
-                    <p className="text-xs text-slate-600 leading-relaxed font-medium pt-1">
-                      {DESKTOP_STAGES.junior.description}
-                    </p>
-                  </div>
-
-                  {/* Learner Quote */}
-                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
-                    <p className="text-xs text-slate-700 italic leading-relaxed">
-                      {DESKTOP_STAGES.junior.humanQuote}
-                    </p>
-                    <span className="text-[10px] font-mono font-bold uppercase text-slate-400 block">
-                      — {DESKTOP_STAGES.junior.humanAuthor}
-                    </span>
-                  </div>
-
-                  {/* Stats */}
-                  <div className="grid grid-cols-3 gap-2 pt-1">
-                    {DESKTOP_STAGES.junior.stats.map((s, idx) => (
-                      <div key={idx} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/60 text-center transition-transform duration-200 hover:scale-105">
-                        <span className="block text-[9px] font-mono font-bold uppercase text-slate-400">
-                          {s.label}
-                        </span>
-                        <strong className="text-xs font-black text-slate-900">
-                          {s.value}
-                        </strong>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Feature Checklist */}
-                  <ul className="space-y-2 text-xs text-slate-800 font-medium pt-2 border-t border-slate-100">
-                    {DESKTOP_STAGES.junior.features.map((f, idx) => (
-                      <li key={idx} className="flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-violet-600 shrink-0" />
-                        <span className="leading-tight">{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="pt-4 border-t border-slate-100 space-y-2">
-                  <Link
-                    href={DESKTOP_STAGES.junior.ctaUrl}
-                    className="btn-shine w-full py-3.5 rounded-2xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-black uppercase tracking-wider text-center transition-all shadow-md flex items-center justify-center gap-2 hover:scale-102 active:scale-98"
-                  >
-                    <span>Launch Junior Lab</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
-                  <Link
-                    href={DESKTOP_STAGES.junior.loginUrl}
-                    className="w-full py-2.5 rounded-xl text-center text-xs font-bold text-slate-600 hover:text-slate-900 block transition-colors"
-                  >
-                    Sign In to Junior Track
-                  </Link>
-                </div>
-              </SpotlightCard>
-            </Interactive3DCard>
-          </div>
-
-          {/* Pillar 2: Student */}
+          {/* Pillar 1: Student */}
           <div id="student-campus" className="scroll-mt-24">
             <Interactive3DCard maxTilt={6} depth={14} className="h-full">
               <SpotlightCard

@@ -77,8 +77,6 @@ export default function Navbar() {
   }
 
   const isStaff = Boolean(isEmployee || isHR || isFounder || isTeacher || isSchoolAdmin || isCollegeAdmin || isAdmin || isSuperAdmin);
-  const isJunior = user?.ageBand === "13-15";
-  const isExplorer = user?.ageBand === "16-18";
 
   interface PortalLink {
     href: string;
@@ -142,20 +140,7 @@ export default function Navbar() {
     },
   ].filter(p => p.visible);
 
-  // 2. Client / Learner Public Portals (Zero Staff Tools Leaked)
-  const clientJuniorPortals: PortalLink[] = [
-    { href: "/student/junior/dashboard", label: "Junior Dashboard", shortLabel: "Dashboard", icon: LayoutDashboard },
-    { href: "/school", label: "Curiosity & Skills Lab", shortLabel: "Skills Lab", icon: Compass },
-    { href: "/school/journal", label: "Growth Journal", shortLabel: "Journal", icon: FileText },
-  ];
-
-  const clientExplorerPortals: PortalLink[] = [
-    { href: "/student/explorer/dashboard", label: "Explorer Dashboard", shortLabel: "Dashboard", icon: LayoutDashboard },
-    { href: "/school", label: "Pathways & Exam Tracker", shortLabel: "Pathways", icon: Compass },
-    { href: "/projects", label: "Micro-Project Studio", shortLabel: "Projects", icon: Layers },
-    { href: "/network", label: "Student Network", shortLabel: "Network", icon: Users },
-  ];
-
+  // 2. Client / Learner Public Portals (Unified Student & Career OS)
   const clientCareerPortals: PortalLink[] = [
     { href: "/dashboard", label: "Dashboard", shortLabel: "Dashboard", icon: LayoutDashboard },
     { href: "/resumes", label: "Resume Maker", shortLabel: "Resumes", icon: FileText },
@@ -167,8 +152,6 @@ export default function Navbar() {
 
   const activePortals: PortalLink[] = isStaff
     ? internalStaffPortals
-    : isJunior
-    ? clientJuniorPortals
     : clientCareerPortals;
 
   return (
@@ -185,7 +168,7 @@ export default function Navbar() {
             
             {/* Left: Brand Logo */}
             <Link 
-              href={user ? (isStaff ? (isFounder ? "/founder" : isHR ? "/hr" : isTeacher ? "/school/teacher" : "/employee") : (isJunior ? "/student/junior/dashboard" : isExplorer ? "/student/explorer/dashboard" : "/dashboard")) : "/"} 
+              href={user ? (isStaff ? (isFounder ? "/founder" : isHR ? "/hr" : isTeacher ? "/school/teacher" : "/employee") : "/dashboard") : "/"} 
               className="flex items-center gap-2.5 group"
             >
               <div className="w-9 h-9 rounded-2xl bg-[#1C1D26] border border-white/15 p-1 flex items-center justify-center shadow-md group-hover:scale-105 group-hover:border-[#D7FC51]/50 transition-all overflow-hidden shrink-0">
@@ -203,7 +186,7 @@ export default function Navbar() {
                   Edworld <span className="text-[#D7FC51] font-black text-xl leading-none">{isStaff ? "OS" : "Co."}</span>
                 </span>
                 <span className="text-[8px] font-bold text-[#8E95A5] uppercase tracking-wider mt-0.5 leading-none">
-                  {isStaff ? "Organization Portal" : isJunior ? "Junior Track" : "Student & Career OS"}
+                  {isStaff ? "Organization Portal" : "Student & Career OS"}
                 </span>
               </div>
             </Link>
@@ -273,7 +256,7 @@ export default function Navbar() {
                 <>
                   {/* Current Role / Track Badge */}
                   <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#D7FC51]/10 text-[#D7FC51] border border-[#D7FC51]/30">
-                    <span>{isStaff ? (role || "STAFF") : isJunior ? "JUNIOR" : isExplorer ? "STUDENT" : "PRO"}</span>
+                    <span>{isStaff ? (role || "STAFF") : (user?.careerStage || "STUDENT")}</span>
                   </div>
 
                   {/* Quixel User Profile Capsule */}
@@ -415,7 +398,7 @@ export default function Navbar() {
                         </div>
                       </div>
                       <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-[#D7FC51]/10 text-[#D7FC51] border border-[#D7FC51]/30">
-                        {isStaff ? (role || "STAFF") : isJunior ? "JUNIOR" : isExplorer ? "STUDENT" : "PRO"}
+                        {isStaff ? (role || "STAFF") : (user?.careerStage || "STUDENT")}
                       </span>
                     </div>
                   </div>

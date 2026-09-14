@@ -26,7 +26,7 @@ import Button from "@/components/ui/Button";
 import { calculateAgeBandFromDob } from "@/lib/utils";
 import { CareerStage } from "@/lib/types";
 
-type StageKey = "junior" | "student" | "pro";
+type StageKey = "student" | "pro";
 
 interface StageConfig {
   key: StageKey;
@@ -42,22 +42,10 @@ interface StageConfig {
 }
 
 const STAGE_CONFIGS: Record<StageKey, StageConfig> = {
-  junior: {
-    key: "junior",
-    stageEnum: "JUNIOR",
-    badge: "Ages 13–15",
-    badgeColor: "bg-violet-50 text-violet-700 border-violet-200",
-    accentBorder: "border-violet-500 ring-violet-500",
-    accentBg: "bg-violet-600 text-white",
-    accentText: "text-violet-700",
-    icon: Compass,
-    title: "Start Your Junior Journey",
-    subtitle: "A safe space to explore skills, curiosity, and your future.",
-  },
   student: {
     key: "student",
     stageEnum: "STUDENT",
-    badge: "Ages 16–18 • College",
+    badge: "College Student & Graduate",
     badgeColor: "bg-emerald-50 text-emerald-800 border-emerald-200",
     accentBorder: "border-emerald-500 ring-emerald-500",
     accentBg: "bg-emerald-600 text-white",
@@ -69,7 +57,7 @@ const STAGE_CONFIGS: Record<StageKey, StageConfig> = {
   pro: {
     key: "pro",
     stageEnum: "PROFESSIONAL",
-    badge: "Ages 18+ • Career",
+    badge: "Working Professional",
     badgeColor: "bg-amber-50 text-amber-900 border-amber-200",
     accentBorder: "border-amber-500 ring-amber-500",
     accentBg: "bg-amber-600 text-white",
@@ -80,7 +68,6 @@ const STAGE_CONFIGS: Record<StageKey, StageConfig> = {
   },
 };
 
-const JUNIOR_GRADES = ["Class 8", "Class 9", "Class 10"];
 const STUDENT_DEGREES = ["B.Tech / B.E.", "B.Sc", "BCA", "BBA / B.Com", "M.Tech / M.E.", "MCA", "MBA", "Other Degree"];
 const STUDENT_YEARS = ["1st Year", "2nd Year", "3rd Year", "4th Year / Final Year", "Graduated"];
 const PRO_EXPERIENCE = ["0–2 Years (Early Career)", "3–5 Years (Mid-Level)", "6–10 Years (Senior)", "10+ Years (Lead / Executive)"];
@@ -94,9 +81,7 @@ function SignupForm() {
   const intentParam = searchParams?.get("intent") || searchParams?.get("stage") || searchParams?.get("track") || "student";
   
   const initialStage: StageKey = 
-    intentParam === "junior" || intentParam === "for-junior" 
-      ? "junior" 
-      : intentParam === "pro" || intentParam === "professional" || intentParam === "working_professional" || intentParam === "for-professionals"
+    intentParam === "pro" || intentParam === "professional" || intentParam === "working_professional" || intentParam === "for-professionals"
       ? "pro" 
       : "student";
   
@@ -110,13 +95,6 @@ function SignupForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [dob, setDob] = useState("");
   const [termsAgreed, setTermsAgreed] = useState(false);
-
-  // Junior specific state
-  const [schoolName, setSchoolName] = useState("");
-  const [juniorGrade, setJuniorGrade] = useState("Class 9");
-  const [guardianName, setGuardianName] = useState("");
-  const [guardianEmail, setGuardianEmail] = useState("");
-  const [guardianConsentAgreed, setGuardianConsentAgreed] = useState(false);
 
   // Student specific state
   const [collegeName, setCollegeName] = useState("");
@@ -143,59 +121,25 @@ function SignupForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [signupSuccess, setSignupSuccess] = useState(false);
-  const [mismatchLogged, setMismatchLogged] = useState(false);
 
   useEffect(() => {
     const raw = searchParams?.get("intent") || searchParams?.get("stage") || searchParams?.get("track");
-    if (raw === "junior" || raw === "for-junior") setSelectedStage("junior");
-    else if (raw === "explorer" || raw === "for-explorer" || raw === "college" || raw === "for-college" || raw === "student") setSelectedStage("student");
-    else if (raw === "pro" || raw === "professional" || raw === "working_professional" || raw === "for-professionals") setSelectedStage("pro");
+    if (raw === "pro" || raw === "professional" || raw === "working_professional" || raw === "for-professionals") {
+      setSelectedStage("pro");
+    } else {
+      setSelectedStage("student");
+    }
   }, [searchParams]);
 
   const activeStage = STAGE_CONFIGS[selectedStage];
-  const IconComponent = activeStage.icon;
 
-  // Real age band strictly calculated from entered DOB
+  // Age band strictly calculated from entered DOB
   const derivedAgeBand = dob ? calculateAgeBandFromDob(dob) : null;
-  const isMinorBand = derivedAgeBand === "13-15" || derivedAgeBand === "16-18";
   const isUnder13 = derivedAgeBand === null && dob !== "";
-
-  // Check intent / actual-age mismatch
-  const isAgeMismatch = 
-    (intentParam === "working_professional" || intentParam === "for-professionals" || intentParam === "college" || selectedStage === "pro") && 
-    derivedAgeBand === "13-15";
-
-  // Log mismatch event asynchronously without blocking signup
-  useEffect(() => {
-    if (isAgeMismatch && !mismatchLogged) {
-      setMismatchLogged(true);
-      fetch("/api/performance/event", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          eventType: "INTENT_AGE_MISMATCH",
-          source: "signup_flow",
-          title: "Signup Intent vs Real Age Mismatch",
-          metricsPayload: {
-            intent: intentParam,
-            derivedAgeBand,
-            timestamp: new Date().toISOString()
-          },
-          evidenceText: `User entered intent '${intentParam}' but verified DOB indicates '${derivedAgeBand}'. Seamlessly adapted to Junior track.`
-        })
-      }).catch((e) => console.warn("Mismatch log notice:", e));
-    }
-  }, [isAgeMismatch, mismatchLogged, intentParam, derivedAgeBand]);
 
   // Tone adjustment helper
   const getIntentGreeting = () => {
     switch (intentParam) {
-      case "junior":
-      case "for-junior":
-        return "Welcome to EdWorld. Let's get your junior explorer profile set up.";
-      case "explorer":
-      case "for-explorer":
-        return "Welcome to EdWorld. Let's get your high school & pre-college profile set up.";
       case "college":
       case "for-college":
         return "Welcome to EdWorld. Let's get your college profile set up.";
@@ -230,19 +174,12 @@ function SignupForm() {
     }
 
     if (isUnder13) {
-      setError("Edworld Co requires users to be at least 13 years of age. Registration is blocked for learners under 13 per DPDP Act / COPPA.");
+      setError("Edworld Co requires users to be at least 13 years of age.");
       return;
     }
 
     if (!isPasswordValid) {
       setError("Password must be at least 8 characters long and contain both letters and numbers.");
-      return;
-    }
-
-    // If derived age is 13-15 or junior, require guardian consent
-    const isJuniorAccount = derivedAgeBand === "13-15" || selectedStage === "junior";
-    if (isJuniorAccount && !guardianConsentAgreed) {
-      setError("Guardian consent is required for junior learners under 16 per DPDP Act regulations.");
       return;
     }
 
@@ -253,34 +190,20 @@ function SignupForm() {
 
     setLoading(true);
     try {
-      // Real stage is derived from DOB for minors, or selected stage for adults (18+)
-      const stageEnum: CareerStage = 
-        derivedAgeBand === "13-15"
-          ? "JUNIOR"
-          : derivedAgeBand === "16-18"
-          ? "STUDENT"
-          : activeStage.stageEnum;
+      const stageEnum: CareerStage = activeStage.stageEnum;
 
       const gradeLevel = 
-        stageEnum === "JUNIOR" 
-          ? juniorGrade 
-          : stageEnum === "STUDENT" 
+        stageEnum === "STUDENT" 
           ? `${degree} - ${currentYear}` 
           : "Working Professional";
 
       await signupWithEmail(name, email, password, dob, gradeLevel, phone, stageEnum);
 
-      if (guardianName && guardianEmail && isMinorBand) {
-        await submitGuardianConsent(guardianName, guardianEmail, "parent");
-      }
-
       setSignupSuccess(true);
       
-      // Route directly to the verified dashboard matching real account profile
+      // Route directly to the verified dashboard matching account profile
       setTimeout(() => {
-        if (stageEnum === "JUNIOR") {
-          router.push("/student/junior/dashboard");
-        } else if (stageEnum === "STUDENT") {
+        if (stageEnum === "STUDENT") {
           router.push("/dashboard");
         } else {
           router.push("/career/dashboard");
@@ -311,13 +234,13 @@ function SignupForm() {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-xl">
         <div className="card-quixel rounded-3xl p-6 sm:p-8 bg-white border border-[#E8ECF2] shadow-xl space-y-6">
           
-          {/* Stage Default Switcher (Non-binding, editable by user) */}
+          {/* Stage Default Switcher */}
           <div className="space-y-2">
             <label className="block text-[11px] font-bold text-[#8E95A5] uppercase tracking-wider">
-              Selected Pathway (Suggested & Editable)
+              Select Your Profile Type
             </label>
-            <div className="grid grid-cols-3 gap-2 p-1.5 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2]">
-              {(["junior", "student", "pro"] as StageKey[]).map((stg) => {
+            <div className="grid grid-cols-2 gap-2 p-1.5 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2]">
+              {(["student", "pro"] as StageKey[]).map((stg) => {
                 const conf = STAGE_CONFIGS[stg];
                 const isCurrent = selectedStage === stg;
                 return (
@@ -325,7 +248,7 @@ function SignupForm() {
                     key={stg}
                     type="button"
                     onClick={() => setSelectedStage(stg)}
-                    className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex flex-col sm:flex-row items-center justify-center gap-1.5 cursor-pointer ${
+                    className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                       isCurrent
                         ? "bg-[#13141B] text-white shadow-sm"
                         : "text-[#5E6573] hover:text-[#13141B] hover:bg-white/60"
@@ -337,19 +260,6 @@ function SignupForm() {
               })}
             </div>
           </div>
-
-          {/* Friendly Intent / Real Age Mismatch Message */}
-          {isAgeMismatch && (
-            <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs space-y-1.5 animate-in fade-in">
-              <div className="flex items-center gap-2 font-bold text-indigo-950">
-                <Info className="w-4 h-4 text-indigo-600 flex-shrink-0" />
-                <span>Notice on pathway selection</span>
-              </div>
-              <p className="text-indigo-800 leading-relaxed">
-                Looks like our Working Professional tools aren&apos;t quite the right fit yet — here&apos;s what&apos;s actually available for you right now in our Junior Discovery Lab, and it&apos;ll grow with you!
-              </p>
-            </div>
-          )}
 
           {error && (
             <div className="p-4 rounded-2xl bg-[#FFEFEA] border border-[#FF7A50]/20 text-[#FF7A50] text-xs flex items-start gap-3 animate-in fade-in">
@@ -460,46 +370,6 @@ function SignupForm() {
                 </button>
               </div>
             </div>
-
-            {/* Junior Guardian Consent Section */}
-            {(selectedStage === "junior" || derivedAgeBand === "13-15") && (
-              <div className="p-4 rounded-2xl bg-purple-50/70 border border-purple-200/80 space-y-3">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-purple-700" />
-                  <span className="text-xs font-bold text-purple-900">
-                    Guardian Consent (DPDP Act Compliance)
-                  </span>
-                </div>
-                <p className="text-[11px] text-purple-800 leading-relaxed">
-                  For students under 16, a parent or legal guardian must grant consent for educational access.
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <input
-                    type="text"
-                    value={guardianName}
-                    onChange={(e) => setGuardianName(e.target.value)}
-                    placeholder="Parent / Guardian Name"
-                    className="w-full px-3 py-2 rounded-xl bg-white border border-purple-200 text-xs text-[#13141B]"
-                  />
-                  <input
-                    type="email"
-                    value={guardianEmail}
-                    onChange={(e) => setGuardianEmail(e.target.value)}
-                    placeholder="Parent / Guardian Email"
-                    className="w-full px-3 py-2 rounded-xl bg-white border border-purple-200 text-xs text-[#13141B]"
-                  />
-                </div>
-                <label className="flex items-start gap-2 text-[11px] text-purple-900 cursor-pointer pt-1">
-                  <input
-                    type="checkbox"
-                    checked={guardianConsentAgreed}
-                    onChange={(e) => setGuardianConsentAgreed(e.target.checked)}
-                    className="mt-0.5 rounded border-purple-300"
-                  />
-                  <span>I confirm my parent or legal guardian approves this educational account.</span>
-                </label>
-              </div>
-            )}
 
             {/* Terms & Privacy */}
             <label className="flex items-start gap-2.5 text-xs text-[#5E6573] cursor-pointer pt-2">

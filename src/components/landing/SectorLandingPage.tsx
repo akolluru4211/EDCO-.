@@ -420,8 +420,6 @@ export default function SectorLandingPage({
           </div>
           <div className="flex items-center gap-6">
             <Link href={getMainAppUrl("/")} className="hover:underline">Home</Link>
-            <Link href={getMainAppUrl("/for-junior")} className="hover:underline">Junior</Link>
-            <Link href={getMainAppUrl("/for-explorer")} className="hover:underline">Explorer</Link>
             <Link href={getMainAppUrl("/for-college")} className="hover:underline">College</Link>
             <Link href={getMainAppUrl("/for-professionals")} className="hover:underline">Professionals</Link>
             <Link href={getMainAppUrl("/privacy")} className="hover:underline">Privacy</Link>

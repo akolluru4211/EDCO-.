@@ -29,10 +29,7 @@ export default function OnboardingPage() {
 
   // Auto-route to dedicated stage onboarding if known
   useEffect(() => {
-    if (user?.careerStage === "JUNIOR") {
-      router.replace("/onboarding/junior");
-      return;
-    } else if (user?.careerStage === "PROFESSIONAL") {
+    if (user?.careerStage === "PROFESSIONAL") {
       router.replace("/onboarding/professional");
       return;
     } else if (user?.careerStage === "STUDENT") {
@@ -45,8 +42,7 @@ export default function OnboardingPage() {
         const stored = localStorage.getItem("edworld_pending_stage_profile");
         if (stored) {
           const parsed = JSON.parse(stored);
-          if (parsed.stage === "junior") router.replace("/onboarding/junior");
-          else if (parsed.stage === "pro") router.replace("/onboarding/professional");
+          if (parsed.stage === "pro") router.replace("/onboarding/professional");
           else if (parsed.stage === "student") router.replace("/onboarding/student");
         }
       } catch {}

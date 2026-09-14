@@ -54,18 +54,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/student/junior/dashboard`,
-      lastModified,
-      changeFrequency: "weekly",
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/student/explorer/dashboard`,
-      lastModified,
-      changeFrequency: "weekly",
-      priority: 0.8,
-    },
-    {
       url: `${baseUrl}/career/dashboard`,
       lastModified,
       changeFrequency: "weekly",

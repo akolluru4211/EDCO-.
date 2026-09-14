@@ -27,7 +27,7 @@ import {
 interface PerformanceIntelligenceWidgetProps {
   userId?: string;
   userName?: string;
-  track?: "student" | "career" | "junior";
+  track?: "student" | "career";
 }
 
 export default function PerformanceIntelligenceWidget({
