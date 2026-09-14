@@ -1,863 +1,629 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { 
-  Briefcase, 
-  CheckCircle2, 
-  Clock, 
-  Target, 
-  Users, 
-  Calendar, 
-  FileText, 
-  DollarSign, 
-  AlertCircle, 
-  Sparkles, 
-  Plus, 
-  ChevronRight, 
-  ArrowRight,
-  Smile,
-  Shield,
-  Layers,
-  Send,
-  Building,
-  Check,
-  X,
-  Filter,
-  TrendingUp,
-  Download
-} from "lucide-react";
-import Button from "@/components/ui/Button";
-import { 
-  EmployeeCheckIn, 
-  EmployeeTask, 
-  EmployeeOKR, 
-  LeaveRequest, 
-  PayrollRecord, 
-  TeamMember,
-  EmployeeDocument
-} from "@/lib/types";
-import { 
-  getEmployeeCheckIns, 
-  saveEmployeeCheckIn, 
   getEmployeeTasks, 
   saveEmployeeTask, 
-  updateTaskStatus, 
+  updateTaskStatus,
   getEmployeeOKRs, 
-  saveEmployeeOKR, 
-  updateOKRProgress, 
+  getEmployeeCheckIns, 
   getLeaveRequests, 
-  submitLeaveRequest, 
+  submitLeaveRequest,
   getEmployeePayrollRecords, 
-  getTeamDirectory, 
-  getEmployeeDocuments 
+  getEmployeeDocuments,
+  getTeamDirectory
 } from "@/lib/db-service";
 import { runEmployeeProductivityAgent, AgentInsight } from "@/lib/ai-agents";
-import AccessDeniedPortal from "@/components/ui/AccessDeniedPortal";
-import AuthGuard from "@/components/auth/AuthGuard";
+import { logInternalAction } from "@/lib/services/internal-audit-service";
+import { 
+  EmployeeTask, 
+  EmployeeOKR, 
+  EmployeeCheckIn, 
+  LeaveRequest, 
+  PayrollRecord, 
+  EmployeeDocument, 
+  TeamMember,
+  LeaveType
+} from "@/lib/types";
+import { 
+  CheckSquare, 
+  Target, 
+  Calendar, 
+  DollarSign, 
+  Sparkles, 
+  CheckCircle2, 
+  Plus, 
+  RefreshCw,
+  Users
+} from "lucide-react";
+
+type EmployeeTab = "my_work" | "my_performance" | "my_hr" | "company" | "ai_assistant";
 
 export default function EmployeeWorkspacePage() {
-  const { user, profile, role, isEmployee, isHR, isFounder, isAdmin } = useAuth();
+  const { user, profile, role, loading: authLoading } = useAuth();
+  const router = useRouter();
 
-  if (user && !isEmployee && !isHR && !isFounder && !isAdmin) {
-    return (
-      <AccessDeniedPortal
-        portalName="Employee Workspace"
-        requiredRole="Corporate Employee / Staff"
-        userRole={role}
-        redirectTo="/dashboard"
-      />
-    );
-  }
-
-  const [activeTab, setActiveTab] = useState<"today" | "my_work" | "people" | "hr">("today");
-
-  // State
-  const [checkIns, setCheckIns] = useState<EmployeeCheckIn[]>([]);
+  const [activeTab, setActiveTab] = useState<EmployeeTab>("my_work");
   const [tasks, setTasks] = useState<EmployeeTask[]>([]);
   const [okrs, setOkrs] = useState<EmployeeOKR[]>([]);
+  const [checkIns, setCheckIns] = useState<EmployeeCheckIn[]>([]);
   const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
-  const [payrolls, setPayrolls] = useState<PayrollRecord[]>([]);
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [payroll, setPayroll] = useState<PayrollRecord[]>([]);
   const [documents, setDocuments] = useState<EmployeeDocument[]>([]);
+  const [team, setTeam] = useState<TeamMember[]>([]);
   const [aiInsights, setAiInsights] = useState<AgentInsight[]>([]);
-  const [taskFilter, setTaskFilter] = useState<string>("ALL");
-  const [notification, setNotification] = useState<string | null>(null);
 
-  // Daily Check-in Form
-  const [checkInPriorities, setCheckInPriorities] = useState("");
-  const [checkInProgress, setCheckInProgress] = useState("");
-  const [checkInBlockers, setCheckInBlockers] = useState("");
-  const [checkInMood, setCheckInMood] = useState<"Great" | "Good" | "Okay" | "Stressed" | "Blocked">("Great");
-  const [checkInHours, setCheckInHours] = useState(8);
-  const [checkInSubmitted, setCheckInSubmitted] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [aiLoading, setAiLoading] = useState(false);
 
-  // New Task Modal / Form
+  // Forms / Modals
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [newTaskDesc, setNewTaskDesc] = useState("");
-  const [newTaskProject, setNewTaskProject] = useState("EdWorld Core Platform");
+  const [newTaskProject, setNewTaskProject] = useState("EdWorld Co.");
   const [newTaskPriority, setNewTaskPriority] = useState<EmployeeTask["priority"]>("MEDIUM");
-  const [newTaskDueDate, setNewTaskDueDate] = useState("2026-03-20");
+  const [newTaskDueDate, setNewTaskDueDate] = useState("");
 
-  // Leave Form
-  const [leaveType, setLeaveType] = useState<LeaveRequest["leaveType"]>("CASUAL");
-  const [leaveStart, setLeaveStart] = useState("2026-03-25");
-  const [leaveEnd, setLeaveEnd] = useState("2026-03-26");
-  const [leaveReason, setLeaveReason] = useState("");
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [newLeaveType, setNewLeaveType] = useState<LeaveType>("CASUAL");
+  const [newLeaveStart, setNewLeaveStart] = useState("");
+  const [newLeaveEnd, setNewLeaveEnd] = useState("");
+  const [newLeaveDays, setNewLeaveDays] = useState(1);
+  const [newLeaveReason, setNewLeaveReason] = useState("");
 
-  const currentEmployeeId = user?.uid || "emp_demo_1";
-  const currentEmployeeName = user?.name || "Staff Member";
-  const currentEmployeeEmail = user?.email || "staff@edworld.co.in";
+  const isAuthorized = 
+    role === "EMPLOYEE" || 
+    role === "HR" || 
+    role === "FOUNDER" || 
+    role === "SUPER_ADMIN" || 
+    role === "ADMIN" ||
+    user?.role === "EMPLOYEE" ||
+    user?.role === "HR" ||
+    user?.role === "FOUNDER";
+
+  const effectiveRole = (role === "EMPLOYEE" || role === "HR" || role === "FOUNDER" || role === "ADMIN" || role === "SUPER_ADMIN") ? role : "EMPLOYEE";
+
+  useEffect(() => {
+    if (!authLoading && !isAuthorized) {
+      router.replace("/login");
+    }
+  }, [authLoading, isAuthorized, router]);
 
   const loadData = async () => {
-    const [c, t, o, l, p, tm, d] = await Promise.all([
-      getEmployeeCheckIns(currentEmployeeId),
-      getEmployeeTasks(currentEmployeeId),
-      getEmployeeOKRs(currentEmployeeId),
-      getLeaveRequests(currentEmployeeId),
-      getEmployeePayrollRecords(currentEmployeeId, false),
-      getTeamDirectory(),
-      getEmployeeDocuments(currentEmployeeId),
-    ]);
-
-    setTasks(t || []);
-    setOkrs(o || []);
-    setPayrolls(p || []);
-    setCheckIns(c || []);
-    setLeaves(l || []);
-    setTeamMembers(tm || []);
-    setDocuments(d || []);
-
-    const insights = await runEmployeeProductivityAgent(currentEmployeeId);
-    setAiInsights(insights);
+    if (!user) return;
+    try {
+      setLoading(true);
+      const [taskData, okrData, checkInData, leaveData, payrollData, docData, teamData] = await Promise.all([
+        getEmployeeTasks(user.uid),
+        getEmployeeOKRs(user.uid),
+        getEmployeeCheckIns(user.uid),
+        getLeaveRequests(user.uid),
+        getEmployeePayrollRecords(user.uid),
+        getEmployeeDocuments(user.uid),
+        getTeamDirectory()
+      ]);
+      setTasks(taskData);
+      setOkrs(okrData);
+      setCheckIns(checkInData);
+      setLeaves(leaveData);
+      setPayroll(payrollData);
+      setDocuments(docData);
+      setTeam(teamData);
+    } catch (err) {
+      console.error("Failed to load employee workspace:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    loadData();
-  }, [user]);
+    if (isAuthorized && user) {
+      loadData();
+    }
+  }, [isAuthorized, user]);
 
-  const handleCheckInSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!checkInPriorities.trim()) return;
-
-    await saveEmployeeCheckIn({
-      employeeId: currentEmployeeId,
-      employeeName: currentEmployeeName,
-      date: new Date().toISOString().split("T")[0],
-      priorities: checkInPriorities.split("\n").filter(Boolean),
-      yesterdayProgress: checkInProgress,
-      blockers: checkInBlockers,
-      mood: checkInMood,
-      hoursWorked: Number(checkInHours),
-      status: "COMPLETED",
-    });
-
-    setCheckInSubmitted(true);
-    setNotification("Daily Check-In saved successfully to database!");
-    setTimeout(() => setNotification(null), 3500);
-    loadData();
+  const handleRunAiProductivity = async () => {
+    if (!user) return;
+    setAiLoading(true);
+    try {
+      const insights = await runEmployeeProductivityAgent(user.uid);
+      setAiInsights(insights);
+      await logInternalAction({
+        actorUserId: user.uid,
+        actorRole: effectiveRole,
+        action: "AI_PRODUCTIVITY_COPILOT_RUN",
+        resourceType: "ai_insight",
+        metadata: { count: insights.length }
+      });
+    } catch (err) {
+      console.error("Failed to run employee productivity AI:", err);
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTaskTitle.trim()) return;
-
-    await saveEmployeeTask({
-      title: newTaskTitle,
-      description: newTaskDesc,
-      project: newTaskProject,
-      priority: newTaskPriority,
-      assigneeId: currentEmployeeId,
-      assigneeName: currentEmployeeName,
-      assigneeEmail: currentEmployeeEmail,
-      assignedById: currentEmployeeId,
-      dueDate: newTaskDueDate,
-      status: "TODO",
-      comments: [],
-    });
-
-    setShowTaskModal(false);
-    setNewTaskTitle("");
-    setNewTaskDesc("");
-    setNotification("Task created & synced to workspace!");
-    setTimeout(() => setNotification(null), 3500);
-    loadData();
+    if (!newTaskTitle.trim() || !user) return;
+    try {
+      const created = await saveEmployeeTask({
+        title: newTaskTitle.trim(),
+        description: "",
+        project: newTaskProject,
+        priority: newTaskPriority,
+        assigneeId: user.uid,
+        assigneeName: user.name,
+        assigneeEmail: user.email,
+        assignedById: user.uid,
+        dueDate: newTaskDueDate || new Date().toISOString().split("T")[0],
+        status: "TODO",
+        comments: []
+      });
+      setTasks(prev => [created, ...prev]);
+      setShowTaskModal(false);
+      setNewTaskTitle("");
+      await logInternalAction({
+        actorUserId: user.uid,
+        actorRole: effectiveRole,
+        action: "TASK_CREATE",
+        resourceType: "task",
+        resourceId: created.id,
+        metadata: { title: created.title, priority: created.priority }
+      });
+    } catch (err) {
+      console.error("Error creating task:", err);
+    }
   };
 
-  const handleStatusChange = async (taskId: string, newStatus: EmployeeTask["status"]) => {
-    await updateTaskStatus(taskId, newStatus, currentEmployeeName);
-    loadData();
+  const handleToggleTaskStatus = async (taskId: string, currentStatus: EmployeeTask["status"]) => {
+    if (!user) return;
+    const nextStatus: EmployeeTask["status"] = currentStatus === "COMPLETED" ? "IN_PROGRESS" : "COMPLETED";
+    try {
+      const updated = await updateTaskStatus(taskId, nextStatus, user.name);
+      if (updated) {
+        setTasks(prev => prev.map(t => (t.id === taskId ? updated : t)));
+      }
+    } catch (err) {
+      console.error("Error updating task status:", err);
+    }
   };
 
-  const handleLeaveSubmit = async (e: React.FormEvent) => {
+  const handleCreateLeaveRequest = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!leaveReason.trim()) return;
-
-    await submitLeaveRequest({
-      employeeId: currentEmployeeId,
-      employeeName: currentEmployeeName,
-      employeeEmail: currentEmployeeEmail,
-      department: "Engineering",
-      leaveType,
-      startDate: leaveStart,
-      endDate: leaveEnd,
-      daysCount: 2,
-      reason: leaveReason,
-    });
-
-    setLeaveReason("");
-    setNotification("Leave request submitted for HR approval.");
-    setTimeout(() => setNotification(null), 3500);
-    loadData();
+    if (!newLeaveStart || !newLeaveEnd || !newLeaveReason.trim() || !user) return;
+    try {
+      const created = await submitLeaveRequest({
+        employeeId: user.uid,
+        employeeName: user.name,
+        employeeEmail: user.email,
+        department: "Operations",
+        leaveType: newLeaveType,
+        startDate: newLeaveStart,
+        endDate: newLeaveEnd,
+        daysCount: Number(newLeaveDays) || 1,
+        reason: newLeaveReason.trim()
+      });
+      setLeaves(prev => [created, ...prev]);
+      setShowLeaveModal(false);
+      setNewLeaveReason("");
+      await logInternalAction({
+        actorUserId: user.uid,
+        actorRole: effectiveRole,
+        action: "LEAVE_REQUEST_SUBMIT",
+        resourceType: "leave_request",
+        resourceId: created.id,
+        metadata: { days: created.daysCount, type: created.leaveType }
+      });
+    } catch (err) {
+      console.error("Error submitting leave request:", err);
+    }
   };
 
-  const filteredTasks = taskFilter === "ALL" ? tasks : tasks.filter(t => t.status === taskFilter);
+  if (authLoading || (!isAuthorized && typeof window !== "undefined")) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">
+        <div className="flex items-center gap-3">
+          <RefreshCw className="w-5 h-5 animate-spin text-cyan-500" />
+          <span>Verifying Employee Workplace Authentication...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <AuthGuard allowedRoles={["EMPLOYEE", "HR", "FOUNDER", "EXECUTIVE", "ADMIN", "SUPER_ADMIN"]}>
-      <div className="min-h-screen bg-[#0E0F15] text-white p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1440px] mx-auto">
-      
-      {/* Workspace Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#13141B] p-6 rounded-3xl border border-white/10 shadow-xl">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#D7FC51]/10 text-[#D7FC51] border border-[#D7FC51]/30">
-              Employee Workspace
-            </span>
-            <span className="text-xs text-[#8E95A5]">🏢 EdWorld Organization OS</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white font-sans">
-            Welcome back, {currentEmployeeName}!
-          </h1>
-          <p className="text-xs text-[#8E95A5]">
-            Corporate Account: <span className="font-mono text-white">{currentEmployeeEmail}</span> &bull; Engineering &amp; Platform Team
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Link
-            href="/employee/performance"
-            className="px-4 py-2.5 rounded-2xl bg-[#1C1D26] hover:bg-[#282937] border border-white/10 text-xs font-bold text-white transition-all flex items-center gap-2 shadow-sm"
-          >
-            <TrendingUp className="w-4 h-4 text-emerald-400" />
-            <span>Performance &amp; Reviews</span>
-          </Link>
-          <button
-            onClick={() => setShowTaskModal(true)}
-            className="px-4 py-2.5 rounded-2xl bg-[#D7FC51] hover:bg-[#E9FFA4] text-[#13141B] text-xs font-black transition-all flex items-center gap-1.5 shadow-md"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Create Task</span>
-          </button>
-        </div>
-      </div>
-
-      {notification && (
-        <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-bold flex items-center gap-2 animate-in fade-in">
-          <Check className="w-4 h-4 text-emerald-400" />
-          <span>{notification}</span>
-        </div>
-      )}
-
-      {/* Main Tabs Navigation */}
-      <div className="flex items-center gap-2 border-b border-white/10 pb-2 overflow-x-auto">
-        {[
-          { id: "today", label: "Today & Daily Check-in", icon: Clock },
-          { id: "my_work", label: "My Work & OKRs", icon: Target },
-          { id: "people", label: "Team & Directory", icon: Users },
-          { id: "hr", label: "Leave & Personal Payroll", icon: DollarSign },
-        ].map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap ${
-                isActive
-                  ? "bg-[#D7FC51] text-[#13141B] shadow-md font-black"
-                  : "bg-[#1C1D26] text-[#8E95A5] hover:text-white hover:bg-[#252633]"
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* TAB 1: TODAY & DAILY CHECK-IN */}
-      {activeTab === "today" && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* Left: Daily Check-In Interactive Card */}
-          <div className="lg:col-span-2 bg-[#13141B] p-6 rounded-3xl border border-white/10 shadow-xl space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-black text-white flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-[#D7FC51]" />
-                  <span>Daily Standup Check-In</span>
-                </h2>
-                <p className="text-xs text-[#8E95A5] mt-0.5">
-                  Synchronize your daily focus with your manager &amp; agile squad.
-                </p>
-              </div>
-              <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-white/5 border border-white/10 text-white font-mono">
-                {new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
-              </span>
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      {/* Top Banner Header */}
+      <header className="border-b border-slate-800 bg-slate-900/60 backdrop-blur-md sticky top-0 z-30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-500 flex items-center justify-center text-slate-950 font-bold shadow-lg shadow-cyan-500/10">
+              <CheckSquare className="w-5 h-5 text-slate-950" />
             </div>
-
-            <form onSubmit={handleCheckInSubmit} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="block text-[11px] font-bold text-[#8E95A5] uppercase tracking-wider">
-                  Today&apos;s Top Priorities (One per line)
-                </label>
-                <textarea
-                  rows={3}
-                  required
-                  value={checkInPriorities}
-                  onChange={(e) => setCheckInPriorities(e.target.value)}
-                  placeholder="1. Complete RBAC server verification middleware&#10;2. Review pull requests for attendance radar"
-                  className="w-full p-3.5 rounded-2xl bg-[#1C1D26] border border-white/10 text-xs text-white placeholder:text-[#8E95A5] focus:outline-none focus:border-[#D7FC51] transition-all"
-                />
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-bold text-white tracking-tight">Employee Workplace</h1>
+                <span className="px-2 py-0.5 text-xs font-semibold rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                  ACTIVE SESSION
+                </span>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="block text-[11px] font-bold text-[#8E95A5] uppercase tracking-wider">
-                    Yesterday&apos;s Progress / Shipped
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={checkInProgress}
-                    onChange={(e) => setCheckInProgress(e.target.value)}
-                    placeholder="Closed bug #402 and tested gradebook calculations"
-                    className="w-full p-3 rounded-2xl bg-[#1C1D26] border border-white/10 text-xs text-white placeholder:text-[#8E95A5] focus:outline-none focus:border-[#D7FC51] transition-all"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="block text-[11px] font-bold text-[#8E95A5] uppercase tracking-wider">
-                    Blockers / Dependencies
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={checkInBlockers}
-                    onChange={(e) => setCheckInBlockers(e.target.value)}
-                    placeholder="Waiting on Firebase security rules signoff (or None)"
-                    className="w-full p-3 rounded-2xl bg-[#1C1D26] border border-white/10 text-xs text-white placeholder:text-[#8E95A5] focus:outline-none focus:border-[#D7FC51] transition-all"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center pt-2">
-                <div className="space-y-1.5">
-                  <label className="block text-[11px] font-bold text-[#8E95A5] uppercase tracking-wider">
-                    Mood / Energy Level
-                  </label>
-                  <div className="flex gap-2">
-                    {(["Great", "Good", "Okay", "Stressed", "Blocked"] as const).map((m) => (
-                      <button
-                        type="button"
-                        key={m}
-                        onClick={() => setCheckInMood(m)}
-                        className={`px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all ${
-                          checkInMood === m
-                            ? "bg-[#D7FC51] text-[#13141B] font-black"
-                            : "bg-[#1C1D26] text-[#8E95A5] hover:text-white"
-                        }`}
-                      >
-                        {m}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="block text-[11px] font-bold text-[#8E95A5] uppercase tracking-wider">
-                    Hours Planned Today
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={16}
-                    value={checkInHours}
-                    onChange={(e) => setCheckInHours(Number(e.target.value))}
-                    className="w-full p-2.5 rounded-xl bg-[#1C1D26] border border-white/10 text-xs text-white focus:outline-none focus:border-[#D7FC51]"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <button
-                  type="submit"
-                  className="w-full py-3 rounded-2xl bg-[#D7FC51] hover:bg-[#E9FFA4] text-[#13141B] font-black text-xs transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <Send className="w-4 h-4" />
-                  <span>Submit Today&apos;s Standup Check-In</span>
-                </button>
-              </div>
-            </form>
-          </div>
-
-          {/* Right: AI Productivity Agent & Today's Schedule */}
-          <div className="space-y-6">
-            
-            {/* AI Agent Box */}
-            <div className="bg-[#13141B] p-6 rounded-3xl border border-[#D7FC51]/20 shadow-xl space-y-4">
-              <div className="flex items-center gap-2 text-[#D7FC51]">
-                <Sparkles className="w-5 h-5" />
-                <h3 className="text-sm font-black uppercase tracking-wider">EmployeeProductivityAgent</h3>
-              </div>
-              <p className="text-xs text-[#8E95A5] leading-relaxed">
-                Autonomous daily work assistant checking task blockers, OKR alignment, and schedule pacing.
+              <p className="text-xs text-slate-400">
+                EdWorld Co. Team Member Workspace • {profile?.name || user?.name || user?.email} ({role})
               </p>
-
-              <div className="space-y-2.5">
-                {aiInsights.length > 0 ? (
-                  aiInsights.map((insight) => (
-                    <div key={insight.id} className="p-3.5 rounded-2xl bg-[#1C1D26] border border-white/5 space-y-1">
-                      <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#D7FC51]/10 text-[#D7FC51]">
-                        {insight.category}
-                      </span>
-                      <h4 className="text-xs font-bold text-white mt-1">{insight.headline}</h4>
-                      <p className="text-[11px] text-[#8E95A5]">{insight.detail}</p>
-                      {insight.actionableStep && (
-                        <p className="text-[10px] text-[#00D2B4] font-semibold pt-1">
-                          &rarr; {insight.actionableStep}
-                        </p>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <div className="p-4 rounded-2xl bg-[#1C1D26] text-xs text-[#8E95A5] text-center">
-                    All tasks on track. No blockers detected today.
-                  </div>
-                )}
-              </div>
             </div>
-
-            {/* Today's Meetings */}
-            <div className="bg-[#13141B] p-6 rounded-3xl border border-white/10 shadow-xl space-y-3">
-              <h3 className="text-xs font-black uppercase tracking-wider text-[#8E95A5]">Today&apos;s Meetings</h3>
-              <div className="space-y-2">
-                <div className="p-3 rounded-2xl bg-[#1C1D26] border border-white/5 flex items-center justify-between">
-                  <div>
-                    <span className="text-xs font-bold text-white block">Engineering Sprint Sync</span>
-                    <span className="text-[10px] text-[#8E95A5]">10:30 AM &bull; Google Meet</span>
-                  </div>
-                  <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 text-[10px] font-bold">Upcoming</span>
-                </div>
-                <div className="p-3 rounded-2xl bg-[#1C1D26] border border-white/5 flex items-center justify-between">
-                  <div>
-                    <span className="text-xs font-bold text-white block">Phase 19 Architecture Review</span>
-                    <span className="text-[10px] text-[#8E95A5]">3:00 PM &bull; Conf Room 2</span>
-                  </div>
-                  <span className="px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-400 text-[10px] font-bold">Design</span>
-                </div>
-              </div>
-            </div>
-
           </div>
 
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={handleRunAiProductivity}
+              disabled={aiLoading}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold shadow-md shadow-cyan-600/20 transition disabled:opacity-50"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              {aiLoading ? "Analyzing..." : "Claude Work Copilot"}
+            </button>
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 transition"
+            >
+              Main Dashboard
+            </Link>
+          </div>
         </div>
-      )}
 
-      {/* TAB 2: MY WORK & OKRS */}
-      {activeTab === "my_work" && (
-        <div className="space-y-6">
-          
-          {/* OKR Progress Card */}
-          <div className="bg-[#13141B] p-6 rounded-3xl border border-white/10 shadow-xl space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-black text-white flex items-center gap-2">
-                  <Target className="w-5 h-5 text-purple-400" />
-                  <span>Q1 2026 Objectives &amp; Key Results (OKRs)</span>
-                </h2>
-                <p className="text-xs text-[#8E95A5]">Strategic goals aligned with EdWorld business objectives.</p>
-              </div>
-              <span className="px-3 py-1 rounded-full text-xs font-black bg-purple-500/10 text-purple-300 border border-purple-500/30">
-                Quarterly Target
-              </span>
-            </div>
+        {/* Tab Navigation */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex overflow-x-auto gap-1 scrollbar-none border-t border-slate-800/60 pt-2">
+          {[
+            { id: "my_work", label: "My Work & Tasks", icon: CheckSquare },
+            { id: "my_performance", label: "OKRs & Performance", icon: Target },
+            { id: "my_hr", label: "Leaves & HR", icon: Calendar },
+            { id: "company", label: "Team Directory", icon: Users },
+            { id: "ai_assistant", label: "AI Work Copilot", icon: Sparkles },
+          ].map(tab => {
+            const Icon = tab.icon;
+            const active = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as EmployeeTab)}
+                className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition whitespace-nowrap ${
+                  active 
+                    ? "border-cyan-500 text-cyan-400 bg-cyan-500/10 rounded-t-lg" 
+                    : "border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700"
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+      </header>
 
-            <div className="space-y-4">
-              {okrs.map((okr) => (
-                <div key={okr.id} className="p-4 rounded-2xl bg-[#1C1D26] border border-white/5 space-y-3">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+      {/* Main Content Area */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {loading ? (
+          <div className="py-24 text-center text-slate-400">
+            <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-3 text-cyan-500" />
+            <p className="text-sm">Loading your workplace dashboard...</p>
+          </div>
+        ) : (
+          <>
+            {/* TAB 1: MY WORK */}
+            {activeTab === "my_work" && (
+              <div className="space-y-6">
+                <div className="p-6 rounded-xl bg-slate-900 border border-slate-800">
+                  <div className="flex items-center justify-between mb-4">
                     <div>
-                      <h3 className="text-sm font-bold text-white">{okr.objective}</h3>
-                      <span className="text-[10px] text-[#8E95A5]">Deadline: {okr.deadline} &bull; Owner: {okr.ownerName}</span>
+                      <h2 className="text-base font-semibold text-white">My Assigned Tasks</h2>
+                      <p className="text-xs text-slate-400">
+                        {tasks.filter(t => t.status === "COMPLETED").length} of {tasks.length} tasks completed
+                      </p>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg font-black text-[#D7FC51] font-mono">{okr.overallProgress}%</span>
-                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${okr.status === "ON_TRACK" ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"}`}>
-                        {okr.status}
-                      </span>
-                    </div>
+                    <button
+                      onClick={() => setShowTaskModal(true)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium transition"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> New Task
+                    </button>
                   </div>
 
-                  {/* Progress Bar & Slider */}
-                  <div className="space-y-1.5">
-                    <div className="w-full h-2 rounded-full bg-[#13141B] overflow-hidden border border-white/5">
-                      <div 
-                        className="h-full bg-gradient-to-r from-purple-500 to-[#D7FC51] transition-all duration-300"
-                        style={{ width: `${okr.overallProgress}%` }}
-                      />
+                  {tasks.length === 0 ? (
+                    <div className="text-center py-8 border border-dashed border-slate-800 rounded-lg text-slate-400">
+                      <CheckSquare className="w-8 h-8 mx-auto mb-2 text-slate-600" />
+                      <p className="text-xs text-slate-400">No tasks assigned or created yet</p>
                     </div>
-                    <div className="flex items-center justify-between text-[10px] text-[#8E95A5]">
-                      <span>Adjust progress:</span>
-                      <input 
-                        type="range" 
-                        min="0" 
-                        max="100" 
-                        value={okr.overallProgress} 
-                        onChange={(e) => updateOKRProgress(okr.id, Number(e.target.value), currentEmployeeName).then(loadData)}
-                        className="w-48 accent-[#D7FC51] cursor-pointer"
-                      />
-                    </div>
-                  </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {tasks.map(task => {
+                        const isDone = task.status === "COMPLETED";
+                        return (
+                          <div 
+                            key={task.id} 
+                            className={`p-3.5 rounded-lg border transition flex items-center justify-between gap-3 ${
+                              isDone ? "bg-slate-950/60 border-slate-800/60 opacity-70" : "bg-slate-950 border-slate-800"
+                            }`}
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <button
+                                onClick={() => handleToggleTaskStatus(task.id, task.status)}
+                                className={`w-5 h-5 rounded border flex items-center justify-center transition shrink-0 ${
+                                  isDone 
+                                    ? "bg-cyan-600 border-cyan-500 text-white" 
+                                    : "border-slate-700 hover:border-slate-500"
+                                }`}
+                              >
+                                {isDone && <CheckCircle2 className="w-3.5 h-3.5" />}
+                              </button>
+                              <div className="min-w-0">
+                                <h3 className={`text-xs font-semibold truncate ${isDone ? "line-through text-slate-400" : "text-white"}`}>
+                                  {task.title}
+                                </h3>
+                                <p className="text-[11px] text-slate-500 mt-0.5">
+                                  Project: {task.project} • Due: {task.dueDate}
+                                </p>
+                              </div>
+                            </div>
 
-                  {/* Key Results */}
-                  <div className="space-y-1.5 pt-2 border-t border-white/5">
-                    <span className="text-[10px] font-bold text-[#8E95A5] uppercase">Key Results Breakdown:</span>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                      {okr.keyResults.map((kr) => (
-                        <div key={kr.id} className="p-2.5 rounded-xl bg-[#13141B] text-xs space-y-1">
-                          <span className="text-white font-medium block truncate">{kr.title}</span>
-                          <span className="text-[10px] text-[#D7FC51] font-mono">{kr.current} / {kr.target} {kr.unit} ({kr.progressPercentage}%)</span>
+                            <span className={`text-[10px] px-2 py-0.5 rounded font-semibold shrink-0 ${
+                              task.priority === "URGENT" ? "bg-rose-500/20 text-rose-300" :
+                              task.priority === "HIGH" ? "bg-amber-500/20 text-amber-300" :
+                              "bg-slate-800 text-slate-300"
+                            }`}>
+                              {task.priority}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: MY PERFORMANCE */}
+            {activeTab === "my_performance" && (
+              <div className="space-y-6">
+                <div className="p-6 rounded-xl bg-slate-900 border border-slate-800">
+                  <h2 className="text-base font-semibold text-white mb-1">My Quarterly Objectives & Key Results (OKRs)</h2>
+                  <p className="text-xs text-slate-400 mb-4">Track progress against your personal quarterly deliverables</p>
+
+                  {okrs.length === 0 ? (
+                    <div className="text-center py-8 border border-dashed border-slate-800 rounded-lg text-slate-400">
+                      <Target className="w-8 h-8 mx-auto mb-2 text-slate-600" />
+                      <p className="text-xs text-slate-400">No OKRs defined for current quarter</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {okrs.map(okr => (
+                        <div key={okr.id} className="p-4 rounded-lg bg-slate-950 border border-slate-800">
+                          <div className="flex items-center justify-between mb-2">
+                            <div>
+                              <h3 className="text-sm font-semibold text-white">{okr.objective}</h3>
+                              <p className="text-xs text-slate-400 mt-0.5">Quarter: {okr.quarter} • Due: {okr.deadline}</p>
+                            </div>
+                            <span className="text-xs font-bold text-cyan-400">{okr.overallProgress}%</span>
+                          </div>
+                          <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                            <div 
+                              className="bg-cyan-500 h-1.5 rounded-full transition-all duration-300" 
+                              style={{ width: `${okr.overallProgress}%` }}
+                            />
+                          </div>
                         </div>
                       ))}
                     </div>
-                  </div>
+                  )}
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Task Management Board */}
-          <div className="bg-[#13141B] p-6 rounded-3xl border border-white/10 shadow-xl space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-black text-white flex items-center gap-2">
-                  <Briefcase className="w-5 h-5 text-[#D7FC51]" />
-                  <span>Project Task Board</span>
-                </h2>
-                <p className="text-xs text-[#8E95A5]">Manage and update your active engineering assignments.</p>
-              </div>
-
-              {/* Status Filter */}
-              <div className="flex items-center gap-1 bg-[#1C1D26] p-1 rounded-2xl border border-white/5">
-                {(["ALL", "TODO", "IN_PROGRESS", "IN_REVIEW", "COMPLETED"] as const).map((st) => (
-                  <button
-                    key={st}
-                    onClick={() => setTaskFilter(st)}
-                    className={`px-3 py-1 rounded-xl text-[10px] font-bold transition-all ${
-                      taskFilter === st ? "bg-[#D7FC51] text-[#13141B] font-black" : "text-[#8E95A5] hover:text-white"
-                    }`}
-                  >
-                    {st}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredTasks.map((task) => (
-                <div key={task.id} className="p-4 rounded-2xl bg-[#1C1D26] border border-white/5 space-y-3 flex flex-col justify-between">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold text-[#8E95A5] uppercase tracking-wider">{task.project}</span>
-                      <span className={`px-2 py-0.5 rounded text-[9px] font-black ${task.priority === "HIGH" ? "bg-rose-500/10 text-rose-400" : "bg-amber-500/10 text-amber-400"}`}>
-                        {task.priority}
-                      </span>
-                    </div>
-                    <h3 className="text-xs font-bold text-white leading-snug">{task.title}</h3>
-                    <p className="text-[11px] text-[#8E95A5] leading-relaxed line-clamp-2">{task.description}</p>
-                  </div>
-
-                  <div className="space-y-2 pt-2 border-t border-white/5">
-                    <div className="flex items-center justify-between text-[10px] text-[#8E95A5]">
-                      <span>Due: {task.dueDate}</span>
-                      <span className="font-bold text-white font-mono">{task.status}</span>
-                    </div>
-                    
-                    {/* Status Dropdown / Action */}
-                    <div className="grid grid-cols-3 gap-1">
-                      <button
-                        onClick={() => handleStatusChange(task.id, "IN_PROGRESS")}
-                        className={`py-1 rounded-lg text-[9px] font-bold ${task.status === "IN_PROGRESS" ? "bg-[#D7FC51] text-[#13141B]" : "bg-[#13141B] text-[#8E95A5] hover:text-white"}`}
-                      >
-                        Progress
-                      </button>
-                      <button
-                        onClick={() => handleStatusChange(task.id, "IN_REVIEW")}
-                        className={`py-1 rounded-lg text-[9px] font-bold ${task.status === "IN_REVIEW" ? "bg-purple-500 text-white" : "bg-[#13141B] text-[#8E95A5] hover:text-white"}`}
-                      >
-                        Review
-                      </button>
-                      <button
-                        onClick={() => handleStatusChange(task.id, "COMPLETED")}
-                        className={`py-1 rounded-lg text-[9px] font-bold ${task.status === "COMPLETED" ? "bg-emerald-500 text-white" : "bg-[#13141B] text-[#8E95A5] hover:text-white"}`}
-                      >
-                        Done ✓
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-        </div>
-      )}
-
-      {/* TAB 3: PEOPLE & DIRECTORY */}
-      {activeTab === "people" && (
-        <div className="bg-[#13141B] p-6 rounded-3xl border border-white/10 shadow-xl space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-black text-white flex items-center gap-2">
-                <Users className="w-5 h-5 text-[#00D2B4]" />
-                <span>EdWorld Team Directory</span>
-              </h2>
-              <p className="text-xs text-[#8E95A5]">
-                Authorized organization directory with privacy filtering (personal phone &amp; private salary data strictly isolated).
-              </p>
-            </div>
-            <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#00D2B4]/10 text-[#00D2B4] border border-[#00D2B4]/30 font-mono">
-              {teamMembers.length} Colleagues
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {teamMembers.map((member) => (
-              <div key={member.id} className="p-4 rounded-2xl bg-[#1C1D26] border border-white/5 space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#D7FC51] to-[#00D2B4] text-[#13141B] font-black text-sm flex items-center justify-center shadow-md">
-                    {member.name.charAt(0)}
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-bold text-white">{member.name}</h3>
-                    <span className="text-[10px] text-[#8E95A5] block truncate max-w-[140px]">{member.designation}</span>
-                  </div>
-                </div>
-
-                <div className="space-y-1 text-[11px] text-[#8E95A5] pt-2 border-t border-white/5">
-                  <div className="flex items-center justify-between">
-                    <span>Department:</span>
-                    <span className="font-semibold text-white">{member.department}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Work Email:</span>
-                    <span className="font-mono text-white text-[10px]">{member.workEmail}</span>
-                  </div>
-                  <div className="flex items-center justify-between pt-1">
-                    <span>Status:</span>
-                    <span className="px-2 py-0.5 rounded text-[9px] font-black bg-emerald-500/10 text-emerald-400">
-                      {member.availabilityStatus}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* TAB 4: HR & PERSONAL PAYROLL */}
-      {activeTab === "hr" && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          
-          {/* Left: Personal Payroll Statement (Strictly Isolated) */}
-          <div className="bg-[#13141B] p-6 rounded-3xl border border-white/10 shadow-xl space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-black text-white flex items-center gap-2">
-                  <DollarSign className="w-5 h-5 text-emerald-400" />
-                  <span>My Salary Statement</span>
-                </h2>
-                <p className="text-xs text-[#8E95A5]">Confidential &amp; strictly isolated personal pay records.</p>
-              </div>
-              <span className="px-3 py-1 rounded-full text-xs font-black bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-mono">
-                {payrolls[0]?.payPeriod || "March 2026"}
-              </span>
-            </div>
-
-            {payrolls.length > 0 ? (
-              <div className="p-5 rounded-2xl bg-[#1C1D26] border border-white/5 space-y-4">
-                <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-[#8E95A5]">Net Take-Home Pay</span>
-                    <div className="text-2xl font-black text-white font-mono mt-0.5">
-                      ₹{payrolls[0].netPay.toLocaleString()}
-                    </div>
-                  </div>
-                  <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                    DISBURSED ✓
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div className="space-y-1 p-3 rounded-xl bg-[#13141B]">
-                    <span className="text-[10px] font-bold text-[#8E95A5] uppercase">Earnings &amp; Allowances</span>
-                    <div className="text-white">Base: ₹{payrolls[0].baseSalary.toLocaleString()}</div>
-                    <div className="text-[#8E95A5] text-[11px]">HRA: ₹{payrolls[0].allowances.hra.toLocaleString()}</div>
-                    <div className="text-[#8E95A5] text-[11px]">Special: ₹{payrolls[0].allowances.special.toLocaleString()}</div>
-                  </div>
-
-                  <div className="space-y-1 p-3 rounded-xl bg-[#13141B]">
-                    <span className="text-[10px] font-bold text-[#8E95A5] uppercase">Deductions</span>
-                    <div className="text-rose-400">PF: ₹{payrolls[0].deductions.pf.toLocaleString()}</div>
-                    <div className="text-rose-400">Tax: ₹{payrolls[0].deductions.tax.toLocaleString()}</div>
-                    <div className="text-[#8E95A5] text-[11px]">Total Deductions: ₹{(payrolls[0].deductions.pf + payrolls[0].deductions.tax).toLocaleString()}</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between text-[11px] text-[#8E95A5] pt-1">
-                  <span>Bank Account: <strong className="text-white font-mono">{payrolls[0].bankAccountMasked}</strong></span>
-                  <button className="text-[#D7FC51] font-bold hover:underline flex items-center gap-1">
-                    <Download className="w-3.5 h-3.5" />
-                    <span>Download Payslip PDF</span>
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="p-4 rounded-2xl bg-[#1C1D26] text-xs text-[#8E95A5] text-center">
-                No payroll record generated for this cycle yet.
               </div>
             )}
-          </div>
 
-          {/* Right: Leave Management */}
-          <div className="bg-[#13141B] p-6 rounded-3xl border border-white/10 shadow-xl space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-black text-white flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-amber-400" />
-                  <span>Leave Management</span>
-                </h2>
-                <p className="text-xs text-[#8E95A5]">Apply for time off and track approval status.</p>
-              </div>
-              <div className="flex items-center gap-2 text-xs">
-                <span className="px-2.5 py-1 rounded-xl bg-[#1C1D26] text-white font-mono">14 Casual</span>
-                <span className="px-2.5 py-1 rounded-xl bg-[#1C1D26] text-white font-mono">8 Sick</span>
-              </div>
-            </div>
+            {/* TAB 3: MY HR & LEAVES */}
+            {activeTab === "my_hr" && (
+              <div className="space-y-6">
+                <div className="p-6 rounded-xl bg-slate-900 border border-slate-800">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h2 className="text-base font-semibold text-white">Leave Balance & Time Off</h2>
+                      <p className="text-xs text-slate-400">Submit and track your annual and sick leave requests</p>
+                    </div>
+                    <button
+                      onClick={() => setShowLeaveModal(true)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium transition"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Request Time Off
+                    </button>
+                  </div>
 
-            <form onSubmit={handleLeaveSubmit} className="space-y-3 p-4 rounded-2xl bg-[#1C1D26] border border-white/5">
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-[10px] font-bold text-[#8E95A5] uppercase">Leave Type</label>
-                  <select
-                    value={leaveType}
-                    onChange={(e) => setLeaveType(e.target.value as any)}
-                    className="w-full mt-1 p-2 rounded-xl bg-[#13141B] border border-white/10 text-xs text-white"
-                  >
-                    <option value="CASUAL">Casual Leave</option>
-                    <option value="SICK">Sick Leave</option>
-                    <option value="PAID_VACATION">Paid Vacation</option>
-                  </select>
+                  {leaves.length === 0 ? (
+                    <div className="text-center py-8 border border-dashed border-slate-800 rounded-lg text-slate-400">
+                      <Calendar className="w-8 h-8 mx-auto mb-2 text-slate-600" />
+                      <p className="text-xs text-slate-400">No leave requests logged</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {leaves.map(req => (
+                        <div key={req.id} className="p-3.5 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-between gap-3">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-xs font-semibold text-white">{req.leaveType}</h3>
+                              <span className="text-[10px] text-slate-400">({req.daysCount} Days)</span>
+                            </div>
+                            <p className="text-[11px] text-slate-400 mt-0.5">
+                              {req.startDate} to {req.endDate} • "{req.reason}"
+                            </p>
+                          </div>
+                          <span className={`text-[10px] px-2 py-0.5 rounded font-semibold ${
+                            req.status === "APPROVED" ? "bg-emerald-500/20 text-emerald-300" :
+                            req.status === "REJECTED" ? "bg-rose-500/20 text-rose-300" :
+                            "bg-amber-500/20 text-amber-300"
+                          }`}>
+                            {req.status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
+
+                {/* Payslips Snapshot */}
+                <div className="p-6 rounded-xl bg-slate-900 border border-slate-800">
+                  <h2 className="text-base font-semibold text-white mb-1">My Disbursed Payslips</h2>
+                  <p className="text-xs text-slate-400 mb-4">Official monthly compensation summaries</p>
+
+                  {payroll.length === 0 ? (
+                    <div className="text-center py-6 border border-dashed border-slate-800 rounded-lg text-slate-400">
+                      <DollarSign className="w-6 h-6 mx-auto mb-1 text-slate-600" />
+                      <p className="text-xs text-slate-400">No payslips generated for this account</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {payroll.map(pay => (
+                        <div key={pay.id} className="p-3 rounded bg-slate-950 border border-slate-800 flex items-center justify-between text-xs">
+                          <div>
+                            <span className="font-semibold text-white">{pay.payPeriod}</span>
+                            <span className="text-slate-400 ml-2">Net: ₹{pay.netPay.toLocaleString("en-IN")}</span>
+                          </div>
+                          <span className="text-[10px] text-emerald-400 font-semibold">{pay.paymentStatus}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 4: COMPANY */}
+            {activeTab === "company" && (
+              <div className="space-y-6">
+                <div className="p-6 rounded-xl bg-slate-900 border border-slate-800">
+                  <h2 className="text-base font-semibold text-white mb-1">Team Directory</h2>
+                  <p className="text-xs text-slate-400 mb-4">Colleagues and leadership at EdWorld Co.</p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {team.map(member => (
+                      <div key={member.id} className="p-3.5 rounded-lg bg-slate-950 border border-slate-800 flex items-start gap-3">
+                        <div className="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center font-bold text-slate-300 text-xs border border-slate-700 shrink-0">
+                          {member.name ? member.name.charAt(0).toUpperCase() : "U"}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-xs font-semibold text-white truncate">{member.name}</h3>
+                          <p className="text-xs text-cyan-400 truncate">{member.designation}</p>
+                          <p className="text-[11px] text-slate-500 truncate">{member.workEmail}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 5: AI WORK COPILOT */}
+            {activeTab === "ai_assistant" && (
+              <div className="space-y-6">
+                <div className="p-6 rounded-xl bg-slate-900 border border-slate-800">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div>
+                      <h2 className="text-base font-semibold text-white flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-cyan-400" />
+                        Claude AI Productivity Copilot
+                      </h2>
+                      <p className="text-xs text-slate-400 mt-1">
+                        Personal work insights, blocker detection, and sprint task prioritization.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunAiProductivity}
+                      disabled={aiLoading}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold shadow-md shadow-cyan-600/20 transition disabled:opacity-50 self-start sm:self-auto"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${aiLoading ? "animate-spin" : ""}`} />
+                      {aiLoading ? "Analyzing..." : "Analyze Work & Priorities"}
+                    </button>
+                  </div>
+
+                  {aiInsights.length === 0 ? (
+                    <div className="text-center py-12 border border-dashed border-slate-800 rounded-lg text-slate-400">
+                      <Sparkles className="w-8 h-8 mx-auto mb-2 text-slate-600" />
+                      <p className="text-sm font-medium text-slate-300">No productivity insights generated</p>
+                      <p className="text-xs text-slate-500 mt-1 mb-4">Click above to analyze your tasks and deadlines.</p>
+                      <button
+                        onClick={handleRunAiProductivity}
+                        className="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition"
+                      >
+                        Run Personal Work Radar
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {aiInsights.map((insight, idx) => (
+                        <div key={insight.id || idx} className="p-4 rounded-lg bg-slate-950 border border-slate-800">
+                          <div className="flex items-center justify-between gap-2 mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
+                                insight.category === "BOTTLENECK" ? "bg-rose-500/20 text-rose-300 border border-rose-500/30" :
+                                insight.category === "OPPORTUNITY" ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30" :
+                                "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"
+                              }`}>
+                                {insight.category}
+                              </span>
+                              <h3 className="text-sm font-semibold text-white">{insight.headline}</h3>
+                            </div>
+                            <span className="text-[10px] text-slate-500">{insight.agentName}</span>
+                          </div>
+                          <p className="text-xs text-slate-300 mb-3">{insight.detail}</p>
+                          {insight.actionableStep && (
+                            <div className="p-2.5 rounded bg-cyan-950/40 border border-cyan-800/40 text-xs text-cyan-300 flex items-center gap-2">
+                              <CheckCircle2 className="w-4 h-4 shrink-0" />
+                              <span><strong>Action Item:</strong> {insight.actionableStep}</span>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </main>
+
+      {/* MODAL: Create Task */}
+      {showTaskModal && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl max-w-md w-full p-6 shadow-2xl">
+            <h3 className="text-base font-bold text-white mb-4">Create Personal Task</h3>
+            <form onSubmit={handleCreateTask} className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1">Task Title</label>
+                <input
+                  type="text"
+                  value={newTaskTitle}
+                  onChange={e => setNewTaskTitle(e.target.value)}
+                  placeholder="e.g., Finalize mock interview grading rubric"
+                  required
+                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-cyan-500"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[10px] font-bold text-[#8E95A5] uppercase">Start Date</label>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Project</label>
                   <input
-                    type="date"
-                    required
-                    value={leaveStart}
-                    onChange={(e) => setLeaveStart(e.target.value)}
-                    className="w-full mt-1 p-2 rounded-xl bg-[#13141B] border border-white/10 text-xs text-white"
+                    type="text"
+                    value={newTaskProject}
+                    onChange={e => setNewTaskProject(e.target.value)}
+                    placeholder="EdWorld Co."
+                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-cyan-500"
                   />
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold text-[#8E95A5] uppercase">Reason for Leave</label>
-                <input
-                  type="text"
-                  required
-                  value={leaveReason}
-                  onChange={(e) => setLeaveReason(e.target.value)}
-                  placeholder="Family commitment / Personal appointment"
-                  className="w-full mt-1 p-2.5 rounded-xl bg-[#13141B] border border-white/10 text-xs text-white"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="w-full py-2.5 rounded-xl bg-[#D7FC51] text-[#13141B] font-black text-xs hover:bg-[#E9FFA4] transition-all"
-              >
-                Submit Leave Application
-              </button>
-            </form>
-
-            {/* Leave History */}
-            <div className="space-y-2">
-              <span className="text-[10px] font-bold text-[#8E95A5] uppercase">Recent Leave History</span>
-              {leaves.map((l) => (
-                <div key={l.id} className="p-3 rounded-xl bg-[#1C1D26] border border-white/5 flex items-center justify-between text-xs">
-                  <div>
-                    <span className="font-bold text-white block">{l.leaveType} ({l.daysCount} days)</span>
-                    <span className="text-[10px] text-[#8E95A5]">{l.startDate} to {l.endDate} &bull; {l.reason}</span>
-                  </div>
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${l.status === "APPROVED" ? "bg-emerald-500/10 text-emerald-400" : l.status === "REJECTED" ? "bg-rose-500/10 text-rose-400" : "bg-amber-500/10 text-amber-400"}`}>
-                    {l.status}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-        </div>
-      )}
-
-      {/* Task Creation Modal */}
-      {showTaskModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-[#13141B] border border-white/15 rounded-3xl p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-black text-white">Create New Task</h3>
-              <button onClick={() => setShowTaskModal(false)} className="text-[#8E95A5] hover:text-white">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateTask} className="space-y-3">
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-[#8E95A5] uppercase">Task Title</label>
-                <input
-                  type="text"
-                  required
-                  value={newTaskTitle}
-                  onChange={(e) => setNewTaskTitle(e.target.value)}
-                  placeholder="Implement API endpoint..."
-                  className="w-full p-2.5 rounded-xl bg-[#1C1D26] border border-white/10 text-xs text-white"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-[#8E95A5] uppercase">Description</label>
-                <textarea
-                  rows={2}
-                  value={newTaskDesc}
-                  onChange={(e) => setNewTaskDesc(e.target.value)}
-                  placeholder="Task details & acceptance criteria"
-                  className="w-full p-2.5 rounded-xl bg-[#1C1D26] border border-white/10 text-xs text-white"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-[#8E95A5] uppercase">Priority</label>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Priority</label>
                   <select
                     value={newTaskPriority}
-                    onChange={(e) => setNewTaskPriority(e.target.value as any)}
-                    className="w-full p-2 rounded-xl bg-[#1C1D26] border border-white/10 text-xs text-white"
+                    onChange={e => setNewTaskPriority(e.target.value as EmployeeTask["priority"])}
+                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-cyan-500"
                   >
                     <option value="LOW">Low</option>
                     <option value="MEDIUM">Medium</option>
@@ -865,28 +631,120 @@ export default function EmployeeWorkspacePage() {
                     <option value="URGENT">Urgent</option>
                   </select>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-[#8E95A5] uppercase">Due Date</label>
-                  <input
-                    type="date"
-                    value={newTaskDueDate}
-                    onChange={(e) => setNewTaskDueDate(e.target.value)}
-                    className="w-full p-2 rounded-xl bg-[#1C1D26] border border-white/10 text-xs text-white"
-                  />
-                </div>
               </div>
-
-              <button
-                type="submit"
-                className="w-full py-2.5 rounded-xl bg-[#D7FC51] text-[#13141B] font-black text-xs hover:bg-[#E9FFA4] transition-all mt-2"
-              >
-                Save Task to Workspace
-              </button>
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1">Due Date</label>
+                <input
+                  type="date"
+                  value={newTaskDueDate}
+                  onChange={e => setNewTaskDueDate(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-cyan-500"
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowTaskModal(false)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold"
+                >
+                  Create Task
+                </button>
+              </div>
             </form>
           </div>
         </div>
       )}
-      </div>
-    </AuthGuard>
+
+      {/* MODAL: Request Leave */}
+      {showLeaveModal && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl max-w-md w-full p-6 shadow-2xl">
+            <h3 className="text-base font-bold text-white mb-4">Request Time Off</h3>
+            <form onSubmit={handleCreateLeaveRequest} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Leave Type</label>
+                  <select
+                    value={newLeaveType}
+                    onChange={e => setNewLeaveType(e.target.value as LeaveType)}
+                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-cyan-500"
+                  >
+                    <option value="CASUAL">Casual Leave</option>
+                    <option value="SICK">Sick Leave</option>
+                    <option value="PAID_VACATION">Paid Vacation</option>
+                    <option value="UNPAID">Unpaid Leave</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Days Count</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="30"
+                    value={newLeaveDays}
+                    onChange={e => setNewLeaveDays(Number(e.target.value))}
+                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-cyan-500"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Start Date</label>
+                  <input
+                    type="date"
+                    value={newLeaveStart}
+                    onChange={e => setNewLeaveStart(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-cyan-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">End Date</label>
+                  <input
+                    type="date"
+                    value={newLeaveEnd}
+                    onChange={e => setNewLeaveEnd(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-cyan-500"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1">Reason / Notes</label>
+                <textarea
+                  value={newLeaveReason}
+                  onChange={e => setNewLeaveReason(e.target.value)}
+                  placeholder="Provide context for HR review..."
+                  rows={3}
+                  required
+                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-cyan-500"
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowLeaveModal(false)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold"
+                >
+                  Submit Request
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

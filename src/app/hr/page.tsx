@@ -1,630 +1,732 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { 
+  getCandidates, 
+  saveCandidate,
+  moveCandidateStage, 
+  getTeamDirectory, 
+  getLeaveRequests, 
+  processLeaveDecision,
+  getEmployeePayrollRecords,
+  getEmployeeDocuments
+} from "@/lib/db-service";
+import { runHRInsightAgent, runRecruitmentAgent, AgentInsight } from "@/lib/ai-agents";
+import { logInternalAction } from "@/lib/services/internal-audit-service";
+import { 
+  Candidate, 
+  CandidateStage,
+  TeamMember, 
+  LeaveRequest, 
+  PayrollRecord, 
+  EmployeeDocument 
+} from "@/lib/types";
 import { 
   Users, 
   UserPlus, 
-  CheckCircle2, 
-  Calendar, 
+  FileCheck, 
   DollarSign, 
-  FileText, 
+  FolderLock, 
   Sparkles, 
-  Check, 
-  X, 
+  CheckCircle2, 
+  XCircle, 
   Clock, 
-  AlertTriangle, 
-  ChevronRight, 
-  ShieldCheck, 
-  TrendingUp, 
-  Building2, 
-  Search, 
   Plus, 
-  Filter,
-  Layers,
-  Send,
-  Eye,
-  ArrowRight
+  Search, 
+  RefreshCw
 } from "lucide-react";
-import Button from "@/components/ui/Button";
-import { Candidate, OnboardingRecord, LeaveRequest, PayrollBatch, PayrollRecord } from "@/lib/types";
-import { 
-  getCandidates, 
-  saveCandidate, 
-  moveCandidateStage, 
-  getOnboardingRecords, 
-  updateOnboardingChecklist, 
-  getLeaveRequests, 
-  processLeaveDecision, 
-  savePayrollBatch 
-} from "@/lib/db-service";
-import { runHRInsightAgent, AgentInsight } from "@/lib/ai-agents";
-import AccessDeniedPortal from "@/components/ui/AccessDeniedPortal";
-import AuthGuard from "@/components/auth/AuthGuard";
 
-export default function HrCommandCenterPage() {
-  const { user, role, isHR, isAdmin, isFounder } = useAuth();
+type HRTab = "recruitment" | "people" | "compensation" | "documents" | "ai_assistant";
 
-  if (user && !isHR && !isAdmin && !isFounder) {
-    return (
-      <AccessDeniedPortal
-        portalName="HR Command Center"
-        requiredRole="HR Operations or System Administrator"
-        userRole={role}
-        redirectTo="/dashboard"
-      />
-    );
-  }
+const PIPELINE_STAGES: CandidateStage[] = [
+  "Applied",
+  "Screening",
+  "Interview",
+  "Selected",
+  "Offer",
+  "Onboarding",
+  "Rejected"
+];
 
-  const [activeTab, setActiveTab] = useState<"recruitment" | "onboarding" | "leaves" | "payroll" | "attendance">("recruitment");
+export default function HRWorkspacePage() {
+  const { user, profile, role, loading: authLoading } = useAuth();
+  const router = useRouter();
 
-  // State
+  const [activeTab, setActiveTab] = useState<HRTab>("recruitment");
   const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [onboardings, setOnboardings] = useState<OnboardingRecord[]>([]);
+  const [team, setTeam] = useState<TeamMember[]>([]);
   const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
+  const [payroll, setPayroll] = useState<PayrollRecord[]>([]);
+  const [documents, setDocuments] = useState<EmployeeDocument[]>([]);
   const [aiInsights, setAiInsights] = useState<AgentInsight[]>([]);
-  const [notification, setNotification] = useState<string | null>(null);
+  
+  const [loading, setLoading] = useState(true);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [filterStage, setFilterStage] = useState<string>("ALL");
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Candidate Create Modal
-  const [showCandidateModal, setShowCandidateModal] = useState(false);
-  const [candName, setCandName] = useState("");
-  const [candEmail, setCandEmail] = useState("");
-  const [candPhone, setCandPhone] = useState("");
-  const [candRole, setCandRole] = useState("Senior Backend Systems Engineer");
-  const [candDept, setCandDept] = useState("Engineering");
-  const [candYoe, setCandYoe] = useState(4);
+  // Modal
+  const [showAddCandidate, setShowAddCandidate] = useState(false);
+  const [newCandName, setNewCandName] = useState("");
+  const [newCandEmail, setNewCandEmail] = useState("");
+  const [newCandPhone, setNewCandPhone] = useState("");
+  const [newCandRole, setNewCandRole] = useState("");
+  const [newCandDept, setNewCandDept] = useState("Engineering");
+  const [newCandExp, setNewCandExp] = useState(2);
 
-  // Payroll Batch State
-  const [batchCalculating, setBatchCalculating] = useState(false);
-  const [payrollSuccess, setPayrollSuccess] = useState(false);
+  const isAuthorized = 
+    role === "HR" || 
+    role === "FOUNDER" || 
+    role === "SUPER_ADMIN" || 
+    role === "ADMIN" ||
+    user?.role === "HR" ||
+    user?.role === "FOUNDER";
+
+  const effectiveRole = (role === "HR" || role === "FOUNDER" || role === "ADMIN" || role === "SUPER_ADMIN") ? role : "HR";
+
+  useEffect(() => {
+    if (!authLoading && !isAuthorized) {
+      router.replace("/login");
+    }
+  }, [authLoading, isAuthorized, router]);
 
   const loadData = async () => {
-    const [c, o, l] = await Promise.all([
-      getCandidates(),
-      getOnboardingRecords(),
-      getLeaveRequests(),
-    ]);
-
-    setCandidates(c || []);
-    setOnboardings(o || []);
-    setLeaves(l || []);
-
     try {
-      const insights = await runHRInsightAgent("HR");
-      setAiInsights(insights);
-    } catch {
-      // safe fallback
+      setLoading(true);
+      const [candData, teamData, leaveData, payrollData, docData] = await Promise.all([
+        getCandidates(),
+        getTeamDirectory(),
+        getLeaveRequests(),
+        getEmployeePayrollRecords(user?.uid || "", true),
+        getEmployeeDocuments()
+      ]);
+      setCandidates(candData);
+      setTeam(teamData);
+      setLeaves(leaveData);
+      setPayroll(payrollData);
+      setDocuments(docData);
+    } catch (err) {
+      console.error("Failed to load HR workspace:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (isAuthorized) {
+      loadData();
+    }
+  }, [isAuthorized]);
+
+  const handleRunAiAnalysis = async () => {
+    setAiLoading(true);
+    try {
+      const [hrInsights, recInsights] = await Promise.all([
+        runHRInsightAgent(role || "HR"),
+        runRecruitmentAgent(role || "HR")
+      ]);
+      const combined = [...hrInsights, ...recInsights];
+      setAiInsights(combined);
+      if (user) {
+        await logInternalAction({
+          actorUserId: user.uid,
+          actorRole: effectiveRole,
+          action: "AI_HR_SCREENING_RUN",
+          resourceType: "candidate",
+          metadata: { generatedCount: combined.length }
+        });
+      }
+    } catch (err) {
+      console.error("Failed to run HR AI:", err);
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const handleCreateCandidate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!candName.trim() || !candEmail.trim()) return;
-
-    await saveCandidate({
-      fullName: candName,
-      email: candEmail,
-      phone: candPhone,
-      appliedRole: candRole,
-      department: candDept,
-      experienceYears: Number(candYoe),
-      currentStage: "Applied",
-      notes: [],
-    });
-
-    setShowCandidateModal(false);
-    setCandName("");
-    setCandEmail("");
-    setNotification("Candidate profile added to recruitment pipeline!");
-    setTimeout(() => setNotification(null), 3500);
-    loadData();
+    if (!newCandName.trim() || !newCandEmail.trim() || !user) return;
+    try {
+      const created = await saveCandidate({
+        fullName: newCandName.trim(),
+        email: newCandEmail.trim(),
+        phone: newCandPhone.trim(),
+        appliedRole: newCandRole.trim() || "Software Engineer",
+        department: newCandDept,
+        experienceYears: Number(newCandExp) || 0,
+        currentStage: "Applied",
+        notes: []
+      });
+      setCandidates(prev => [created, ...prev]);
+      setShowAddCandidate(false);
+      setNewCandName("");
+      setNewCandEmail("");
+      setNewCandPhone("");
+      setNewCandRole("");
+      await logInternalAction({
+        actorUserId: user.uid,
+        actorRole: effectiveRole,
+        action: "CANDIDATE_CREATE",
+        resourceType: "candidate",
+        resourceId: created.id,
+        metadata: { fullName: created.fullName, appliedRole: created.appliedRole }
+      });
+    } catch (err) {
+      console.error("Error creating candidate:", err);
+    }
   };
 
-  const handleMoveCandidate = async (candidateId: string, stage: Candidate["currentStage"]) => {
-    await moveCandidateStage(candidateId, stage, user?.name || "HR Lead");
-    loadData();
+  const handleMoveStage = async (candidateId: string, newStage: CandidateStage) => {
+    try {
+      const updated = await moveCandidateStage(candidateId, newStage, user?.name || "HR Operations");
+      if (updated) {
+        setCandidates(prev => prev.map(c => (c.id === candidateId ? updated : c)));
+      }
+      if (user) {
+        await logInternalAction({
+          actorUserId: user.uid,
+          actorRole: effectiveRole,
+          action: "CANDIDATE_STAGE_MOVE",
+          resourceType: "candidate",
+          resourceId: candidateId,
+          metadata: { newStage }
+        });
+      }
+    } catch (err) {
+      console.error("Error moving candidate stage:", err);
+    }
   };
 
-  const handleLeaveDecision = async (leaveId: string, decision: "APPROVED" | "REJECTED") => {
-    await processLeaveDecision(leaveId, decision, user?.name || "HR Operations");
-    setNotification(`Leave request ${decision.toLowerCase()} successfully.`);
-    setTimeout(() => setNotification(null), 3500);
-    loadData();
+  const handleLeaveDecision = async (leaveId: string, status: "APPROVED" | "REJECTED") => {
+    try {
+      const updated = await processLeaveDecision(leaveId, status, user?.name || "HR Operations");
+      if (updated) {
+        setLeaves(prev => prev.map(l => (l.id === leaveId ? updated : l)));
+      }
+      if (user) {
+        await logInternalAction({
+          actorUserId: user.uid,
+          actorRole: effectiveRole,
+          action: status === "APPROVED" ? "LEAVE_APPROVE" : "LEAVE_REJECT",
+          resourceType: "leave_request",
+          resourceId: leaveId,
+          metadata: { status }
+        });
+      }
+    } catch (err) {
+      console.error("Error updating leave request:", err);
+    }
   };
 
-  const handleToggleChecklist = async (record: OnboardingRecord, key: keyof OnboardingRecord["checklist"]) => {
-    if (key === "completionPercentage") return;
-    const updated = {
-      ...record.checklist,
-      [key]: !record.checklist[key],
-    };
-    await updateOnboardingChecklist(record.id, updated);
-    loadData();
-  };
+  if (authLoading || (!isAuthorized && typeof window !== "undefined")) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">
+        <div className="flex items-center gap-3">
+          <RefreshCw className="w-5 h-5 animate-spin text-indigo-500" />
+          <span>Verifying HR Authentication & RBAC Permissions...</span>
+        </div>
+      </div>
+    );
+  }
 
-  const handleRunPayrollBatch = async () => {
-    setBatchCalculating(true);
-    setTimeout(async () => {
-      await savePayrollBatch(
-        {
-          period: "March 2026",
-          totalEmployees: 18,
-          totalGross: 2750000,
-          totalNet: 2280000,
-          exceptionsCount: 0,
-          status: "APPROVED",
-        },
-        [],
-        user?.name || "HR Director"
-      );
-      setBatchCalculating(false);
-      setPayrollSuccess(true);
-      setNotification("March 2026 Payroll Batch calculated & audited successfully!");
-      setTimeout(() => setNotification(null), 4000);
-    }, 1200);
-  };
-
-  const stages: Candidate["currentStage"][] = [
-    "Applied",
-    "Screening",
-    "Interview",
-    "Selected",
-    "Offer",
-    "Onboarding",
-    "Rejected",
-  ];
+  const filteredCandidates = candidates.filter(c => {
+    const matchesStage = filterStage === "ALL" || c.currentStage === filterStage;
+    const matchesQuery = 
+      c.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.appliedRole.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.email.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesStage && matchesQuery;
+  });
 
   return (
-    <AuthGuard allowedRoles={["HR", "FOUNDER", "EXECUTIVE", "ADMIN", "SUPER_ADMIN"]}>
-      <div className="min-h-screen bg-[#0E0F15] text-white p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1440px] mx-auto">
-      
-      {/* Top Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#13141B] p-6 rounded-3xl border border-white/10 shadow-xl">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/30">
-              People Operations
-            </span>
-            <span className="text-xs text-[#8E95A5]">🏢 EdWorld Organization OS</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white font-sans">
-            HR Command Center
-          </h1>
-          <p className="text-xs text-[#8E95A5]">
-            Manage recruitment pipelines, onboarding workflows, leave approvals, and audited payroll batches.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Link
-            href="/hr/provision-account"
-            className="px-4 py-2.5 rounded-2xl bg-[#D7FC51] hover:bg-[#E9FFA4] text-[#13141B] text-xs font-black transition-all flex items-center gap-1.5 shadow-md"
-          >
-            <UserPlus className="w-4 h-4" />
-            <span>Provision Staff Account</span>
-          </Link>
-          <button
-            onClick={() => setShowCandidateModal(true)}
-            className="px-4 py-2.5 rounded-2xl bg-[#1C1D26] hover:bg-[#282937] border border-white/10 text-xs font-bold text-white transition-all flex items-center gap-1.5 shadow-sm"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Candidate</span>
-          </button>
-        </div>
-      </div>
-
-      {notification && (
-        <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-bold flex items-center gap-2 animate-in fade-in">
-          <Check className="w-4 h-4 text-emerald-400" />
-          <span>{notification}</span>
-        </div>
-      )}
-
-      {/* HR AI Insights Banner */}
-      {aiInsights.length > 0 && (
-        <div className="p-4 rounded-3xl bg-gradient-to-r from-purple-950/40 via-[#13141B] to-[#13141B] border border-purple-500/20 space-y-2">
-          <div className="flex items-center gap-2 text-purple-300">
-            <Sparkles className="w-4 h-4" />
-            <span className="text-xs font-black uppercase tracking-wider">HRInsightAgent Radar</span>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {aiInsights.map((insight) => (
-              <div key={insight.id} className="p-3 rounded-2xl bg-[#1C1D26]/80 border border-white/5 space-y-1">
-                <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-purple-500/20 text-purple-300">
-                  {insight.category}
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      {/* Top Banner Header */}
+      <header className="border-b border-slate-800 bg-slate-900/60 backdrop-blur-md sticky top-0 z-30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-500/10">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-bold text-white tracking-tight">HR Command Center</h1>
+                <span className="px-2 py-0.5 text-xs font-semibold rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                  STRICT RBAC VERIFIED
                 </span>
-                <h4 className="text-xs font-bold text-white mt-0.5">{insight.headline}</h4>
-                <p className="text-[11px] text-[#8E95A5] leading-snug">{insight.detail}</p>
               </div>
-            ))}
+              <p className="text-xs text-slate-400">
+                EdWorld Co. People & Talent Operations • Signed in as {profile?.name || user?.name || user?.email} ({role})
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={handleRunAiAnalysis}
+              disabled={aiLoading}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/20 transition disabled:opacity-50"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              {aiLoading ? "Analyzing..." : "Claude HR Radar"}
+            </button>
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 transition"
+            >
+              Main Dashboard
+            </Link>
           </div>
         </div>
-      )}
 
-      {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-white/10 pb-2 overflow-x-auto">
-        {[
-          { id: "recruitment", label: "Recruitment Pipeline", icon: Users },
-          { id: "onboarding", label: "Employee Onboarding (0-100%)", icon: CheckCircle2 },
-          { id: "leaves", label: "Leave Approvals", icon: Calendar },
-          { id: "payroll", label: "Payroll Batches", icon: DollarSign },
-          { id: "attendance", label: "Attendance Radar", icon: Clock },
-        ].map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap ${
-                isActive
-                  ? "bg-[#D7FC51] text-[#13141B] shadow-md font-black"
-                  : "bg-[#1C1D26] text-[#8E95A5] hover:text-white hover:bg-[#252633]"
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
-      </div>
+        {/* Tab Navigation */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex overflow-x-auto gap-1 scrollbar-none border-t border-slate-800/60 pt-2">
+          {[
+            { id: "recruitment", label: "Recruitment Pipeline", icon: UserPlus },
+            { id: "people", label: "Staff & Leaves", icon: Users },
+            { id: "compensation", label: "Payroll & Compensation", icon: DollarSign },
+            { id: "documents", label: "Policy & Documents", icon: FolderLock },
+            { id: "ai_assistant", label: "Claude AI Talent Copilot", icon: Sparkles },
+          ].map(tab => {
+            const Icon = tab.icon;
+            const active = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as HRTab)}
+                className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition whitespace-nowrap ${
+                  active 
+                    ? "border-indigo-500 text-indigo-400 bg-indigo-500/10 rounded-t-lg" 
+                    : "border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700"
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+      </header>
 
-      {/* TAB 1: RECRUITMENT PIPELINE */}
-      {activeTab === "recruitment" && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-black text-white">ATS Candidate Pipeline ({candidates.length} Active)</h2>
-            <span className="text-xs text-[#8E95A5]">Drag or click below each candidate to advance stage</span>
+      {/* Main Content Area */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {loading ? (
+          <div className="py-24 text-center text-slate-400">
+            <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-3 text-indigo-500" />
+            <p className="text-sm">Loading verified HR data & telemetry...</p>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-3 overflow-x-auto pb-4">
-            {stages.map((stage) => {
-              const stageCandidates = candidates.filter((c) => c.currentStage === stage);
-              return (
-                <div key={stage} className="p-3 rounded-2xl bg-[#13141B] border border-white/10 space-y-3 min-w-[200px]">
-                  <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                    <span className="text-xs font-black text-white uppercase tracking-wider">{stage}</span>
-                    <span className="w-5 h-5 rounded-full bg-[#1C1D26] text-[10px] font-mono text-[#D7FC51] flex items-center justify-center font-bold">
-                      {stageCandidates.length}
-                    </span>
+        ) : (
+          <>
+            {/* TAB 1: RECRUITMENT PIPELINE */}
+            {activeTab === "recruitment" && (
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-2 flex-1 max-w-md">
+                    <div className="relative w-full">
+                      <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        placeholder="Search candidates by name, role, email..."
+                        className="w-full pl-9 pr-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-white text-xs focus:outline-none focus:border-indigo-500"
+                      />
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    {stageCandidates.map((cand) => (
-                      <div key={cand.id} className="p-3 rounded-xl bg-[#1C1D26] border border-white/5 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={filterStage}
+                      onChange={e => setFilterStage(e.target.value)}
+                      className="px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 text-xs focus:outline-none focus:border-indigo-500"
+                    >
+                      <option value="ALL">All Stages ({candidates.length})</option>
+                      {PIPELINE_STAGES.map(st => (
+                        <option key={st} value={st}>{st}</option>
+                      ))}
+                    </select>
+
+                    <button
+                      onClick={() => setShowAddCandidate(true)}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/20 transition shrink-0"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Add Candidate
+                    </button>
+                  </div>
+                </div>
+
+                {filteredCandidates.length === 0 ? (
+                  <div className="p-12 text-center border border-dashed border-slate-800 rounded-xl bg-slate-900/40 text-slate-400">
+                    <UserPlus className="w-8 h-8 mx-auto mb-2 text-slate-600" />
+                    <p className="text-sm font-medium text-slate-300">No candidate applications found</p>
+                    <p className="text-xs text-slate-500 mt-1">Inbound applicants and scheduled interview candidates will appear here.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredCandidates.map(cand => (
+                      <div key={cand.id} className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-col justify-between">
                         <div>
-                          <span className="text-xs font-bold text-white block">{cand.fullName}</span>
-                          <span className="text-[10px] text-[#8E95A5] block truncate">{cand.appliedRole}</span>
-                        </div>
-                        <div className="flex items-center justify-between text-[10px] text-[#8E95A5]">
-                          <span>{cand.experienceYears} YOE</span>
-                          <span className="font-mono text-emerald-400">{cand.phone}</span>
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <div>
+                              <h3 className="text-sm font-semibold text-white">{cand.fullName}</h3>
+                              <p className="text-xs text-indigo-400 font-medium">{cand.appliedRole}</p>
+                            </div>
+                            <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                              {cand.experienceYears}y exp
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-400 mb-1">{cand.email} • {cand.phone}</p>
+                          <p className="text-xs text-slate-500 mb-4">Department: {cand.department}</p>
                         </div>
 
-                        {/* Fast Move Selector */}
-                        <div className="pt-1 border-t border-white/5">
-                          <label className="text-[9px] text-[#8E95A5] uppercase block mb-1">Move to:</label>
+                        <div className="pt-3 border-t border-slate-800/80">
+                          <label className="block text-[10px] uppercase font-semibold text-slate-500 mb-1.5">
+                            Stage Progression
+                          </label>
                           <select
                             value={cand.currentStage}
-                            onChange={(e) => handleMoveCandidate(cand.id, e.target.value as any)}
-                            className="w-full p-1 rounded-lg bg-[#13141B] border border-white/10 text-[10px] text-white"
+                            onChange={e => handleMoveStage(cand.id, e.target.value as CandidateStage)}
+                            className="w-full px-2.5 py-1.5 rounded bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
                           >
-                            {stages.map((st) => (
+                            {PIPELINE_STAGES.map(st => (
                               <option key={st} value={st}>{st}</option>
                             ))}
                           </select>
                         </div>
                       </div>
                     ))}
-
-                    {stageCandidates.length === 0 && (
-                      <div className="py-6 text-center text-[10px] text-[#8E95A5]">
-                        No candidates
-                      </div>
-                    )}
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+                )}
+              </div>
+            )}
 
-      {/* TAB 2: ONBOARDING TRACKER */}
-      {activeTab === "onboarding" && (
-        <div className="bg-[#13141B] p-6 rounded-3xl border border-white/10 shadow-xl space-y-6">
-          <div>
-            <h2 className="text-lg font-black text-white">Employee Onboarding Checklist (0–100%)</h2>
-            <p className="text-xs text-[#8E95A5]">
-              Verify equipment dispatch, contracts, bank information, and corporate account activation.
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            {onboardings.map((rec) => (
-              <div key={rec.id} className="p-5 rounded-2xl bg-[#1C1D26] border border-white/5 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/5 pb-3">
-                  <div>
-                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                      <span>{rec.employeeName}</span>
-                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#D7FC51]/10 text-[#D7FC51]">
-                        {rec.corporateEmail}
-                      </span>
-                    </h3>
-                    <span className="text-[11px] text-[#8E95A5]">
-                      {rec.designation} &bull; {rec.department} &bull; Manager: {rec.managerName}
+            {/* TAB 2: STAFF & LEAVES */}
+            {activeTab === "people" && (
+              <div className="space-y-6">
+                {/* Pending Leaves Radar */}
+                <div className="p-6 rounded-xl bg-slate-900 border border-slate-800">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h2 className="text-base font-semibold text-white">Pending Leave Requests</h2>
+                      <p className="text-xs text-slate-400">Review time-off requests submitted by team members</p>
+                    </div>
+                    <span className="text-xs px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                      {leaves.filter(l => l.status === "PENDING").length} Pending
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl font-black text-[#D7FC51] font-mono">
-                      {rec.checklist.completionPercentage}% Complete
-                    </span>
-                    <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-purple-500/10 text-purple-300 border border-purple-500/30">
-                      {rec.status}
-                    </span>
-                  </div>
-                </div>
+                  {leaves.length === 0 ? (
+                    <div className="text-center py-8 border border-dashed border-slate-800 rounded-lg text-slate-400">
+                      <Clock className="w-8 h-8 mx-auto mb-2 text-slate-600" />
+                      <p className="text-xs text-slate-400">No leave requests in queue</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {leaves.map(req => (
+                        <div key={req.id} className="p-4 rounded-lg bg-slate-950 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-sm font-semibold text-white">{req.employeeName}</h3>
+                              <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300">
+                                {req.leaveType} ({req.daysCount} Days)
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-400 mt-1">
+                              Duration: {req.startDate} to {req.endDate} • Department: {req.department}
+                            </p>
+                            <p className="text-xs text-slate-300 mt-1.5 italic">"{req.reason}"</p>
+                          </div>
 
-                {/* Checklist Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 text-xs">
-                  {[
-                    { key: "personalDetails", label: "Personal Details" },
-                    { key: "documents", label: "Identity Documents" },
-                    { key: "offer", label: "Offer Acceptance" },
-                    { key: "contract", label: "Signed Employment Contract" },
-                    { key: "bankDetails", label: "Bank Account Setup" },
-                    { key: "departmentAssigned", label: "Department Assignment" },
-                    { key: "managerAssigned", label: "Manager Assignment" },
-                    { key: "equipmentDispatched", label: "Laptop & Hardware" },
-                    { key: "emailAccountCreated", label: "Corporate Email Account" },
-                    { key: "accessPermissionsSet", label: "RBAC Access Permissions" },
-                    { key: "orientationCompleted", label: "HR Orientation Completed" },
-                  ].map((item) => {
-                    const isChecked = Boolean(rec.checklist[item.key as keyof typeof rec.checklist]);
-                    return (
-                      <button
-                        key={item.key}
-                        onClick={() => handleToggleChecklist(rec, item.key as any)}
-                        className={`p-2.5 rounded-xl border text-left flex items-center gap-2 transition-all ${
-                          isChecked
-                            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
-                            : "bg-[#13141B] border-white/5 text-[#8E95A5] hover:text-white"
-                        }`}
-                      >
-                        <div className={`w-4 h-4 rounded-md flex items-center justify-center shrink-0 ${isChecked ? "bg-emerald-500 text-[#13141B]" : "border border-white/20"}`}>
-                          {isChecked && <Check className="w-3 h-3 font-bold" />}
+                          <div className="flex items-center gap-2 self-end sm:self-center">
+                            {req.status === "PENDING" ? (
+                              <>
+                                <button
+                                  onClick={() => handleLeaveDecision(req.id, "APPROVED")}
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium transition"
+                                >
+                                  <CheckCircle2 className="w-3.5 h-3.5" /> Approve
+                                </button>
+                                <button
+                                  onClick={() => handleLeaveDecision(req.id, "REJECTED")}
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-medium transition"
+                                >
+                                  <XCircle className="w-3.5 h-3.5" /> Reject
+                                </button>
+                              </>
+                            ) : (
+                              <span className={`text-xs px-2.5 py-1 rounded font-semibold ${
+                                req.status === "APPROVED" ? "bg-emerald-500/20 text-emerald-300" : "bg-rose-500/20 text-rose-300"
+                              }`}>
+                                {req.status}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <span className="text-[11px] font-medium leading-tight">{item.label}</span>
-                      </button>
-                    );
-                  })}
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Team Directory */}
+                <div className="p-6 rounded-xl bg-slate-900 border border-slate-800">
+                  <h2 className="text-base font-semibold text-white mb-1">Employee Directory</h2>
+                  <p className="text-xs text-slate-400 mb-4">Total headcount: {team.length} active personnel</p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {team.map(member => (
+                      <div key={member.id} className="p-3.5 rounded-lg bg-slate-950 border border-slate-800 flex items-start gap-3">
+                        <div className="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center font-bold text-slate-300 text-xs border border-slate-700 shrink-0">
+                          {member.name ? member.name.charAt(0).toUpperCase() : "U"}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-xs font-semibold text-white truncate">{member.name}</h3>
+                          <p className="text-xs text-indigo-400 truncate">{member.designation}</p>
+                          <p className="text-[11px] text-slate-500 truncate">{member.workEmail}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
+            )}
 
-      {/* TAB 3: LEAVE APPROVALS */}
-      {activeTab === "leaves" && (
-        <div className="bg-[#13141B] p-6 rounded-3xl border border-white/10 shadow-xl space-y-4">
-          <div>
-            <h2 className="text-lg font-black text-white">Employee Leave Approval Queue</h2>
-            <p className="text-xs text-[#8E95A5]">Review employee time-off requests with real-time audit logging.</p>
-          </div>
+            {/* TAB 3: COMPENSATION */}
+            {activeTab === "compensation" && (
+              <div className="space-y-6">
+                <div className="p-6 rounded-xl bg-slate-900 border border-slate-800">
+                  <h2 className="text-base font-semibold text-white mb-1">Payroll & Disbursal Records</h2>
+                  <p className="text-xs text-slate-400 mb-4">Verified salary disbursement records with audit logging</p>
 
-          <div className="space-y-3">
-            {leaves.map((leave) => (
-              <div key={leave.id} className="p-4 rounded-2xl bg-[#1C1D26] border border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-3">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-white">{leave.employeeName}</span>
-                    <span className="text-[10px] text-[#8E95A5] font-mono">({leave.employeeEmail})</span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#D7FC51]/10 text-[#D7FC51]">
-                      {leave.leaveType} ({leave.daysCount} days)
-                    </span>
-                  </div>
-                  <p className="text-xs text-[#8E95A5]">
-                    Duration: <strong className="text-white">{leave.startDate}</strong> to <strong className="text-white">{leave.endDate}</strong> &bull; Reason: &ldquo;{leave.reason}&rdquo;
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {leave.status === "PENDING" ? (
-                    <>
-                      <button
-                        onClick={() => handleLeaveDecision(leave.id, "APPROVED")}
-                        className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-[#13141B] text-xs font-black transition-all flex items-center gap-1 shadow-sm"
-                      >
-                        <Check className="w-3.5 h-3.5" />
-                        <span>Approve</span>
-                      </button>
-                      <button
-                        onClick={() => handleLeaveDecision(leave.id, "REJECTED")}
-                        className="px-3.5 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-bold transition-all flex items-center gap-1"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                        <span>Reject</span>
-                      </button>
-                    </>
+                  {payroll.length === 0 ? (
+                    <div className="text-center py-8 border border-dashed border-slate-800 rounded-lg text-slate-400">
+                      <DollarSign className="w-8 h-8 mx-auto mb-2 text-slate-600" />
+                      <p className="text-xs text-slate-400">No payroll records logged in current cycle</p>
+                    </div>
                   ) : (
-                    <span className={`px-3 py-1 rounded-full text-xs font-black ${leave.status === "APPROVED" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30" : "bg-rose-500/10 text-rose-400 border border-rose-500/30"}`}>
-                      {leave.status}
-                    </span>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs text-left text-slate-300">
+                        <thead className="bg-slate-950 text-slate-400 uppercase text-[10px] border-b border-slate-800">
+                          <tr>
+                            <th className="py-2.5 px-3">Employee</th>
+                            <th className="py-2.5 px-3">Department</th>
+                            <th className="py-2.5 px-3">Pay Period</th>
+                            <th className="py-2.5 px-3">Net Pay</th>
+                            <th className="py-2.5 px-3">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/60">
+                          {payroll.map(rec => (
+                            <tr key={rec.id} className="hover:bg-slate-800/30">
+                              <td className="py-2.5 px-3 font-medium text-white">{rec.employeeName}</td>
+                              <td className="py-2.5 px-3 text-slate-400">{rec.department}</td>
+                              <td className="py-2.5 px-3 text-slate-400">{rec.payPeriod}</td>
+                              <td className="py-2.5 px-3 text-emerald-400 font-semibold">₹{rec.netPay.toLocaleString("en-IN")}</td>
+                              <td className="py-2.5 px-3">
+                                <span className={`text-[10px] px-2 py-0.5 rounded font-semibold ${
+                                  rec.paymentStatus === "PAID" ? "bg-emerald-500/20 text-emerald-300" : "bg-amber-500/20 text-amber-300"
+                                }`}>
+                                  {rec.paymentStatus}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   )}
                 </div>
               </div>
-            ))}
+            )}
 
-            {leaves.length === 0 && (
-              <div className="p-6 rounded-2xl bg-[#1C1D26] text-center text-xs text-[#8E95A5]">
-                No pending employee leave requests in queue.
+            {/* TAB 4: DOCUMENTS */}
+            {activeTab === "documents" && (
+              <div className="space-y-6">
+                <div className="p-6 rounded-xl bg-slate-900 border border-slate-800">
+                  <h2 className="text-base font-semibold text-white mb-1">HR Documents & Company Policies</h2>
+                  <p className="text-xs text-slate-400 mb-4">Official contracts, policies, and employee handbooks</p>
+
+                  {documents.length === 0 ? (
+                    <div className="text-center py-8 border border-dashed border-slate-800 rounded-lg text-slate-400">
+                      <FolderLock className="w-8 h-8 mx-auto mb-2 text-slate-600" />
+                      <p className="text-xs text-slate-400">No company documents available</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {documents.map(doc => (
+                        <div key={doc.id} className="p-4 rounded-lg bg-slate-950 border border-slate-800 flex items-start gap-3">
+                          <FileCheck className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />
+                          <div className="min-w-0 flex-1">
+                            <h3 className="text-xs font-semibold text-white truncate">{doc.title}</h3>
+                            <p className="text-[11px] text-indigo-400">{doc.documentType}</p>
+                            <p className="text-[10px] text-slate-500 mt-1">{doc.fileSize} • {doc.visibility}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
-          </div>
-        </div>
-      )}
 
-      {/* TAB 4: PAYROLL BATCHES */}
-      {activeTab === "payroll" && (
-        <div className="bg-[#13141B] p-6 rounded-3xl border border-white/10 shadow-xl space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-lg font-black text-white">Monthly Payroll Batch Operations</h2>
-              <p className="text-xs text-[#8E95A5]">Calculate, review exceptions, and disburse payroll with zero silent edits.</p>
-            </div>
+            {/* TAB 5: AI RADAR */}
+            {activeTab === "ai_assistant" && (
+              <div className="space-y-6">
+                <div className="p-6 rounded-xl bg-slate-900 border border-slate-800">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div>
+                      <h2 className="text-base font-semibold text-white flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-indigo-400" />
+                        Claude AI Talent & Pipeline Radar
+                      </h2>
+                      <p className="text-xs text-slate-400 mt-1">
+                        Automated recruitment screening, onboarding checklist anomaly detection, and leave queue analysis.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRunAiAnalysis}
+                      disabled={aiLoading}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/20 transition disabled:opacity-50 self-start sm:self-auto"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${aiLoading ? "animate-spin" : ""}`} />
+                      {aiLoading ? "Analyzing..." : "Run AI Pipeline Analysis"}
+                    </button>
+                  </div>
 
-            <button
-              onClick={handleRunPayrollBatch}
-              disabled={batchCalculating}
-              className="px-5 py-2.5 rounded-2xl bg-[#D7FC51] hover:bg-[#E9FFA4] text-[#13141B] font-black text-xs transition-all shadow-lg flex items-center gap-2"
-            >
-              <DollarSign className="w-4 h-4" />
-              <span>{batchCalculating ? "Calculating Disbursals..." : "Calculate March 2026 Batch"}</span>
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="p-4 rounded-2xl bg-[#1C1D26] border border-white/5 space-y-1">
-              <span className="text-[10px] font-bold text-[#8E95A5] uppercase">Total Active Employees</span>
-              <div className="text-2xl font-black text-white font-mono">18</div>
-              <span className="text-[10px] text-emerald-400">100% records validated</span>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-[#1C1D26] border border-white/5 space-y-1">
-              <span className="text-[10px] font-bold text-[#8E95A5] uppercase">Total Gross CTC</span>
-              <div className="text-2xl font-black text-white font-mono">₹27,50,000</div>
-              <span className="text-[10px] text-[#8E95A5]">Includes base + HRA + perks</span>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-[#1C1D26] border border-white/5 space-y-1">
-              <span className="text-[10px] font-bold text-[#8E95A5] uppercase">Net Disbursement</span>
-              <div className="text-2xl font-black text-[#D7FC51] font-mono">₹22,80,000</div>
-              <span className="text-[10px] text-emerald-400">After PF &amp; TDS deductions</span>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-[#1C1D26] border border-white/5 space-y-1">
-              <span className="text-[10px] font-bold text-[#8E95A5] uppercase">Batch Status</span>
-              <div className="text-2xl font-black text-emerald-400 font-mono">APPROVED</div>
-              <span className="text-[10px] text-[#8E95A5]">Audited by {user?.name || "HR Lead"}</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 5: ATTENDANCE RADAR */}
-      {activeTab === "attendance" && (
-        <div className="bg-[#13141B] p-6 rounded-3xl border border-white/10 shadow-xl space-y-4">
-          <div>
-            <h2 className="text-lg font-black text-white">Daily &amp; Monthly Workforce Attendance Radar</h2>
-            <p className="text-xs text-[#8E95A5]">Aggregated company-wide attendance telemetry.</p>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {[
-              { label: "Present (Office)", count: 12, color: "text-emerald-400" },
-              { label: "Remote / WFH", count: 4, color: "text-[#D7FC51]" },
-              { label: "On Leave", count: 2, color: "text-purple-400" },
-              { label: "Late Arrivals", count: 0, color: "text-amber-400" },
-              { label: "Unexcused Absent", count: 0, color: "text-rose-400" },
-              { label: "Overall Rate", count: "98.8%", color: "text-white" },
-            ].map((stat, i) => (
-              <div key={i} className="p-4 rounded-2xl bg-[#1C1D26] border border-white/5 text-center space-y-1">
-                <span className="text-[10px] font-bold text-[#8E95A5] uppercase">{stat.label}</span>
-                <div className={`text-2xl font-black font-mono ${stat.color}`}>{stat.count}</div>
+                  {aiInsights.length === 0 ? (
+                    <div className="text-center py-12 border border-dashed border-slate-800 rounded-lg text-slate-400">
+                      <Sparkles className="w-8 h-8 mx-auto mb-2 text-slate-600" />
+                      <p className="text-sm font-medium text-slate-300">No HR AI insights generated in current session</p>
+                      <p className="text-xs text-slate-500 mt-1 mb-4">Click above to run real-time candidate and operational checks.</p>
+                      <button
+                        onClick={handleRunAiAnalysis}
+                        className="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition"
+                      >
+                        Run HR Intelligence Scan
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {aiInsights.map((insight, idx) => (
+                        <div key={insight.id || idx} className="p-4 rounded-lg bg-slate-950 border border-slate-800">
+                          <div className="flex items-center justify-between gap-2 mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
+                                insight.category === "BOTTLENECK" ? "bg-rose-500/20 text-rose-300 border border-rose-500/30" :
+                                insight.category === "OPPORTUNITY" ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30" :
+                                "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
+                              }`}>
+                                {insight.category}
+                              </span>
+                              <h3 className="text-sm font-semibold text-white">{insight.headline}</h3>
+                            </div>
+                            <span className="text-[10px] text-slate-500">{insight.agentName}</span>
+                          </div>
+                          <p className="text-xs text-slate-300 mb-3">{insight.detail}</p>
+                          {insight.actionableStep && (
+                            <div className="p-2.5 rounded bg-indigo-950/40 border border-indigo-800/40 text-xs text-indigo-300 flex items-center gap-2">
+                              <CheckCircle2 className="w-4 h-4 shrink-0" />
+                              <span><strong>Recommended Action:</strong> {insight.actionableStep}</span>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
+            )}
+          </>
+        )}
+      </main>
 
-      {/* Create Candidate Modal */}
-      {showCandidateModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-[#13141B] border border-white/15 rounded-3xl p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-black text-white">Add Candidate to Pipeline</h3>
-              <button onClick={() => setShowCandidateModal(false)} className="text-[#8E95A5] hover:text-white">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateCandidate} className="space-y-3">
+      {/* MODAL: Add Candidate */}
+      {showAddCandidate && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl max-w-md w-full p-6 shadow-2xl">
+            <h3 className="text-base font-bold text-white mb-4">Add Pipeline Candidate</h3>
+            <form onSubmit={handleCreateCandidate} className="space-y-4">
               <div>
-                <label className="text-[10px] font-bold text-[#8E95A5] uppercase">Full Name</label>
+                <label className="block text-xs font-medium text-slate-400 mb-1">Full Name</label>
                 <input
                   type="text"
+                  value={newCandName}
+                  onChange={e => setNewCandName(e.target.value)}
+                  placeholder="e.g., Jane Doe"
                   required
-                  value={candName}
-                  onChange={(e) => setCandName(e.target.value)}
-                  placeholder="Candidate Name"
-                  className="w-full mt-1 p-2.5 rounded-xl bg-[#1C1D26] border border-white/10 text-xs text-white"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-indigo-500"
                 />
               </div>
-
-              <div>
-                <label className="text-[10px] font-bold text-[#8E95A5] uppercase">Email Address</label>
-                <input
-                  type="email"
-                  required
-                  value={candEmail}
-                  onChange={(e) => setCandEmail(e.target.value)}
-                  placeholder="candidate@example.com"
-                  className="w-full mt-1 p-2.5 rounded-xl bg-[#1C1D26] border border-white/10 text-xs text-white"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-bold text-[#8E95A5] uppercase">Phone</label>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Email</label>
+                  <input
+                    type="email"
+                    value={newCandEmail}
+                    onChange={e => setNewCandEmail(e.target.value)}
+                    placeholder="candidate@example.com"
+                    required
+                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Phone</label>
                   <input
                     type="tel"
-                    value={candPhone}
-                    onChange={(e) => setCandPhone(e.target.value)}
-                    placeholder="+91 98765..."
-                    className="w-full mt-1 p-2 rounded-xl bg-[#1C1D26] border border-white/10 text-xs text-white"
+                    value={newCandPhone}
+                    onChange={e => setNewCandPhone(e.target.value)}
+                    placeholder="+91 9876543210"
+                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Applied Role</label>
+                  <input
+                    type="text"
+                    value={newCandRole}
+                    onChange={e => setNewCandRole(e.target.value)}
+                    placeholder="e.g., Frontend Engineer"
+                    required
+                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-indigo-500"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-[#8E95A5] uppercase">YOE</label>
-                  <input
-                    type="number"
-                    value={candYoe}
-                    onChange={(e) => setCandYoe(Number(e.target.value))}
-                    className="w-full mt-1 p-2 rounded-xl bg-[#1C1D26] border border-white/10 text-xs text-white"
-                  />
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Department</label>
+                  <select
+                    value={newCandDept}
+                    onChange={e => setNewCandDept(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-indigo-500"
+                  >
+                    <option value="Engineering">Engineering</option>
+                    <option value="Product">Product</option>
+                    <option value="Design">Design</option>
+                    <option value="Growth">Growth</option>
+                    <option value="Operations">Operations</option>
+                  </select>
                 </div>
               </div>
-
-              <div>
-                <label className="text-[10px] font-bold text-[#8E95A5] uppercase">Applied Role</label>
-                <input
-                  type="text"
-                  value={candRole}
-                  onChange={(e) => setCandRole(e.target.value)}
-                  className="w-full mt-1 p-2.5 rounded-xl bg-[#1C1D26] border border-white/10 text-xs text-white"
-                />
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddCandidate(false)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold"
+                >
+                  Add Candidate
+                </button>
               </div>
-
-              <button
-                type="submit"
-                className="w-full py-2.5 rounded-xl bg-[#D7FC51] text-[#13141B] font-black text-xs hover:bg-[#E9FFA4] transition-all mt-2"
-              >
-                Save Candidate to ATS
-              </button>
             </form>
           </div>
         </div>
       )}
-      </div>
-    </AuthGuard>
+    </div>
   );
 }
