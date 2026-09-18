@@ -17,7 +17,6 @@ import {
   Calendar, 
   TrendingUp, 
   ShieldCheck,
-  School,
   GraduationCap
 } from "lucide-react";
 
@@ -32,7 +31,7 @@ export interface SearchItem {
 
 export default function RoleScopedSearch({ onClose }: { onClose: () => void }) {
   const router = useRouter();
-  const { user, role, isEmployee, isHR, isFounder, isTeacher, isCollegeAdmin, isAdmin, isSuperAdmin } = useAuth();
+  const { user, role, isEmployee, isHR, isFounder, isCollegeAdmin, isAdmin, isSuperAdmin } = useAuth();
   const [query, setQuery] = useState("");
 
   useEffect(() => {
@@ -69,8 +68,6 @@ export default function RoleScopedSearch({ onClose }: { onClose: () => void }) {
     { id: "f-2", title: "Growth & Unit Economics", category: "Founder Executive", href: "/founder", icon: TrendingUp, allowedRoles: ["FOUNDER", "ADMIN", "SUPER_ADMIN"] },
     { id: "f-3", title: "Strategic Roadmap & Cap Table", category: "Founder Executive", href: "/founder", icon: Building2, allowedRoles: ["FOUNDER", "ADMIN", "SUPER_ADMIN"] },
 
-    // --- TEACHER DOMAIN ---
-    
     // --- COLLEGE PLACEMENT DOMAIN ---
     { id: "c-1", title: "Campus Placement Drives & CRM", category: "College Placements", href: "/colleges", icon: GraduationCap, allowedRoles: ["COLLEGE_ADMIN", "PLACEMENT_OFFICER", "ADMIN", "SUPER_ADMIN"] },
 
@@ -80,7 +77,7 @@ export default function RoleScopedSearch({ onClose }: { onClose: () => void }) {
   ];
 
   // Resolve user role
-  const effectiveRole = role || (isSuperAdmin ? "SUPER_ADMIN" : isAdmin ? "ADMIN" : isFounder ? "FOUNDER" : isHR ? "HR" : isEmployee ? "EMPLOYEE" : isTeacher ? "TEACHER" : isCollegeAdmin ? "COLLEGE_ADMIN" : "STUDENT");
+  const effectiveRole = role || (isSuperAdmin ? "SUPER_ADMIN" : isAdmin ? "ADMIN" : isFounder ? "FOUNDER" : isHR ? "HR" : isEmployee ? "EMPLOYEE" : isCollegeAdmin ? "COLLEGE_ADMIN" : "STUDENT");
 
   // Filter items matching user permissions
   const permittedItems = ALL_SEARCH_ITEMS.filter((item) =>

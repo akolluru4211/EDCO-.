@@ -38,7 +38,7 @@ const MOBILE_STAGES: MobileStageConfig[] = [
     badge: "AGES 13–15",
     badgeColor: "bg-violet-50 text-violet-700",
     badgeBorder: "border-violet-200",
-    title: "Junior School Lab",
+    title: "Foundation Tech Lab",
     subtitle: "STEM Discovery & Safe Exploration",
     description: "Curiosity quests, digital literacy foundation & private growth journals.",
     loginUrl: "/auth/login?track=junior",

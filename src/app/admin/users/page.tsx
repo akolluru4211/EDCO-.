@@ -46,8 +46,6 @@ interface UserAdminRecord {
   grade?: string;
   career_stage?: string;
   is_admin: boolean;
-  is_teacher: boolean;
-  is_school_admin: boolean;
   is_employer: boolean;
   is_suspended: boolean;
   created_at: string;
@@ -148,8 +146,6 @@ export default function AdminUsersPage() {
             grade: u.grade || profile?.grade_level || "College",
             career_stage: u.career_stage || profile?.career_stage || undefined,
             is_admin: Boolean(u.is_admin),
-            is_teacher: Boolean(u.is_teacher),
-            is_school_admin: Boolean(u.is_school_admin),
             is_employer: Boolean(u.is_employer),
             is_suspended: Boolean(u.is_suspended),
             created_at: u.created_at || new Date().toISOString(),
@@ -189,8 +185,6 @@ export default function AdminUsersPage() {
                 grade: "University / Pro",
                 career_stage: "professional",
                 is_admin: true,
-                is_teacher: false,
-                is_school_admin: false,
                 is_employer: false,
                 is_suspended: false,
                 created_at: new Date().toISOString(),
@@ -214,8 +208,6 @@ export default function AdminUsersPage() {
                 grade: "Grade 11",
                 career_stage: "junior",
                 is_admin: false,
-                is_teacher: false,
-                is_school_admin: false,
                 is_employer: false,
                 is_suspended: false,
                 created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
@@ -239,8 +231,6 @@ export default function AdminUsersPage() {
                 grade: "B.Tech Final Year",
                 career_stage: "student",
                 is_admin: false,
-                is_teacher: false,
-                is_school_admin: false,
                 is_employer: false,
                 is_suspended: false,
                 created_at: new Date(Date.now() - 86400000 * 7).toISOString(),
@@ -302,24 +292,7 @@ export default function AdminUsersPage() {
     }
   };
 
-  const handleToggleRole = async (targetId: string, roleKey: "is_teacher" | "is_school_admin", currentValue: boolean) => {
-    try {
-      const newStatus = !currentValue;
-      await supabase
-        .from("users")
-        .update({ [roleKey]: newStatus })
-        .eq("id", targetId);
-
-      setUsersList(prev => prev.map(u => u.id === targetId ? { ...u, [roleKey]: newStatus } : u));
-      if (selectedStudent && selectedStudent.id === targetId) {
-        setSelectedStudent(prev => prev ? { ...prev, [roleKey]: newStatus } : null);
-      }
-      setActionMessage(`Updated ${roleKey.replace("is_", "").replace("_", " ")} permission.`);
-      setTimeout(() => setActionMessage(null), 3000);
-    } catch (e) {
-      console.warn("Role update error:", e);
-    }
-  };
+  
 
   const exportCSV = () => {
     const headers = ["ID", "Name", "Email", "Phone", "Age Band", "Grade", "Points", "Streak", "Quests", "Interviews", "Avg Interview Score", "Resumes", "Status"];
@@ -363,10 +336,8 @@ export default function AdminUsersPage() {
 
     const matchesRole = 
       roleFilter === "all" ||
-      (roleFilter === "teacher" && u.is_teacher) ||
-      (roleFilter === "school_admin" && u.is_school_admin) ||
-      (roleFilter === "admin" && u.is_admin) ||
-      (roleFilter === "student" && !u.is_admin && !u.is_teacher && !u.is_school_admin);
+                  (roleFilter === "admin" && u.is_admin) ||
+      (roleFilter === "student" && !u.is_admin );
 
     return matchesSearch && matchesTrack && matchesRole;
   });
@@ -525,9 +496,7 @@ export default function AdminUsersPage() {
               >
                 <option value="all">All Roles</option>
                 <option value="student">Learners / Students</option>
-                <option value="teacher">Teachers</option>
-                <option value="school_admin">School Admins</option>
-                <option value="admin">Platform Admins</option>
+                                                <option value="admin">Platform Admins</option>
               </select>
             </div>
           </div>
@@ -618,14 +587,6 @@ export default function AdminUsersPage() {
                       {u.is_admin ? (
                         <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
                           Admin
-                        </span>
-                      ) : u.is_teacher ? (
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                          Teacher
-                        </span>
-                      ) : u.is_school_admin ? (
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
-                          School Admin
                         </span>
                       ) : (
                         <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">
@@ -803,33 +764,7 @@ export default function AdminUsersPage() {
                   </div>
                 </div>
 
-                {/* Administrative Role Grants */}
-                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                  <span className="text-xs font-bold text-slate-700 block">Institutional Permissions &amp; Roles</span>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      onClick={() => handleToggleRole(selectedStudent.id, "is_teacher", selectedStudent.is_teacher)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
-                        selectedStudent.is_teacher
-                          ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
-                          : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"
-                      }`}
-                    >
-                      {selectedStudent.is_teacher ? "✓ Teacher Clearance Granted" : "+ Grant Teacher Access"}
-                    </button>
 
-                    <button
-                      onClick={() => handleToggleRole(selectedStudent.id, "is_school_admin", selectedStudent.is_school_admin)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
-                        selectedStudent.is_school_admin
-                          ? "bg-sky-600 text-white border-sky-600 shadow-sm"
-                          : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"
-                      }`}
-                    >
-                      {selectedStudent.is_school_admin ? "✓ School Admin Clearance Granted" : "+ Grant School Admin"}
-                    </button>
-                  </div>
-                </div>
               </div>
 
               {/* Modal Footer */}

@@ -15,7 +15,6 @@ import {
   Building2,
   Menu,
   X,
-  School,
   Settings,
   Users,
   Lock,
@@ -34,9 +33,7 @@ export default function Navbar() {
     role,
     isEmployee, 
     isHR, 
-    isFounder, 
-    isTeacher, 
-    isSchoolAdmin,
+    isFounder,
     isCollegeAdmin, 
     isAdmin, 
     isSuperAdmin,
@@ -76,7 +73,7 @@ export default function Navbar() {
     return null;
   }
 
-  const isStaff = Boolean(isEmployee || isHR || isFounder || isTeacher || isSchoolAdmin || isCollegeAdmin || isAdmin || isSuperAdmin);
+  const isStaff = Boolean(isEmployee || isHR || isFounder || isCollegeAdmin || isAdmin || isSuperAdmin);
 
   interface PortalLink {
     href: string;

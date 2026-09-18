@@ -137,7 +137,7 @@ export default function DesktopLandingView() {
               href="/colleges"
               className="text-xs font-bold text-slate-600 hover:text-slate-950 transition-colors"
             >
-              For Schools
+              For Colleges & Placements
             </Link>
             <div className="h-4 w-px bg-slate-200" />
             <Link

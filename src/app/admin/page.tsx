@@ -87,7 +87,7 @@ export default function AdminControlPage() {
             name: displayName || p.name || p.email || "Registered User",
             email: p.email || `${p.username || "user"}@edworld.co.in`,
             role: (p.role as UserRole) || "CLIENT",
-            department: p.department || (p.role === "TEACHER" ? "Faculty" : p.role === "EMPLOYEE" ? "Engineering" : "User Platform"),
+            department: p.department || (p.role === "EMPLOYEE" ? "Engineering" : "User Platform"),
             status: p.status === "SUSPENDED" ? "SUSPENDED" : "ACTIVE",
             lastLogin: p.updated_at ? new Date(p.updated_at).toLocaleDateString() : "Recent",
           };
@@ -159,7 +159,7 @@ export default function AdminControlPage() {
     setAuditLogs(freshLogs);
   };
 
-  const allRoles: UserRole[] = ["SUPER_ADMIN", "ADMIN", "FOUNDER", "HR", "EMPLOYEE", "TEACHER", "SCHOOL_ADMIN", "COLLEGE_ADMIN", "PLACEMENT_OFFICER", "CLIENT", "STUDENT", "EXECUTIVE"];
+  const allRoles: UserRole[] = ["SUPER_ADMIN", "ADMIN", "FOUNDER", "HR", "EMPLOYEE", "COLLEGE_ADMIN", "PLACEMENT_OFFICER", "CLIENT", "STUDENT", "EXECUTIVE"];
 
   const filteredUsers = users.filter((u) => {
     const matchesQuery = u.name.toLowerCase().includes(searchQuery.toLowerCase()) || u.email.toLowerCase().includes(searchQuery.toLowerCase());
@@ -378,7 +378,7 @@ export default function AdminControlPage() {
             </div>
             <div className="p-4 rounded-2xl bg-[#1C1D26] border border-white/5 space-y-1">
               <span className="text-xs font-bold text-white">Academic Faculty</span>
-              <p className="text-[10px] text-[#8E95A5]">School Quests, Curiosity Curricula &amp; Student Mentorship</p>
+              <p className="text-[10px] text-[#8E95A5]">College Curricula & Placement Mentorship</p>
             </div>
           </div>
         </div>

@@ -44,7 +44,7 @@ const SECTOR_META: Record<SectorType, {
     accentColor: "#7B57FF",
     secondaryAccent: "#EDE8FD",
     trackIcon: Compass,
-    targetAudience: "Junior School Students",
+    targetAudience: "Early Engineering Students",
     ageBand: "Ages 13–15",
   },
   explorer: {
@@ -52,7 +52,7 @@ const SECTOR_META: Record<SectorType, {
     accentColor: "#00D2B4",
     secondaryAccent: "#E0FAF6",
     trackIcon: GraduationCap,
-    targetAudience: "High School & Pre-College",
+    targetAudience: "Pre-College & University Students",
     ageBand: "Ages 16–18",
   },
   college: {

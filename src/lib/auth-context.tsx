@@ -65,8 +65,6 @@ interface AuthContextType {
   isEmployer: boolean;
   isEmployee: boolean;
   isHR: boolean;
-  isTeacher: boolean;
-  isSchoolAdmin: boolean;
   isCollegeAdmin: boolean;
   isPlacementOfficer: boolean;
   isFounder: boolean;
@@ -76,7 +74,7 @@ interface AuthContextType {
   sendOtp: (identifier: string, purpose?: "login" | "signup") => Promise<{ success: boolean; maskedIdentifier: string; cooldownSeconds: number; devOtp?: string }>;
   verifyOtp: (identifier: string, otp: string, purpose?: "login" | "signup", metaData?: any) => Promise<{ role: UserRole; redirectUrl: string }>;
   loginWithEmail: (emailOrPhone: string, pass: string) => Promise<{ role: UserRole; redirectUrl: string; careerStage?: CareerStage; onboardingCompleted?: boolean }>;
-  loginWithGoogle: () => Promise<void>;
+  loginWithGoogle: (redirectUrl?: string) => Promise<any>;
   signupWithEmail: (name: string, email: string, pass: string, dob?: string, gradeLevel?: string, phone?: string, careerStage?: CareerStage) => Promise<{ needsEmailVerification?: boolean }>;
   resetPassword: (email: string) => Promise<void>;
   requestPasswordReset: (email: string) => Promise<void>;
@@ -221,8 +219,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           determinedRole = "HR";
         } else if (email.startsWith("founder@") || email.startsWith("ceo@") || profileData?.role === "FOUNDER") {
           determinedRole = "FOUNDER";
-        } else if (email.startsWith("teacher@") || profileData?.is_teacher || profileData?.role === "TEACHER") {
-          determinedRole = "TEACHER";
         } else if (email.startsWith("college@") || email.startsWith("tpo@") || profileData?.role === "COLLEGE_ADMIN") {
           determinedRole = "COLLEGE_ADMIN";
         } else if (email.startsWith("admin@") || profileData?.is_admin || profileData?.role === "ADMIN") {
@@ -262,8 +258,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         careerStage: computedCareerStage,
         isEmployer: Boolean(profileData?.is_employer),
         isAdmin: Boolean(profileData?.is_admin || determinedRole === "ADMIN" || determinedRole === "SUPER_ADMIN"),
-        isTeacher: Boolean(profileData?.is_teacher || userMeta.is_teacher || determinedRole === "TEACHER"),
-        isSchoolAdmin: Boolean(profileData?.is_school_admin || userMeta.is_school_admin),
         visualMode: derivedBand === "18+" ? "career" : "maximalist",
         tosVersion: profileData?.tos_version || "2026.1",
         privacyVersion: profileData?.privacy_version || "2026.1",
@@ -293,8 +287,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           isMentor: Boolean(profileData.is_mentor && derivedBand === "18+"),
           mentorTags: profileData.mentor_tags || [],
           targetRole: profileData.target_role,
-          isTeacher: Boolean(profileData.is_teacher),
-          isSchoolAdmin: Boolean(profileData.is_school_admin),
           onboarding_completed: profileData.onboarding_completed ?? false,
           institution: profileData.institution,
           degree: profileData.degree,
@@ -397,15 +389,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const loginWithGoogle = async () => {
+  const loginWithGoogle = async (redirectUrl?: string) => {
     const origin = typeof window !== "undefined" ? window.location.origin : "";
-    const { error } = await supabase.auth.signInWithOAuth({
+    const redirectTo = `${origin}/auth/callback${redirectUrl ? `?next=${encodeURIComponent(redirectUrl)}` : ""}`;
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${origin}/dashboard`,
+        redirectTo,
+        queryParams: {
+          access_type: "offline",
+          prompt: "consent",
+        },
       },
     });
     if (error) throw error;
+    return data;
   };
 
   const loginWithEmail = async (emailOrPhone: string, pass: string): Promise<{ role: UserRole; redirectUrl: string; careerStage?: CareerStage; onboardingCompleted?: boolean }> => {
@@ -418,7 +416,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (isCorporate) {
         if (credential.toLowerCase().startsWith("hr@") || credential.toLowerCase().includes("hr.")) targetRole = "HR";
         else if (credential.toLowerCase().startsWith("founder@") || credential.toLowerCase().startsWith("ceo@")) targetRole = "FOUNDER";
-        else if (credential.toLowerCase().startsWith("teacher@")) targetRole = "TEACHER";
         else if (credential.toLowerCase().startsWith("college@") || credential.toLowerCase().startsWith("tpo@")) targetRole = "COLLEGE_ADMIN";
         else if (credential.toLowerCase().startsWith("admin@")) targetRole = "ADMIN";
         else targetRole = "EMPLOYEE";
@@ -844,18 +841,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isAdmin = Boolean(user?.isAdmin || activeRole === "ADMIN" || isSuperAdmin);
   const isFounder = Boolean(activeRole === "FOUNDER" || activeRole === "EXECUTIVE" || isAdmin);
   const isHR = Boolean(activeRole === "HR" || isFounder || isAdmin);
-  const isTeacher = Boolean(
-    activeRole === "TEACHER" ||
-    user?.isTeacher ||
-    profile?.isTeacher ||
-    isAdmin
-  );
-  const isSchoolAdmin = Boolean(
-    activeRole === "SCHOOL_ADMIN" ||
-    user?.isSchoolAdmin ||
-    profile?.isSchoolAdmin ||
-    isAdmin
-  );
   const isCollegeAdmin = Boolean(activeRole === "COLLEGE_ADMIN" || isAdmin);
   const isPlacementOfficer = Boolean(activeRole === "PLACEMENT_OFFICER" || isCollegeAdmin || isAdmin);
   const isEmployee = Boolean(activeRole === "EMPLOYEE" || isHR || isFounder || isAdmin);
@@ -890,8 +875,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isEmployer,
         isEmployee,
         isHR,
-        isTeacher,
-        isSchoolAdmin,
         isCollegeAdmin,
         isPlacementOfficer,
         isFounder,

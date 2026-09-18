@@ -6,8 +6,8 @@ import {
   PayrollRecord, 
   PayrollBatch,
   Candidate, 
-  OnboardingRecord, 
-  TeacherClass, 
+  OnboardingRecord,
+ 
   StudentRecord, 
   GradeRecord, 
   LessonPlan, 
@@ -472,84 +472,6 @@ export async function updateOnboardingChecklist(recordId: string, checklist: Onb
   setStored(KEYS.ONBOARDINGS, all);
 
   return all[idx];
-}
-
-// ==========================================
-// 8. SCHOOL TEACHER STUDIO CRUD
-// ==========================================
-export async function getTeacherClasses(): Promise<TeacherClass[]> {
-  return getStored<TeacherClass>(KEYS.CLASSES, []);
-}
-
-export async function getStudentsByClass(classId?: string): Promise<StudentRecord[]> {
-  const all = getStored<StudentRecord>(KEYS.STUDENTS, []);
-  if (classId) {
-    return all.filter((s) => s.classId === classId);
-  }
-  return all;
-}
-
-export async function getGradeRecords(classId?: string): Promise<GradeRecord[]> {
-  const all = getStored<GradeRecord>(KEYS.GRADES, []);
-  if (classId) {
-    return all.filter((g) => g.classId === classId);
-  }
-  return all;
-}
-
-export async function saveGradeRecord(grade: Omit<GradeRecord, "id">): Promise<GradeRecord> {
-  const all = getStored<GradeRecord>(KEYS.GRADES, []);
-  const newGrade: GradeRecord = {
-    ...grade,
-    id: `grade_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-  };
-  all.unshift(newGrade);
-  setStored(KEYS.GRADES, all);
-
-  await recordAuditLog({
-    actorId: "teacher_faculty",
-    actorName: "Faculty",
-    actorRole: "TEACHER",
-    action: "academic.grade_recorded",
-    resource: "grade_record",
-    resourceId: newGrade.id,
-    result: "SUCCESS",
-    metadata: { student: grade.studentName, assessment: grade.assessmentTitle, marks: grade.marksObtained },
-  });
-
-  return newGrade;
-}
-
-export async function getLessonPlans(): Promise<LessonPlan[]> {
-  return getStored<LessonPlan>(KEYS.LESSON_PLANS, []);
-}
-
-export async function saveLessonPlan(plan: Omit<LessonPlan, "id" | "createdAt">): Promise<LessonPlan> {
-  const all = getStored<LessonPlan>(KEYS.LESSON_PLANS, []);
-  const newPlan: LessonPlan = {
-    ...plan,
-    id: `plan_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-    createdAt: new Date().toISOString(),
-  };
-  all.unshift(newPlan);
-  setStored(KEYS.LESSON_PLANS, all);
-  return newPlan;
-}
-
-export async function getParentMessages(): Promise<ParentMessage[]> {
-  return getStored<ParentMessage>(KEYS.PARENT_MESSAGES, []);
-}
-
-export async function sendParentMessage(msg: Omit<ParentMessage, "id" | "sentAt">): Promise<ParentMessage> {
-  const all = getStored<ParentMessage>(KEYS.PARENT_MESSAGES, []);
-  const newMsg: ParentMessage = {
-    ...msg,
-    id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-    sentAt: new Date().toISOString(),
-  };
-  all.unshift(newMsg);
-  setStored(KEYS.PARENT_MESSAGES, all);
-  return newMsg;
 }
 
 // ==========================================

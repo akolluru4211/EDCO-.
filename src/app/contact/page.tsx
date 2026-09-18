@@ -107,7 +107,7 @@ export default function ContactPage() {
                   >
                     <option value="General Support">General Support</option>
                     <option value="Billing & Razorpay">Billing &amp; Razorpay</option>
-                    <option value="School / Institutional">School / Institutional Partnership</option>
+                    <option value="Colleges & Universities">College & University Placement Partnership</option>
                     <option value="Privacy & Data Deletion">Data Privacy / Account Deletion Request</option>
                     <option value="Grievance Appeal">Formal Grievance Appeal</option>
                   </select>

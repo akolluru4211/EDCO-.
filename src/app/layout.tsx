@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://edworld.co"),
   title: "Edworld Co — Personalized Career-Readiness & Skills Growth Platform",
   description:
-    "From Class 9 school students building early foundations to adult job-seekers landing senior roles — Edworld Co adapts ATS resumes and mock interviews to your proven effective level.",
+    "From college students building early engineering foundations to working professionals landing senior roles — Edworld Co adapts ATS resumes and mock interviews to your proven effective level.",
   keywords: [
     "Career Readiness",
     "ATS Resume Maker",

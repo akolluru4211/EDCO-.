@@ -15,11 +15,11 @@ export interface RoleNotification {
 }
 
 export default function RoleScopedNotifications() {
-  const { role, isEmployee, isHR, isFounder, isTeacher, isCollegeAdmin, isAdmin, isSuperAdmin } = useAuth();
+  const { role, isEmployee, isHR, isFounder, isCollegeAdmin, isAdmin, isSuperAdmin } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
 
   // Active role
-  const effectiveRole = role || (isSuperAdmin ? "SUPER_ADMIN" : isAdmin ? "ADMIN" : isFounder ? "FOUNDER" : isHR ? "HR" : isEmployee ? "EMPLOYEE" : isTeacher ? "TEACHER" : isCollegeAdmin ? "COLLEGE_ADMIN" : "STUDENT");
+  const effectiveRole = role || (isSuperAdmin ? "SUPER_ADMIN" : isAdmin ? "ADMIN" : isFounder ? "FOUNDER" : isHR ? "HR" : isEmployee ? "EMPLOYEE" : isCollegeAdmin ? "COLLEGE_ADMIN" : "STUDENT");
 
   // Notifications database with strict role scoping
   const [notifications, setNotifications] = useState<RoleNotification[]>([

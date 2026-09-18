@@ -352,7 +352,7 @@ export default function ProblemBoardPage() {
                   {visibility === "classroom" && (
                     <p className="text-[11px] text-gold-dark mt-1 flex items-center gap-1 font-medium">
                       <ShieldCheck className="w-3.5 h-3.5 text-gold" />
-                      <span>Classroom visibility requires teacher/admin moderation approval.</span>
+                      <span>Solution visibility requires platform moderation review.</span>
                     </p>
                   )}
                 </div>

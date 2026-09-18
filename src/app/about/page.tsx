@@ -28,7 +28,7 @@ export default function AboutPage() {
             </div>
             <h3 className="text-xl font-bold font-display text-ink">Stage-Aware Progression</h3>
             <p className="text-xs text-ink-soft leading-relaxed">
-              We never show adult job boards to school minors, and we never show basic school trivia to working software engineers. Every track is purpose-built with its own distinct visual mode and tools.
+              Every student and professional track is purpose-built with its own distinct visual mode, drills, and tools. Every track is purpose-built with its own distinct visual mode and tools.
             </p>
           </div>
 

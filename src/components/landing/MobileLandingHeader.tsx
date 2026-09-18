@@ -207,7 +207,7 @@ export default function MobileLandingHeader() {
                   onClick={() => setMenuOpen(false)}
                   className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl text-slate-200 hover:text-white hover:bg-white/5 text-xs font-bold flex items-center justify-between transition-colors"
                 >
-                  <span>For Schools &amp; Institutions</span>
+                  <span>For Colleges &amp; Placements</span>
                   <ArrowRight className="w-3.5 h-3.5 text-slate-500" />
                 </Link>
 
