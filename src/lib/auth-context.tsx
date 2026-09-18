@@ -43,8 +43,8 @@ export function translateAuthError(err: any): string {
   if (lower.includes("over_email_send_rate_limit") || lower.includes("rate limit") || lower.includes("too many requests") || code === 429) {
     return "Too many attempts. Please wait a few moments before trying again.";
   }
-  if (lower.includes("network") || lower.includes("fetch") || lower.includes("504") || lower.includes("gateway timeout") || lower.includes("timeout")) {
-    return "Connection issue. Please verify your internet connection and try again.";
+  if (lower.includes("failed to fetch") || lower.includes("network error") || lower.includes("connection refused") || lower.includes("504") || lower.includes("gateway timeout")) {
+    return "Connection issue. Please verify your internet connection or Supabase status and try again.";
   }
   if (lower.includes("session expired") || lower.includes("jwt expired") || lower.includes("invalid token")) {
     return "Your session has expired. Please sign in again.";
@@ -468,7 +468,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!pass || pass.length < 8) {
       throw new Error("Password must be at least 8 characters long.");
     }
-    if (!/[a-zA-Z]/.test(pass) || !/d/.test(pass)) {
+    if (!/[a-zA-Z]/.test(pass) || !/\d/.test(pass)) {
       throw new Error("Password must contain at least one letter and one number.");
     }
 
