@@ -31,6 +31,7 @@ function SignupForm() {
   const [termsAgreed, setTermsAgreed] = useState(false);
 
   const [loading, setLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState("Creating your account...");
   const [oauthLoading, setOauthLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,7 +69,10 @@ function SignupForm() {
     }
 
     setLoading(true);
+    setLoadingStep("Securing your credentials...");
     try {
+      setTimeout(() => setLoadingStep("Creating your personalized profile..."), 800);
+      setTimeout(() => setLoadingStep("Setting up your workspace..."), 1800);
       const { needsEmailVerification } = await signupWithEmail(name.trim(), email.trim(), password);
 
       if (needsEmailVerification) {
@@ -300,11 +304,11 @@ function SignupForm() {
               className="w-full py-3.5 rounded-2xl bg-[#13141B] hover:bg-[#2A2C38] disabled:opacity-50 text-white font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-md hover:scale-[1.01] active:scale-98 cursor-pointer mt-2"
             >
               {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Creating Account...</span>
-                </>
-              ) : (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>{loadingStep}</span>
+                  </>
+                ) : (
                 <>
                   <span>Create Account &amp; Continue</span>
                   <ArrowRight className="w-4 h-4" />

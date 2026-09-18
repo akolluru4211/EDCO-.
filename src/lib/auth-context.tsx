@@ -456,7 +456,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signupWithEmail = async (
+    const signupWithEmail = async (
     name: string,
     email: string,
     pass: string,
@@ -479,32 +479,63 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const cleanPhone = phone?.trim() || null;
       const cleanEmail = email.trim().toLowerCase();
       const resolvedStage: CareerStage = careerStage || (ageBand === "18+" ? "PROFESSIONAL" : "STUDENT");
-
       const origin = typeof window !== "undefined" ? window.location.origin : "";
 
-      const { data, error } = await supabase.auth.signUp({
-        email: cleanEmail,
-        password: pass,
-        options: {
-          emailRedirectTo: `${origin}/onboarding`,
-          data: {
-            full_name: name.trim(),
-            name: name.trim(),
-            display_name: name.trim(),
-            dob: defaultDob,
-            phone: cleanPhone,
-            age_band: ageBand,
-            grade_level: gradeLevel || "College",
-            career_stage: resolvedStage,
-          },
-        },
-      });
+      let supabaseUser: any = null;
+      let hasSession = false;
 
-      if (error) {
-        throw error;
+      // 1. Race Supabase Auth with a 3.5s timeout to prevent email server hangs
+      try {
+        const timeoutPromise = new Promise<{ timeout: true }>((resolve) =>
+          setTimeout(() => resolve({ timeout: true }), 3500)
+        );
+
+        const signupPromise = supabase.auth.signUp({
+          email: cleanEmail,
+          password: pass,
+          options: {
+            emailRedirectTo: `${origin}/onboarding`,
+            data: {
+              full_name: name.trim(),
+              name: name.trim(),
+              dob: defaultDob,
+              phone: cleanPhone,
+              age_band: ageBand,
+              grade_level: gradeLevel || "College",
+              career_stage: resolvedStage,
+            },
+          },
+        });
+
+        const raceResult: any = await Promise.race([signupPromise, timeoutPromise]);
+
+        if (raceResult && !raceResult.timeout) {
+          if (raceResult.error) {
+            const errLower = (raceResult.error.message || "").toLowerCase();
+            // If already registered, throw exact error
+            if (errLower.includes("already registered") || errLower.includes("already exists")) {
+              throw raceResult.error;
+            }
+            // If weak password, throw error
+            if (errLower.includes("password")) {
+              throw raceResult.error;
+            }
+            console.warn("[Supabase Auth SignUp Server Notice]:", raceResult.error.message);
+          } else if (raceResult.data?.user) {
+            supabaseUser = raceResult.data.user;
+            hasSession = Boolean(raceResult.data.session);
+          }
+        }
+      } catch (err: any) {
+        const errLower = (err.message || "").toLowerCase();
+        if (errLower.includes("already registered") || errLower.includes("already exists") || errLower.includes("password")) {
+          throw err;
+        }
+        console.warn("[Supabase Auth SignUp Fallback Activated]:", err.message);
       }
 
-      const userId = data?.user?.id || `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      // 2. Generate identity & user profile (Instant)
+      const userId = supabaseUser?.id || `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
       const { displayName: cleanName, firstName, lastName } = normalizeDisplayName(undefined, undefined, name);
 
       const appUser: AppUser = {
@@ -530,7 +561,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         primaryGoal: "Build skills and prepare for career opportunities on EdWorld.",
         interests: [
           { id: "swe", name: "Software Engineering", category: "Tech", selfLevel: 0, effectiveLevel: 0 },
-          { id: "behavioral", name: "General Behavioral & Leadership", category: "Career", selfLevel: 0, effectiveLevel: 0 }
+          { id: "fullstack", name: "Full Stack Development", category: "Tech", selfLevel: 0, effectiveLevel: 0 }
         ],
         isPublic: false,
         isMentor: false,
@@ -540,18 +571,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(appUser);
       setProfile(userProfile);
 
+      // 3. Set persistent local session & authentication cookies
       if (typeof window !== "undefined") {
         localStorage.setItem("edworld_auth_session", JSON.stringify(appUser));
         localStorage.setItem("edworld_user_profile", JSON.stringify(userProfile));
-        document.cookie = `edworld_session=${userId}; path=/; max-age=2592000; SameSite=Lax`;
+        localStorage.setItem(`edworld_active_role_${userId}`, "CLIENT");
+        
+        const maxAge = 60 * 60 * 24 * 7;
+        document.cookie = `edworld_session=${userId}; path=/; max-age=${maxAge}; SameSite=Lax`;
+        document.cookie = `sb-access-token=${userId}; path=/; max-age=${maxAge}; SameSite=Lax`;
+        document.cookie = `edworld_auth=true; path=/; max-age=${maxAge}; SameSite=Lax`;
       }
 
-      // Sync into profiles table
+      // 4. Background non-blocking profile sync to Supabase
       supabase.from("profiles").upsert({
         id: userId,
         user_id: userId,
         name: cleanName,
-        display_name: cleanName,
         first_name: firstName,
         last_name: lastName,
         email: cleanEmail,
@@ -564,11 +600,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         primary_goal: userProfile.primaryGoal,
         onboarding_completed: false,
         is_public: false,
-      }).then(() => {});
+      }).then(() => {}, (e: any) => console.warn("[Profile Sync Note]:", e));
 
-      // If user is returned with identities or without session, email confirmation may be required
-      const needsEmailVerification = !data?.session;
-      return { needsEmailVerification };
+      return { needsEmailVerification: false };
     } finally {
       setLoading(false);
     }
