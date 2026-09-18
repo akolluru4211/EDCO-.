@@ -44,7 +44,8 @@ export interface UserProfile {
   linkedin_url?: string;
   leetcode_url?: string;
   isTeacher?: boolean;         // Educator role
-  isSchoolAdmin?: boolean;     // Institutional Admin role
+  isSchoolAdmin?: boolean;
+  certifications?: Array<{ id: string; name: string; issuer: string; issueDate: string; url?: string }>;     // Institutional Admin role
   updatedAt?: string;
 }
 

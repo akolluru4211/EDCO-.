@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { invalidateSession, logSecurityEvent } from "@/lib/otp-service";
+import { rateLimit, getClientIp } from "@/lib/rate-limiter";
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIp(req);
+    rateLimit(`logout_${ip}`, { limit: 20, windowMs: 60 * 1000 });
+
     const sessionToken = 
       req.cookies.get("edworld_session")?.value ||
       req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ||

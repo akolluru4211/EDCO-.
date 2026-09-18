@@ -3,6 +3,10 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { 
+  Plus,
+  Trash2,
+  Award,
+  ExternalLink,
   User, 
   ShieldCheck, 
   Lock, 
@@ -46,6 +50,64 @@ export default function ProfilePage() {
   const [isChangingPass, setIsChangingPass] = useState(false);
 
   // Notification Preferences
+  
+  const [certs, setCerts] = useState<Array<{ id: string; name: string; issuer: string; issueDate: string; url?: string }>>([]);
+  const [newCertName, setNewCertName] = useState("");
+  const [newCertIssuer, setNewCertIssuer] = useState("");
+  const [newCertDate, setNewCertDate] = useState("");
+  const [newCertUrl, setNewCertUrl] = useState("");
+  const [showAddCert, setShowAddCert] = useState(false);
+
+  useEffect(() => {
+    if (profile?.certifications && Array.isArray(profile.certifications)) {
+      setCerts(profile.certifications);
+    } else if (user?.uid) {
+      const cached = localStorage.getItem("edworld_" + user.uid + "_certs");
+      if (cached) {
+        try { setCerts(JSON.parse(cached)); } catch(e) {}
+      }
+    }
+  }, [profile, user]);
+
+  const handleAddCert = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCertName.trim() || !newCertIssuer.trim()) return;
+
+    const newEntry = {
+      id: "cert-" + Date.now(),
+      name: newCertName.trim(),
+      issuer: newCertIssuer.trim(),
+      issueDate: newCertDate.trim() || new Date().toISOString().split("T")[0],
+      url: newCertUrl.trim() || undefined,
+    };
+
+    const updated = [...certs, newEntry];
+    setCerts(updated);
+    if (user?.uid) {
+      localStorage.setItem("edworld_" + user.uid + "_certs", JSON.stringify(updated));
+      try {
+        await supabase.from("profiles").update({ certifications: updated }).eq("user_id", user.uid);
+      } catch (err) {}
+    }
+
+    setNewCertName("");
+    setNewCertIssuer("");
+    setNewCertDate("");
+    setNewCertUrl("");
+    setShowAddCert(false);
+  };
+
+  const handleDeleteCert = async (id: string) => {
+    const updated = certs.filter((c) => c.id !== id);
+    setCerts(updated);
+    if (user?.uid) {
+      localStorage.setItem("edworld_" + user.uid + "_certs", JSON.stringify(updated));
+      try {
+        await supabase.from("profiles").update({ certifications: updated }).eq("user_id", user.uid);
+      } catch (err) {}
+    }
+  };
+
   const [notifyTasks, setNotifyTasks] = useState(true);
   const [notifyLeaves, setNotifyLeaves] = useState(true);
   const [notifyPayroll, setNotifyPayroll] = useState(true);
@@ -316,7 +378,109 @@ export default function ProfilePage() {
           </div>
 
           {/* Connected Developer Accounts */}
-          <SyncedAccountsCard
+          
+            {/* Professional Certifications Management */}
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+                    <Award className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-base text-slate-900">Career Certifications &amp; Licenses</h3>
+                    <p className="text-xs text-slate-500">Verified credentials showcaseable on your resume and portfolio</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAddCert(!showAddCert)}
+                  className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1 transition-all"
+                >
+                  <Plus className="w-3.5 h-3.5 text-[#D7FC51]" />
+                  <span>Add Certificate</span>
+                </button>
+              </div>
+
+              {showAddCert && (
+                <form onSubmit={handleAddCert} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">Certificate Title *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. AWS Certified Solutions Architect"
+                        value={newCertName}
+                        onChange={(e) => setNewCertName(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-slate-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">Issuing Organization *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Amazon Web Services / Meta"
+                        value={newCertIssuer}
+                        onChange={(e) => setNewCertIssuer(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-slate-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">Issue Date</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. May 2026"
+                        value={newCertDate}
+                        onChange={(e) => setNewCertDate(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-slate-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">Verification URL</label>
+                      <input
+                        type="url"
+                        placeholder="https://credly.com/..."
+                        value={newCertUrl}
+                        onChange={(e) => setNewCertUrl(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-slate-900"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button type="button" onClick={() => setShowAddCert(false)} className="px-3 py-1.5 rounded-xl bg-slate-200 text-xs font-bold">Cancel</button>
+                    <button type="submit" className="px-4 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold">Save Credential</button>
+                  </div>
+                </form>
+              )}
+
+              {certs.length === 0 ? (
+                <p className="text-xs text-slate-500 italic">No certifications added yet. Click &quot;Add Certificate&quot; to list your industry credentials.</p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {certs.map((c) => (
+                    <div key={c.id} className="p-3.5 rounded-2xl border border-slate-200 bg-white flex items-center justify-between gap-3">
+                      <div>
+                        <h4 className="font-bold text-xs text-slate-900">{c.name}</h4>
+                        <p className="text-[10px] text-slate-500">{c.issuer} &bull; {c.issueDate}</p>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {c.url && (
+                          <a href={c.url} target="_blank" rel="noreferrer" className="p-1.5 text-slate-400 hover:text-slate-700">
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                        <button type="button" onClick={() => handleDeleteCert(c.id)} className="p-1.5 text-rose-400 hover:text-rose-600">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <SyncedAccountsCard
             syncedAccounts={syncedAccounts}
             onUpdateAccounts={handleUpdateAccounts}
             userId={user?.uid}

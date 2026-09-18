@@ -1,11 +1,17 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ResumeContent, ResumeExperience, ResumeEducation, ResumeProject, ResumeCertification } from "@/lib/types";
 import { useAuth } from "@/lib/auth-context";
 import { ProjectItem } from "@/lib/types";
 import { getResumeProfileDefaults } from "@/lib/services/user-profile";
 import { 
+  Wand2,
+  AlertCircle,
+  FileText,
+  X,
+  ArrowUpRight,
   User, 
   Briefcase, 
   GraduationCap, 
@@ -44,6 +50,86 @@ export default function ResumeBuilderForm({ content, onChange }: ResumeBuilderFo
       }
     }
   }, [user, showProjectPicker]);
+
+  
+  const router = useRouter();
+  const [showTailorModal, setShowTailorModal] = useState(false);
+  const [tailorRoleInput, setTailorRoleInput] = useState("");
+  const [tailorJdInput, setTailorJdInput] = useState("");
+  const [isTailoring, setIsTailoring] = useState(false);
+  const [tailorResult, setTailorResult] = useState<any | null>(null);
+  const [tailorError, setTailorError] = useState<string | null>(null);
+  const [acceptedItems, setAcceptedItems] = useState<Record<string, boolean>>({});
+
+  const handleRunTailor = async () => {
+    if (!tailorRoleInput.trim() || !tailorJdInput.trim()) {
+      setTailorError("Please enter both target role and job description.");
+      return;
+    }
+    setIsTailoring(true);
+    setTailorError(null);
+    try {
+      const res = await fetch("/api/resumes/tailor", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resumeContent: content,
+          targetRole: tailorRoleInput,
+          jobDescription: tailorJdInput,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        setTailorResult(data.data);
+      } else {
+        setTailorError(data.message || "Tailoring failed.");
+      }
+    } catch (e: any) {
+      setTailorError(e.message || "Failed to reach AI service.");
+    } finally {
+      setIsTailoring(false);
+    }
+  };
+
+  const handleAcceptSummary = () => {
+    if (!tailorResult?.summarySuggestion) return;
+    onChange({
+      ...content,
+      summary: tailorResult.summarySuggestion.suggested,
+    });
+    setAcceptedItems((prev) => ({ ...prev, summary: true }));
+  };
+
+  const handleAcceptBullet = (suggestion: any) => {
+    if (suggestion.type === "experience") {
+      const exp = [...content.experience];
+      if (exp[suggestion.itemIndex] && exp[suggestion.itemIndex].bullets) {
+        const bullets = [...exp[suggestion.itemIndex].bullets];
+        bullets[suggestion.bulletIndex] = suggestion.suggested;
+        exp[suggestion.itemIndex] = { ...exp[suggestion.itemIndex], bullets };
+        onChange({ ...content, experience: exp });
+      }
+    } else if (suggestion.type === "project") {
+      const projs = [...content.projects];
+      if (projs[suggestion.itemIndex] && projs[suggestion.itemIndex].bullets) {
+        const bullets = [...projs[suggestion.itemIndex].bullets];
+        bullets[suggestion.bulletIndex] = suggestion.suggested;
+        projs[suggestion.itemIndex] = { ...projs[suggestion.itemIndex], bullets };
+        onChange({ ...content, projects: projs });
+      }
+    }
+    setAcceptedItems((prev) => ({ ...prev, [suggestion.id]: true }));
+  };
+
+  const handleRejectItem = (id: string) => {
+    setAcceptedItems((prev) => ({ ...prev, [id]: false }));
+  };
+
+  const handleLaunchInterviewFromTailor = () => {
+    const encodedRole = encodeURIComponent(tailorRoleInput || "Software Engineer");
+    const encodedJd = encodeURIComponent(tailorJdInput || "");
+    router.push("/interviews/swe?jobTitle=" + encodedRole + "&jd=" + encodedJd);
+  };
 
   const handleSyncFromProfile = () => {
     if (!user) return;
@@ -188,6 +274,66 @@ export default function ResumeBuilderForm({ content, onChange }: ResumeBuilderFo
     onChange({ ...content, experience: updated });
   };
 
+  
+  const addCertification = () => {
+    const newCert: ResumeCertification = {
+      id: "cert-" + Date.now(),
+      name: "",
+      issuer: "",
+      issueDate: "",
+      url: "",
+    };
+    onChange({
+      ...content,
+      certifications: [...(content.certifications || []), newCert],
+    });
+  };
+
+  const updateCertField = (index: number, field: keyof ResumeCertification, val: string) => {
+    const updated = [...(content.certifications || [])];
+    updated[index] = { ...updated[index], [field]: val };
+    onChange({ ...content, certifications: updated });
+  };
+
+  const removeCertification = (index: number) => {
+    const updated = (content.certifications || []).filter((_, i) => i !== index);
+    onChange({ ...content, certifications: updated });
+  };
+
+  const importCertsFromProfile = () => {
+    let profileCerts: any[] = [];
+    if (profile?.certifications && Array.isArray(profile.certifications)) {
+      profileCerts = profile.certifications;
+    } else if (user?.uid) {
+      const cached = localStorage.getItem("edworld_" + user.uid + "_certs");
+      if (cached) {
+        try { profileCerts = JSON.parse(cached); } catch(e) {}
+      }
+    }
+
+    if (profileCerts.length === 0) {
+      setProfileSyncMsg("No certifications found on your profile. Add them in Profile Settings first!");
+      setTimeout(() => setProfileSyncMsg(null), 3000);
+      return;
+    }
+
+    const mapped: ResumeCertification[] = profileCerts.map((c: any) => ({
+      id: c.id || "cert-" + Date.now() + "-" + Math.random(),
+      name: c.name || c.title || "",
+      issuer: c.issuer || "",
+      issueDate: c.issueDate || c.issue_date || "",
+      url: c.url || c.credential_url || "",
+    }));
+
+    onChange({
+      ...content,
+      certifications: [...(content.certifications || []), ...mapped],
+    });
+
+    setProfileSyncMsg("✓ Imported " + mapped.length + " certifications from your profile!");
+    setTimeout(() => setProfileSyncMsg(null), 3000);
+  };
+
   // Education Handlers
   const addEducation = () => {
     const newEdu: ResumeEducation = {
@@ -301,6 +447,16 @@ export default function ResumeBuilderForm({ content, onChange }: ResumeBuilderFo
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0 mr-1">
+          
+          <button
+            type="button"
+            onClick={() => setShowTailorModal(true)}
+            className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
+            title="Tailor resume bullets & summary to a specific job description"
+          >
+            <Wand2 className="w-3.5 h-3.5 text-[#D7FC51]" />
+            <span>AI Tailor to Job</span>
+          </button>
           <button
             type="button"
             onClick={handleSyncFromProfile}
@@ -931,6 +1087,341 @@ export default function ResumeBuilderForm({ content, onChange }: ResumeBuilderFo
           </div>
         )}
       </div>
+    
+      
+        {/* CERTIFICATIONS */}
+        {activeTab === "certifications" && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between border-b pb-2">
+              <h3 className="text-sm font-bold text-slate-900">Certifications &amp; Licenses</h3>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={importCertsFromProfile}
+                  className="px-2.5 py-1 rounded bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1 shadow-sm"
+                >
+                  <Award className="w-3.5 h-3.5 text-[#D7FC51]" />
+                  <span>Import from Profile</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={addCertification}
+                  className="px-2.5 py-1 rounded bg-brand-50 hover:bg-brand-100 text-brand-700 text-xs font-bold flex items-center gap-1"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Manual</span>
+                </button>
+              </div>
+            </div>
+
+            {(!content.certifications || content.certifications.length === 0) ? (
+              <div className="p-8 text-center border-2 border-dashed border-slate-200 rounded-2xl space-y-2">
+                <Award className="w-8 h-8 text-slate-300 mx-auto" />
+                <p className="text-xs text-slate-500 font-medium">No certifications listed yet.</p>
+                <p className="text-[11px] text-slate-400">Click &quot;Import from Profile&quot; to pull your verified licenses or add them manually.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {content.certifications.map((cert, cIdx) => (
+                  <div key={cert.id || cIdx} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700">Certification #{cIdx + 1}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeCertification(cIdx)}
+                        className="text-rose-500 hover:text-rose-700 p-1"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <input
+                        type="text"
+                        value={cert.name}
+                        onChange={(e) => updateCertField(cIdx, "name", e.target.value)}
+                        placeholder="Certificate Title (e.g. AWS Solutions Architect)"
+                        className="px-3 py-1.5 text-xs rounded border border-slate-300 bg-white"
+                      />
+                      <input
+                        type="text"
+                        value={cert.issuer}
+                        onChange={(e) => updateCertField(cIdx, "issuer", e.target.value)}
+                        placeholder="Issuing Organization (e.g. Amazon Web Services)"
+                        className="px-3 py-1.5 text-xs rounded border border-slate-300 bg-white"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <input
+                        type="text"
+                        value={cert.issueDate}
+                        onChange={(e) => updateCertField(cIdx, "issueDate", e.target.value)}
+                        placeholder="Issue Date (e.g. Jan 2026)"
+                        className="px-3 py-1.5 text-xs rounded border border-slate-300 bg-white"
+                      />
+                      <input
+                        type="url"
+                        value={cert.url || ""}
+                        onChange={(e) => updateCertField(cIdx, "url", e.target.value)}
+                        placeholder="Verification URL (Optional)"
+                        className="px-3 py-1.5 text-xs rounded border border-slate-300 bg-white"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+      {/* AI Resume Tailoring Modal */}
+      {showTailorModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-900 text-white">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center text-white shadow-sm">
+                  <Wand2 className="w-5 h-5 text-[#D7FC51]" />
+                </div>
+                <div>
+                  <h3 className="font-black text-sm text-white flex items-center gap-2">
+                    <span>AI Job Description Tailoring</span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Claude AI</span>
+                  </h3>
+                  <p className="text-[11px] text-slate-400">Optimize summary and bullets for your target role with side-by-side accept/reject controls</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowTailorModal(false)}
+                className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-sm transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-6 flex-1 text-slate-800">
+              <div className="space-y-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                <div className="grid grid-cols-1 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Target Role Title
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Senior Frontend Engineer / Full Stack Developer"
+                      value={tailorRoleInput}
+                      onChange={(e) => setTailorRoleInput(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Paste Job Description (JD)
+                    </label>
+                    <textarea
+                      rows={4}
+                      placeholder="Paste the key responsibilities, requirements, and tech stack from the job posting..."
+                      value={tailorJdInput}
+                      onChange={(e) => setTailorJdInput(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 font-mono text-[11px]"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-2">
+                  <span className="text-[11px] text-slate-500">
+                    Claude AI generates targeted revisions with individual accept/reject controls.
+                  </span>
+                  <button
+                    type="button"
+                    disabled={isTailoring}
+                    onClick={handleRunTailor}
+                    className="px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-xs font-black flex items-center gap-2 shadow-md transition-all"
+                  >
+                    {isTailoring ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin text-[#D7FC51]" />
+                        <span>Analyzing & Tailoring...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 text-[#D7FC51]" />
+                        <span>Analyze & Generate Edits</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {tailorError && (
+                  <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-medium flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{tailorError}</span>
+                  </div>
+                )}
+              </div>
+
+              {tailorResult && (
+                <div className="space-y-6">
+                  <div className="p-4 rounded-2xl bg-gradient-to-r from-violet-50 via-indigo-50 to-emerald-50 border border-violet-100 flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-2xl bg-violet-600 text-white flex flex-col items-center justify-center font-black">
+                        <span className="text-base leading-none">{tailorResult.atsMatchScore || 85}%</span>
+                        <span className="text-[8px] uppercase tracking-wider text-violet-200">Match</span>
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-xs text-slate-900">ATS Keyword Match Level</h4>
+                        <p className="text-[11px] text-slate-600">Tailored against {tailorRoleInput}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5 max-w-md">
+                      {tailorResult.keyMatchingSkills?.map((skill: string, i: number) => (
+                        <span key={i} className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold border border-emerald-200 flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          <span>{skill}</span>
+                        </span>
+                      ))}
+                      {tailorResult.missingKeywords?.map((kw: string, i: number) => (
+                        <span key={i} className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] font-bold border border-amber-200">
+                          + {kw}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {tailorResult.summarySuggestion && (
+                    <div className="p-4 rounded-2xl border border-slate-200 bg-white space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-bold text-xs text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                          <FileText className="w-4 h-4 text-violet-600" />
+                          <span>Professional Summary Suggestion</span>
+                        </h4>
+                        {acceptedItems.summary === true ? (
+                          <span className="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 font-bold text-[10px] flex items-center gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Accepted
+                          </span>
+                        ) : acceptedItems.summary === false ? (
+                          <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 font-bold text-[10px]">
+                            Rejected
+                          </span>
+                        ) : (
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={handleAcceptSummary}
+                              className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold flex items-center gap-1 shadow-sm"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" /> Accept
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRejectItem("summary")}
+                              className="px-3 py-1 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 text-[11px] font-bold flex items-center gap-1"
+                            >
+                              <X className="w-3.5 h-3.5" /> Reject
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Original Summary</span>
+                          <p className="text-slate-700 leading-relaxed">{tailorResult.summarySuggestion.original || "(Empty Summary)"}</p>
+                        </div>
+                        <div className="p-3 rounded-xl bg-violet-50/70 border border-violet-200">
+                          <span className="text-[10px] font-bold text-violet-700 uppercase block mb-1">AI Tailored Suggestion</span>
+                          <p className="text-slate-900 font-medium leading-relaxed">{tailorResult.summarySuggestion.suggested}</p>
+                          <p className="mt-2 text-[10px] text-violet-600 italic">💡 {tailorResult.summarySuggestion.reason}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {tailorResult.bulletSuggestions && tailorResult.bulletSuggestions.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="font-bold text-xs text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                        <Sparkles className="w-4 h-4 text-violet-600" />
+                        <span>Experience &amp; Project Bullet Revisions</span>
+                      </h4>
+
+                      {tailorResult.bulletSuggestions.map((sug: any) => {
+                        const isAccepted = acceptedItems[sug.id] === true;
+                        const isRejected = acceptedItems[sug.id] === false;
+
+                        return (
+                          <div key={sug.id} className="p-4 rounded-2xl border border-slate-200 bg-white space-y-2.5">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[11px] font-bold text-slate-700">{sug.title || "Experience Bullet"}</span>
+                              {isAccepted ? (
+                                <span className="px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-bold text-[10px] flex items-center gap-1">
+                                  <CheckCircle2 className="w-3.5 h-3.5" /> Applied
+                                </span>
+                              ) : isRejected ? (
+                                <span className="px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-500 font-bold text-[10px]">
+                                  Skipped
+                                </span>
+                              ) : (
+                                <div className="flex items-center gap-1.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleAcceptBullet(sug)}
+                                    className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold flex items-center gap-1"
+                                  >
+                                    <CheckCircle2 className="w-3.5 h-3.5" /> Apply
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRejectItem(sug.id)}
+                                    className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-[11px] font-bold flex items-center gap-1"
+                                  >
+                                    <X className="w-3.5 h-3.5" /> Skip
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-600">
+                                <span className="text-[9px] font-bold text-slate-400 uppercase block mb-0.5">Original</span>
+                                <p>{sug.original}</p>
+                              </div>
+                              <div className="p-2.5 rounded-xl bg-violet-50/70 border border-violet-200 text-slate-900 font-medium">
+                                <span className="text-[9px] font-bold text-violet-700 uppercase block mb-0.5">Tailored</span>
+                                <p>{sug.suggested}</p>
+                                <p className="mt-1 text-[9px] text-violet-600 italic">💡 {sug.reason}</p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  <div className="p-4 rounded-2xl bg-slate-900 text-white flex items-center justify-between gap-4">
+                    <div>
+                      <h4 className="font-bold text-xs text-white flex items-center gap-2">
+                        <span>Ready to interview for this position?</span>
+                      </h4>
+                      <p className="text-[11px] text-slate-400">Launch a mock interview session grounded directly in this Job Description.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleLaunchInterviewFromTailor}
+                      className="px-4 py-2 rounded-xl bg-[#D7FC51] hover:bg-[#cbf13f] text-slate-950 font-black text-xs flex items-center gap-1.5 transition-all shrink-0 shadow-md"
+                    >
+                      <span>Start Mock Interview</span>
+                      <ArrowUpRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

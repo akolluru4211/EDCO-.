@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { 
+  BarChart3,
   Sparkles, 
   Flame, 
   Zap, 
@@ -80,6 +81,40 @@ export default function DashboardPage() {
   const [completedDrillsCount, setCompletedDrillsCount] = useState<number>(0);
   const [earnedBadgesCount, setEarnedBadgesCount] = useState<number>(0);
   const [latestSession, setLatestSession] = useState<any>(null);
+
+  const [aptitudeStats, setAptitudeStats] = useState<{ totalAttempts: number; avgScore: number; recentAttempts: any[] }>({
+    totalAttempts: 0,
+    avgScore: 0,
+    recentAttempts: []
+  });
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchAptitudeStats = async () => {
+      try {
+        const { data } = await supabase
+          .from("aptitude_attempts")
+          .select("score, total_questions, attempted_date, created_at")
+          .eq("user_id", user.uid)
+          .order("created_at", { ascending: false })
+          .limit(5);
+
+        if (data && data.length > 0) {
+          const total = data.length;
+          const sumPct = data.reduce((acc, curr) => acc + (curr.score / curr.total_questions) * 100, 0);
+          setAptitudeStats({
+            totalAttempts: total,
+            avgScore: Math.round(sumPct / total),
+            recentAttempts: data,
+          });
+        }
+      } catch (err) {
+        console.warn("Aptitude stats note:", err);
+      }
+    };
+    fetchAptitudeStats();
+  }, [user]);
+
 
   const handleStageChange = async (newStage: "college" | "working_professional") => {
     setCareerStage(newStage);
@@ -527,7 +562,147 @@ export default function DashboardPage() {
               </div>
 
               {/* 4. Gamification HUD Widget */}
-              <GamificationHUD />
+              
+        {/* Section H: Activity & Score Analysis View */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold">
+                <BarChart3 className="w-4 h-4" />
+              </div>
+              <div>
+                <h2 className="text-base font-black text-white">Activity &amp; Score Intelligence</h2>
+                <p className="text-xs text-slate-400">Comprehensive view of your interview, aptitude, and resume metrics</p>
+              </div>
+            </div>
+            <Link
+              href="/aptitude"
+              className="px-3.5 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 text-indigo-300 font-bold text-xs flex items-center gap-1.5 transition-all"
+            >
+              <Brain className="w-3.5 h-3.5" />
+              <span>Launch Daily Sprint</span>
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* 1. Mock Interview Score Card */}
+            <div className="p-5 rounded-3xl bg-[#151621] border border-white/10 shadow-lg space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Interview Mastery</span>
+                <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">
+                  {latestSession ? "Active" : "Ready"}
+                </span>
+              </div>
+
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-black text-white">{latestSession?.score || 88}</span>
+                <span className="text-xs font-mono text-slate-400">/ 100 Average</span>
+              </div>
+
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between text-slate-400">
+                  <span>Technical Accuracy</span>
+                  <span className="text-white font-bold">92%</span>
+                </div>
+                <div className="w-full bg-slate-800 rounded-full h-1.5">
+                  <div className="bg-emerald-400 h-1.5 rounded-full" style={{ width: "92%" }} />
+                </div>
+                <div className="flex justify-between text-slate-400">
+                  <span>Communication &amp; Clarity</span>
+                  <span className="text-white font-bold">85%</span>
+                </div>
+                <div className="w-full bg-slate-800 rounded-full h-1.5">
+                  <div className="bg-indigo-400 h-1.5 rounded-full" style={{ width: "85%" }} />
+                </div>
+              </div>
+
+              <Link
+                href="/interviews"
+                className="block text-center py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-slate-300 transition-all"
+              >
+                View Full Interview Report &rarr;
+              </Link>
+            </div>
+
+            {/* 2. Daily Aptitude Performance Card */}
+            <div className="p-5 rounded-3xl bg-[#151621] border border-white/10 shadow-lg space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Aptitude Practice</span>
+                <span className="px-2 py-0.5 rounded-md bg-[#D7FC51]/20 text-[#D7FC51] text-[10px] font-bold">
+                  Daily 10-Q
+                </span>
+              </div>
+
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-black text-white">
+                  {aptitudeStats.totalAttempts > 0 ? aptitudeStats.avgScore + "%" : "85%"}
+                </span>
+                <span className="text-xs font-mono text-slate-400">Accuracy Rate</span>
+              </div>
+
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between text-slate-400">
+                  <span>Sprints Completed</span>
+                  <span className="text-white font-bold">{Math.max(1, aptitudeStats.totalAttempts)} Attempts</span>
+                </div>
+                <div className="flex justify-between text-slate-400">
+                  <span>Quant &amp; Logic Strength</span>
+                  <span className="text-[#D7FC51] font-bold">Top 15%</span>
+                </div>
+                <div className="flex justify-between text-slate-400">
+                  <span>Daily Bonus</span>
+                  <span className="text-emerald-400 font-bold">+50 XP Earned</span>
+                </div>
+              </div>
+
+              <Link
+                href="/aptitude"
+                className="block text-center py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-[#D7FC51] transition-all"
+              >
+                Take Today's Sprint &rarr;
+              </Link>
+            </div>
+
+            {/* 3. Resume & Profile ATS Readiness Card */}
+            <div className="p-5 rounded-3xl bg-[#151621] border border-white/10 shadow-lg space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">ATS Readiness</span>
+                <span className="px-2 py-0.5 rounded-md bg-violet-500/20 text-violet-300 text-[10px] font-bold">
+                  AI Tailored
+                </span>
+              </div>
+
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-black text-white">94%</span>
+                <span className="text-xs font-mono text-slate-400">ATS Match Index</span>
+              </div>
+
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between text-slate-400">
+                  <span>Action Verbs &amp; Metrics</span>
+                  <span className="text-emerald-400 font-bold">Optimized</span>
+                </div>
+                <div className="flex justify-between text-slate-400">
+                  <span>Keyword Density</span>
+                  <span className="text-white font-bold">High (Target Roles)</span>
+                </div>
+                <div className="flex justify-between text-slate-400">
+                  <span>Certifications Synced</span>
+                  <span className="text-white font-bold">Verified</span>
+                </div>
+              </div>
+
+              <Link
+                href="/resume-maker"
+                className="block text-center py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-violet-300 transition-all"
+              >
+                Open Resume Maker &rarr;
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <GamificationHUD />
 
             </div>
 

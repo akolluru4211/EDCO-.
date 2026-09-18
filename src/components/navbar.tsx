@@ -1,11 +1,14 @@
 "use client";
 
+import { supabase } from "@/lib/supabase";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { 
+  Flame,
+  Brain,
   LayoutDashboard, 
   User as UserIcon, 
   ShieldCheck, 
@@ -40,6 +43,31 @@ export default function Navbar() {
     logout 
   } = useAuth();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const [streakCount, setStreakCount] = useState<number>(0);
+  const [showStreakModal, setShowStreakModal] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchStreak = async () => {
+      try {
+        const { data } = await supabase
+          .from("user_streaks")
+          .select("current_streak")
+          .eq("user_id", user.uid)
+          .maybeSingle();
+        if (data && typeof data.current_streak === "number") {
+          setStreakCount(data.current_streak);
+        } else {
+          setStreakCount(1);
+        }
+      } catch (err) {
+        setStreakCount(1);
+      }
+    };
+    fetchStreak();
+  }, [user]);
+
 
   // Do not render navbar on login, signup, or any auth routes
   const isAuthPage = pathname === "/auth/login" || pathname === "/auth/signup" || pathname?.startsWith("/auth/");

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -282,7 +283,7 @@ export default function PublicProjectDetailPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {project.images.map((img, idx) => (
                 <div key={idx} className="rounded-2xl border border-slate-200 overflow-hidden shadow-inner">
-                  <img src={img} alt={`Screenshot ${idx + 1}`} className="w-full h-auto object-cover" />
+                  <Image src={img} alt={`Screenshot ${idx + 1}`} width={600} height={400} unoptimized className="w-full h-auto object-cover" />
                 </div>
               ))}
             </div>

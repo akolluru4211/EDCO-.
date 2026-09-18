@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateSession } from "@/lib/otp-service";
 import { supabase } from "@/lib/supabase";
+import { rateLimit, getClientIp } from "@/lib/rate-limiter";
 
 export async function GET(req: NextRequest) {
   try {
+    const ip = getClientIp(req);
+    const limiter = rateLimit(`session_${ip}`, { limit: 60, windowMs: 60 * 1000 });
+    if (!limiter.allowed) {
+      return NextResponse.json({ authenticated: false, error: "RATE_LIMIT_EXCEEDED" }, { status: 429 });
+    }
+
     const token = 
       req.cookies.get("edworld_session")?.value ||
       req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ||

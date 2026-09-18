@@ -3,7 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import React, { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { AVAILABLE_CATEGORIES } from "@/lib/mock-data";
@@ -44,6 +44,25 @@ export default function ActiveInterviewStudioPage() {
   const router = useRouter();
   const { user, profile, loading } = useAuth();
   const categoryId = params?.category as string;
+
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const jobTitleParam = searchParams.get("jobTitle");
+    const jdParam = searchParams.get("jd");
+    const resumeIdParam = searchParams.get("resumeId");
+
+    if (jobTitleParam) {
+      setTargetRole(jobTitleParam);
+    }
+    if (jdParam) {
+      setJobDescriptionInput(jdParam);
+    }
+    if (resumeIdParam) {
+      setSelectedResumeId(resumeIdParam);
+    }
+  }, [searchParams]);
+
 
   // Career Track Gating: 18+ only
   const isMinorUser = user ? user.ageBand !== "18+" : false;

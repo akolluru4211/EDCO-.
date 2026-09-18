@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateAndSendOtp } from "@/lib/otp-service";
+import { rateLimit, getClientIp } from "@/lib/rate-limiter";
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIp(req);
+    const limiter = rateLimit(`otp_send_${ip}`, { limit: 5, windowMs: 60 * 1000 });
+    
+    if (!limiter.allowed) {
+      return NextResponse.json(
+        { error: "TOO_MANY_REQUESTS", message: "Too many verification requests. Please try again in 1 minute." },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const { identifier, purpose } = body;
 
@@ -13,9 +24,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const ipAddress = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "127.0.0.1";
-
-    const result = await generateAndSendOtp(identifier, purpose || "login", ipAddress);
+    const result = await generateAndSendOtp(identifier, purpose || "login", ip);
 
     return NextResponse.json(result, { status: 200 });
   } catch (err: any) {
