@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { awardPoints } from "@/lib/gamification-service";
 import { analyzeSpokenLanguage, syncUserCommunicationProfile } from "@/lib/interview/language-analysis-service";
+import { UniversalAI } from "@/lib/ai/universal-ai";
 
 export const dynamic = "force-dynamic";
 
@@ -24,120 +25,92 @@ export async function POST(req: NextRequest) {
       questions = [],
       transcript = "",
       durationSeconds = 60,
-      fullscreenExitEvents = []
+      targetRole = "",
+      resumeContext = "",
+      fullscreenExitEvents = [],
     } = body;
 
     if (!userId || !transcript) {
       return NextResponse.json({ error: "userId and transcript are required." }, { status: 400 });
     }
 
-    // 1. Run Comprehensive Language & Communication Analysis Engine
+    const questionText = questions[0]?.text || "Mock Technical Interview Question";
+    const effectiveRole = targetRole || category || "Software Engineer";
+
+    // 1. Spoken Language & Communication Analysis (WPM, Fillers, Clarity)
     const langAnalysis = analyzeSpokenLanguage(transcript, durationSeconds, category);
 
-    // 2. Dispatch compute job to Python Flask Scoring Microservice (Cluster-internal) if available
-    let flaskResult: any = null;
-    const flaskServiceUrl = process.env.FLASK_SCORING_URL || "http://flask-scoring-service:5000/score-interview";
-    const internalSecret = process.env.INTERNAL_SERVICE_SECRET || "edworld-internal-mock-secret-2026";
-
-    try {
-      const flaskRes = await fetch(flaskServiceUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Internal-Service-Key": internalSecret
-        },
-        body: JSON.stringify({
-          videoUrl: body.videoUrl || null,
-          audioUrl: body.audioUrl || null,
-          questionCategory: category,
-          effectiveLevel: difficultyLevel,
-          questions,
-          transcript,
-          failFaceApi: body.failFaceApi || false
-        })
-      });
-
-      if (flaskRes.ok) {
-        flaskResult = await flaskRes.json();
-      }
-    } catch (flaskErr) {
-      console.warn("[Flask Microservice Connection Notice - Using In-Process Fallback]:", flaskErr);
-    }
+    // 2. Deep Claude AI / Universal AI Evaluation
+    const aiEvaluation = await UniversalAI.scoreInterviewResponse({
+      questionText,
+      transcript,
+      targetRole: effectiveRole,
+      questionCategory: category,
+      resumeContext,
+      suggestedDuration: questions[0]?.suggestedDurationSeconds || 120,
+      actualDuration: durationSeconds,
+    });
 
     const words = transcript.trim().split(/\s+/).filter(Boolean);
     const wordCount = words.length;
-    const duration = Math.max(15, durationSeconds);
-    const wordsPerMinute = flaskResult?.paceWpm || langAnalysis.wordsPerMinute;
+    const wordsPerMinute = langAnalysis.wordsPerMinute;
 
-    // 3. Mistake Annotations
-    const annotations: InlineAnnotation[] = flaskResult?.annotations || [];
+    // 3. Annotations
+    const annotations: InlineAnnotation[] = [];
     const lowerTranscript = transcript.toLowerCase();
 
-    // Check for filler words
+    // Filler word detection
     const fillerWords = ["um", "uh", "like", "you know", "basically", "actually", "sort of"];
     fillerWords.forEach((fw) => {
-      const idx = lowerTranscript.indexOf(fw);
-      if (idx !== -1) {
+      let pos = 0;
+      while ((pos = lowerTranscript.indexOf(fw, pos)) !== -1) {
         annotations.push({
           id: `ann-filler-${Date.now()}-${annotations.length}`,
-          span: transcript.substring(idx, idx + fw.length),
-          remark: `Filler word cluster ("${fw}"). Pausing for breath keeps your pacing authoritative.`,
+          span: transcript.substring(pos, pos + fw.length),
+          remark: `Filler word cluster ("${fw}"). Brief silent pauses sound more authoritative.`,
           type: "filler",
-          startIndex: idx,
-          endIndex: idx + fw.length
+          startIndex: pos,
+          endIndex: pos + fw.length,
         });
+        pos += fw.length;
+        if (annotations.length > 8) break;
       }
     });
 
-    // Check for opportunity to strengthen with a concrete metric/example
+    // Metric benchmark check
     if (!lowerTranscript.includes("percent") && !lowerTranscript.includes("%") && !lowerTranscript.includes("result") && !lowerTranscript.includes("increased") && !lowerTranscript.includes("reduced")) {
       const firstSentenceEnd = transcript.indexOf(".");
       const spanEnd = firstSentenceEnd !== -1 ? firstSentenceEnd : Math.min(60, transcript.length);
       annotations.push({
         id: `ann-example-${Date.now()}`,
         span: transcript.substring(0, spanEnd),
-        remark: "A concrete quantitative benchmark or specific metric here would elevate this technical explanation.",
+        remark: "Add a concrete metric benchmark (e.g. latency, throughput, scale) to solidify engineering credibility.",
         type: "example_needed",
         startIndex: 0,
-        endIndex: spanEnd
+        endIndex: spanEnd,
       });
     }
 
-    // 4. Sub-Score Calculations
-    // A) Technical Content Score
-    const hasStarKeywords = ["situation", "task", "action", "result", "because", "built", "implemented", "solved", "reduced", "optimized"].some(kw => lowerTranscript.includes(kw));
-    let contentScore = hasStarKeywords ? 88 : 78;
-    if (wordCount > 60) contentScore += 6;
-    contentScore = Math.min(98, Math.max(65, contentScore));
-
-    // B) Voice Delivery / Language Score
-    let voiceScore = langAnalysis.overallLanguageScore;
-
-    // C) Eye Contact / Engagement Score
+    // 4. Combined Multimodal Scores
+    const contentScore = aiEvaluation.contentScore;
+    const voiceScore = langAnalysis.overallLanguageScore;
     const engagementScore = 85;
-    const engagementFeedback = "Good eye contact — you maintained steady visual focus on the camera during the majority of your explanation.";
-
-    const overallScore = Math.round((contentScore * 0.45) + (voiceScore * 0.35) + (engagementScore * 0.20));
+    const overallScore = Math.round(contentScore * 0.5 + voiceScore * 0.35 + engagementScore * 0.15);
 
     // 5. Construct Feedback Object
     const feedback = {
-      strengths: langAnalysis.strengths.length > 0 ? langAnalysis.strengths : [
-        "Structured, articulate communication with clear problem framing.",
-        "Effective explanation of foundational concepts and technical decisions."
-      ],
-      areasForImprovement: langAnalysis.areasForImprovement.length > 0 ? langAnalysis.areasForImprovement : [
-        wordsPerMinute > 155
-          ? "Pacing was slightly fast. Inserting brief pauses between ideas aids clarity."
-          : "Consider anchoring your conclusion with a direct, measurable takeaway."
-      ],
-      detailedSummary: `Technical Content: ${contentScore}/100 • Communication & Language: ${langAnalysis.overallLanguageScore}/100. ${langAnalysis.coachSuggestions[0] || "Solid delivery."}`,
-      nextPracticeAdvice: langAnalysis.coachSuggestions[1] || "Practice framing your next technical answer using the STAR method (Situation, Task, Action, Result).",
-      eyeContactFeedback: engagementFeedback,
+      strengths: aiEvaluation.strengths.length > 0 ? aiEvaluation.strengths : langAnalysis.strengths,
+      areasForImprovement: aiEvaluation.areasForImprovement.length > 0 ? aiEvaluation.areasForImprovement : langAnalysis.areasForImprovement,
+      detailedSummary: aiEvaluation.detailedSummary,
+      nextPracticeAdvice: aiEvaluation.coachSuggestions?.[0] || "Practice structuring with STAR method (Situation, Task, Action, Result).",
+      eyeContactFeedback: "Good visual focus and camera engagement maintained throughout.",
       tone: "encouraging",
-      whatYouSaid: langAnalysis.whatYouSaid,
-      improvedVersion: langAnalysis.improvedVersion,
-      improvementRationale: langAnalysis.improvementRationale,
-      coachSuggestions: langAnalysis.coachSuggestions
+      whatYouSaid: aiEvaluation.whatYouSaid || langAnalysis.whatYouSaid,
+      improvedVersion: aiEvaluation.improvedVersion || langAnalysis.improvedVersion,
+      improvementRationale: aiEvaluation.improvementRationale || langAnalysis.improvementRationale,
+      coachSuggestions: aiEvaluation.coachSuggestions.length > 0 ? aiEvaluation.coachSuggestions : langAnalysis.coachSuggestions,
+      starBreakdown: aiEvaluation.starBreakdown,
+      modelUsed: aiEvaluation.modelUsed,
     };
 
     const metrics = {
@@ -148,7 +121,7 @@ export async function POST(req: NextRequest) {
       voiceDelivery: voiceScore,
       facialEngagement: engagementScore,
       eyeContactRating: "Good — Natural Camera Engagement",
-      structureRating: hasStarKeywords ? "Strong (STAR Method)" : "Good Functional Structure",
+      structureRating: aiEvaluation.structureScore > 80 ? "Strong (STAR Method)" : "Good Functional Structure",
       fullscreenExitCount: fullscreenExitEvents.length,
       
       // Extended Communication & Language Telemetry
@@ -159,21 +132,16 @@ export async function POST(req: NextRequest) {
       professionalScore: langAnalysis.professionalScore,
       fillerBreakdown: langAnalysis.fillerBreakdown,
       topFiller: langAnalysis.topFiller,
-      whatYouSaid: langAnalysis.whatYouSaid,
-      improvedVersion: langAnalysis.improvedVersion,
-      improvementRationale: langAnalysis.improvementRationale,
-      coachSuggestions: langAnalysis.coachSuggestions,
-      dailyPracticePrompt: langAnalysis.dailyPracticePrompt
+      whatYouSaid: feedback.whatYouSaid,
+      improvedVersion: feedback.improvedVersion,
+      improvementRationale: feedback.improvementRationale,
+      coachSuggestions: feedback.coachSuggestions,
+      dailyPracticePrompt: langAnalysis.dailyPracticePrompt,
+      modelUsed: aiEvaluation.modelUsed,
     };
 
     const interviewFormat = body.format || "standard";
-    const modelVersion = flaskResult?.modelVersion || process.env.MODEL_VERSION || "edworld-scorer-v2.2-prod";
-    const codeSubmission = body.codeSubmission || null;
-    const testResults = body.testResults || [];
-    const discussionTranscript = body.discussionTranscript || [];
-    const codeScore = body.codeScore !== undefined ? Number(body.codeScore) : (flaskResult?.codeScore || null);
-    const discussionScore = interviewFormat === "group_discussion" ? overallScore : null;
-
+    const modelVersion = aiEvaluation.modelUsed || "claude-3-5-sonnet";
     const sessionId = `session-${Date.now()}`;
 
     // 6. Save Session to Supabase interview_sessions
@@ -185,21 +153,16 @@ export async function POST(req: NextRequest) {
         difficulty_level: difficultyLevel,
         format: interviewFormat,
         model_version: modelVersion,
-        code_submission: codeSubmission,
-        test_results: testResults,
-        discussion_transcript: discussionTranscript,
-        code_score: codeScore,
-        discussion_score: discussionScore,
-        questions: questions.length > 0 ? questions : [{ id: "q1", text: "Mock Interview Question", transcript }],
+        questions: questions.length > 0 ? questions : [{ id: "q1", text: questionText, transcript }],
         overall_score: overallScore,
         metrics: {
           ...metrics,
           annotations,
           fullscreen_exit_events: fullscreenExitEvents,
           format: interviewFormat,
-          model_version: modelVersion
+          model_version: modelVersion,
         },
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
       });
 
       // Save to interview_language_metrics table
@@ -214,13 +177,13 @@ export async function POST(req: NextRequest) {
         professional_score: langAnalysis.professionalScore,
         filler_word_count: langAnalysis.fillerWordCount,
         speaking_rate_wpm: wordsPerMinute,
-        pause_count: annotations.filter(a => a.type === "pacing").length,
-        answer_structure_score: hasStarKeywords ? 92 : 80,
-        what_you_said: langAnalysis.whatYouSaid,
-        improved_version: langAnalysis.improvedVersion,
-        improvement_rationale: langAnalysis.improvementRationale,
-        coachSuggestions: langAnalysis.coachSuggestions,
-        created_at: new Date().toISOString()
+        pause_count: annotations.filter((a) => a.type === "pacing").length,
+        answer_structure_score: aiEvaluation.structureScore,
+        what_you_said: feedback.whatYouSaid,
+        improved_version: feedback.improvedVersion,
+        improvement_rationale: feedback.improvementRationale,
+        coachSuggestions: feedback.coachSuggestions,
+        created_at: new Date().toISOString(),
       });
 
       // Sync long-term user communication profile
@@ -229,14 +192,14 @@ export async function POST(req: NextRequest) {
       console.warn("[Save Interview Session Supabase Note]:", saveErr);
     }
 
-    // 7. Server-Side Gamification Reward Award
+    // 7. Gamification Points
     try {
       await awardPoints({
         userId,
         sourceFeature: "mock_interview",
         sourceId: sessionId,
         points: 50,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
       });
     } catch (rewardErr) {
       console.warn("[Gamification Reward Note]:", rewardErr);
@@ -247,20 +210,19 @@ export async function POST(req: NextRequest) {
       sessionId,
       format: interviewFormat,
       modelVersion,
+      modelUsed: aiEvaluation.modelUsed,
       overallScore,
       contentScore,
       voiceScore,
       engagementScore,
-      codeScore,
-      discussionScore,
-      testResults,
       metrics,
       annotations,
       feedback,
       fullscreenExitEvents,
-      languageAnalysis: langAnalysis
+      languageAnalysis: langAnalysis,
     });
   } catch (error: any) {
+    console.error("[Score Session Error]:", error);
     return NextResponse.json({ error: error.message || "Scoring error" }, { status: 500 });
   }
 }

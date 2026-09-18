@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { executeMCPTool } from "@/lib/mcp/engine";
 import { supabase } from "@/lib/supabase";
+import { UniversalAI, InterviewQuestionItem } from "@/lib/ai/universal-ai";
 
 export const dynamic = "force-dynamic";
 
@@ -12,37 +12,99 @@ export interface GeneratedQuestion {
   keyPoints?: string[];
   suggestedDurationSeconds?: number;
   isWarmup?: boolean;
-  type: "warmup" | "behavioral" | "technical";
+  type: "warmup" | "project_deep_dive" | "technical" | "behavioral" | "system_design";
+  contextSource?: string;
   adaptiveFocus?: string;
 }
-
-const FIXED_OPENING_QUESTION: GeneratedQuestion = {
-  id: "warmup-opening-1",
-  text: "Tell me about yourself, your background, and what drives your passion for this domain.",
-  category: "General",
-  difficultyLevel: 0,
-  keyPoints: ["Clear professional overview", "Key achievements", "Alignment with career goals"],
-  suggestedDurationSeconds: 120,
-  isWarmup: true,
-  type: "warmup"
-};
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
-    const { 
-      jobDescription, 
-      category = "Software Engineering", 
-      effectiveLevel = 0, 
-      userId = "learner-user", 
-      candidateName = "" 
+    const {
+      jobDescription = "",
+      category = "Software Engineering",
+      effectiveLevel = 0,
+      userId = "learner-user",
+      candidateName = "",
+      resumeId = null,
+      resumeContent = null,
+      rawResumeText = "",
+      targetRole = "",
     } = body;
 
     const firstName = candidateName ? candidateName.trim().split(" ")[0] : "";
+    const effectiveRole = targetRole || category || "Software Engineer";
+    const levelLabel = effectiveLevel === 2 ? "Senior" : effectiveLevel === 1 ? "Mid-Level" : "Junior/Entry";
 
-    // 1. Fetch User's Historical Communication Profile & Weakness for Adaptive Question Generation
+    let resumeTitle = "";
+    let resumeSummary = "";
+    let extractedSkills: string[] = [];
+    let extractedProjects: Array<{ title: string; description?: string; technologies?: string[] }> = [];
+    let extractedExperience: Array<{ company?: string; role?: string; description?: string }> = [];
+
+    // 1. Load Resume from Supabase if resumeId is provided
+    if (resumeId && userId && userId !== "guest") {
+      try {
+        const { data: dbResume } = await supabase
+          .from("resumes")
+          .select("id, title, content")
+          .eq("id", resumeId)
+          .maybeSingle();
+
+        if (dbResume && dbResume.content) {
+          resumeTitle = dbResume.title || "User Resume";
+          const c = dbResume.content;
+          resumeSummary = c.summary || "";
+          
+          if (c.skills) {
+            if (Array.isArray(c.skills.technical)) extractedSkills.push(...c.skills.technical);
+            if (Array.isArray(c.skills.tools)) extractedSkills.push(...c.skills.tools);
+            if (Array.isArray(c.skills.soft)) extractedSkills.push(...c.skills.soft);
+            if (Array.isArray(c.skills)) extractedSkills.push(...c.skills);
+          }
+
+          if (Array.isArray(c.projects)) {
+            extractedProjects = c.projects.map((p: any) => ({
+              title: p.title || p.name || "Project",
+              description: p.description || p.bullets?.join("; ") || "",
+              technologies: Array.isArray(p.technologies) ? p.technologies : [],
+            }));
+          }
+
+          if (Array.isArray(c.experience)) {
+            extractedExperience = c.experience.map((e: any) => ({
+              company: e.company || e.organization || "",
+              role: e.role || e.title || "",
+              description: e.description || e.bullets?.join("; ") || "",
+            }));
+          }
+        }
+      } catch (err) {
+        console.warn("[Fetch Resume Supabase Note]:", err);
+      }
+    } else if (resumeContent) {
+      // In-memory or parsed resume object
+      resumeTitle = resumeContent.title || "Custom Resume";
+      resumeSummary = resumeContent.summary || "";
+      if (Array.isArray(resumeContent.skills)) {
+        extractedSkills = resumeContent.skills;
+      } else if (resumeContent.skills) {
+        extractedSkills = [
+          ...(resumeContent.skills.technical || []),
+          ...(resumeContent.skills.tools || []),
+        ];
+      }
+      if (Array.isArray(resumeContent.projects)) {
+        extractedProjects = resumeContent.projects;
+      }
+      if (Array.isArray(resumeContent.experience)) {
+        extractedExperience = resumeContent.experience;
+      }
+    }
+
+    // 2. Fetch User's Historical Communication Profile for adaptive coaching
     let userCommProfile: any = null;
-    if (userId) {
+    if (userId && userId !== "guest") {
       try {
         const { data: profileData } = await supabase
           .from("communication_profiles")
@@ -55,126 +117,69 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 2. Adapt the Warmup Question dynamically based on past performance
-    let warmupText = firstName 
-      ? `Hi ${firstName}, welcome to your mock interview. Let's begin by having you tell me about yourself, your background, and what drives your passion for this domain.`
-      : FIXED_OPENING_QUESTION.text;
+    // 3. Call Universal AI Engine (Claude 3.5/3.7 Sonnet -> Gemini 2.5 Flash -> OpenAI -> Deterministic)
+    const aiResult = await UniversalAI.generateResumeInterviewQuestions({
+      targetRole: effectiveRole,
+      category,
+      experienceLevel: levelLabel,
+      resumeTitle,
+      resumeSummary,
+      skills: extractedSkills,
+      projects: extractedProjects,
+      workExperience: extractedExperience,
+      rawResumeText: rawResumeText || jobDescription,
+    });
 
-    let adaptiveFocus: string | undefined;
-
-    if (userCommProfile) {
-      if (userCommProfile.total_interviews > 1 && userCommProfile.clarity_score < 75) {
-        warmupText = firstName
-          ? `Hi ${firstName}, welcome back! To start, can you briefly introduce yourself and highlight the 2 or 3 core achievements that make you suitable for this role?`
-          : "Can you briefly introduce yourself and highlight the 2 or 3 core achievements that make you suitable for this role?";
-        adaptiveFocus = "Structure & Conciseness";
-      } else if (userCommProfile.primary_weakness?.includes("filler")) {
-        adaptiveFocus = "Pacing & Filler Word Reduction";
+    const formattedQuestions: GeneratedQuestion[] = aiResult.questions.map((q: InterviewQuestionItem, idx: number) => {
+      let qText = q.text;
+      if (idx === 0 && firstName && !qText.includes(firstName)) {
+        qText = `Hi ${firstName}, welcome to your mock interview for ${effectiveRole}. ${qText}`;
       }
-    }
-
-    const personalizedWarmup: GeneratedQuestion = {
-      ...FIXED_OPENING_QUESTION,
-      text: warmupText,
-      adaptiveFocus
-    };
-
-    // 3. Execute via Central MCP Engine if available
-    const mcpResult = await executeMCPTool(
-      "generate_interview_questions",
-      { 
-        category, 
-        effectiveLevel, 
-        jobDescription, 
-        candidateName,
-        communicationProfile: userCommProfile 
-      },
-      {
-        userId: req.headers.get("x-user-id") || userId,
-        role: "CLIENT",
-        timestamp: new Date().toISOString()
-      }
-    );
-
-    if (mcpResult.success && mcpResult.data?.questions) {
-      const returnedQuestions = mcpResult.data.questions.map((q: any, idx: number) => {
-        if (idx === 0 && q.isWarmup && firstName && !q.text.includes(firstName)) {
-          return { ...q, text: `Hi ${firstName}, welcome to your mock interview. ${q.text}`, adaptiveFocus };
-        }
-        return q;
-      });
-
-      return NextResponse.json({
-        success: true,
-        source: mcpResult.data.source || "mcp_engine",
-        questions: returnedQuestions,
-        adaptiveProfileApplied: !!userCommProfile
-      });
-    }
-
-    // 4. Direct Live Supabase Query Fallback
-    const questions: GeneratedQuestion[] = [personalizedWarmup];
-    try {
-      const { data: dbQuestions } = await supabase
-        .from("interview_questions")
-        .select("*")
-        .eq("is_active", true)
-        .ilike("category", `%${category}%`)
-        .eq("difficulty_level", effectiveLevel);
-
-      if (dbQuestions && dbQuestions.length > 0) {
-        dbQuestions.slice(0, 2).forEach((dq: any) => {
-          questions.push({
-            id: dq.id,
-            text: dq.text,
-            category: dq.category,
-            difficultyLevel: Math.min(2, Math.max(0, dq.difficulty_level || effectiveLevel)) as 0 | 1 | 2,
-            keyPoints: dq.key_points || [],
-            suggestedDurationSeconds: dq.suggested_duration_seconds || 120,
-            type: "technical"
-          });
-        });
-      } else {
-        // Dynamic Role-Calibrated Question
-        questions.push({
-          id: `live-q-${Date.now()}`,
-          text: `In relation to your practical experience in ${category}, walk me through your technical approach to diagnosing, building, and deploying reliable solutions.`,
-          category,
-          difficultyLevel: Math.min(2, Math.max(0, effectiveLevel)) as 0 | 1 | 2,
-          keyPoints: ["Problem breakdown", "Architecture decisions", "Measurable outcome"],
-          suggestedDurationSeconds: 120,
-          type: "technical"
-        });
-      }
-
-      // Add a behavioral/communication calibration question if user is on advanced track
-      if (userCommProfile?.total_interviews && userCommProfile.total_interviews >= 1) {
-        questions.push({
-          id: `adaptive-beh-${Date.now()}`,
-          text: `Tell me about a time when you had to explain a complex technical limitation in ${category} to a non-technical stakeholder or client. How did you structure your explanation?`,
-          category,
-          difficultyLevel: 1,
-          keyPoints: ["Empathy and clarity", "Simplifying jargon", "Achieving stakeholder buy-in"],
-          suggestedDurationSeconds: 90,
-          type: "behavioral",
-          adaptiveFocus: "Technical-to-Business Translation"
-        });
-      }
-    } catch (err) {
-      console.warn("[Live Question Fetch Note]:", err);
-    }
+      return {
+        id: q.id || `q_${idx + 1}`,
+        text: qText,
+        category: q.category || category,
+        difficultyLevel: q.difficultyLevel,
+        keyPoints: q.keyPoints,
+        suggestedDurationSeconds: q.suggestedDurationSeconds,
+        isWarmup: idx === 0,
+        type: q.type,
+        contextSource: q.contextSource,
+        adaptiveFocus: q.adaptiveFocus || (userCommProfile?.primary_weakness ? `Targeting: ${userCommProfile.primary_weakness}` : undefined),
+      };
+    });
 
     return NextResponse.json({
       success: true,
-      source: "static_bank",
-      questions,
-      adaptiveProfileApplied: !!userCommProfile
+      source: aiResult.modelUsed,
+      modelUsed: aiResult.modelUsed,
+      resumeConnected: aiResult.resumeConnected,
+      resumeTitle: resumeTitle || null,
+      questions: formattedQuestions,
+      extractedSkillsCount: extractedSkills.length,
+      extractedProjectsCount: extractedProjects.length,
+      adaptiveProfileApplied: Boolean(userCommProfile),
     });
   } catch (error: any) {
-    return NextResponse.json({
-      success: false,
-      error: error.message || "Failed to generate questions",
-      questions: [FIXED_OPENING_QUESTION]
-    }, { status: 500 });
+    console.error("[Generate Questions Error]:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message || "Failed to generate questions",
+        questions: [
+          {
+            id: "warmup-opening-1",
+            text: "Tell me about yourself, your background, and what drives your passion for this domain.",
+            category: "General",
+            difficultyLevel: 0,
+            keyPoints: ["Clear professional overview", "Key achievements", "Alignment with career goals"],
+            suggestedDurationSeconds: 120,
+            isWarmup: true,
+            type: "warmup",
+          },
+        ],
+      },
+      { status: 500 }
+    );
   }
 }

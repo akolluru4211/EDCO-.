@@ -24,7 +24,9 @@ import {
   MessageSquare,
   Activity,
   Flame,
-  Volume2
+  Volume2,
+  FileText,
+  CheckCircle2
 } from "lucide-react";
 import EventTicket from "@/components/ui/EventTicket";
 import AuthGuard from "@/components/auth/AuthGuard";
@@ -43,6 +45,7 @@ export default function InterviewsHubPage() {
   const { user, profile, loading } = useAuth();
   const [sessions, setSessions] = useState<InterviewSession[]>([]);
   const [commProfile, setCommProfile] = useState<any>(null);
+  const [activeResume, setActiveResume] = useState<{ id: string; title: string; skillsCount: number; projectsCount: number } | null>(null);
 
   // Career Track Gating: 18+ only
   const isMinorUser = user ? user.ageBand !== "18+" : false;
@@ -53,7 +56,7 @@ export default function InterviewsHubPage() {
       return;
     }
 
-    const loadSessionsAndCommProfile = async () => {
+    const loadData = async () => {
       // 1. Fetch Sessions from Supabase
       try {
         const { data } = await supabase
@@ -114,9 +117,33 @@ export default function InterviewsHubPage() {
       } catch (cpErr) {
         console.warn("[Fetch Comm Profile Note]:", cpErr);
       }
+
+      // 3. Fetch User's Active Resume
+      try {
+        const { data: resumeData } = await supabase
+          .from("resumes")
+          .select("id, title, content, updated_at")
+          .eq("user_id", user.uid)
+          .order("updated_at", { ascending: false })
+          .limit(1);
+
+        if (resumeData && resumeData.length > 0) {
+          const r = resumeData[0];
+          const skillsList = r.content?.skills?.technical || (Array.isArray(r.content?.skills) ? r.content.skills : []) || [];
+          const projList = r.content?.projects || [];
+          setActiveResume({
+            id: r.id,
+            title: r.title || "Portfolio Resume",
+            skillsCount: skillsList.length,
+            projectsCount: projList.length,
+          });
+        }
+      } catch (rErr) {
+        console.warn("[Fetch Resume Note]:", rErr);
+      }
     };
 
-    loadSessionsAndCommProfile();
+    loadData();
   }, [user, isMinorUser]);
 
   const getEffectiveLevelForCategory = (catId: string, catName: string): SkillLevel => {
@@ -171,24 +198,50 @@ export default function InterviewsHubPage() {
               <span className="text-xs font-black uppercase tracking-wider bg-[#13141B] text-[#D7FC51] px-3 py-1 rounded-xl">
                 Career Track
               </span>
-              <span className="text-xs font-mono text-[#8E95A5]">Adaptive Mock Interviews + Language Trainer</span>
+              <span className="text-xs font-mono text-[#8E95A5]">Claude AI &bull; Resume-Connected Studio</span>
             </div>
             <UserGreeting
               context="interview"
-              subtitle="Evaluate technical correctness and train English fluency, filler-word reduction, and STAR structure across interviews."
+              subtitle="Evaluate technical depth, STAR methodology, and train English fluency with Claude AI interviewing your exact resume projects."
             />
           </div>
 
           <div className="p-5 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] flex items-start gap-3 max-w-sm text-xs text-[#181920] shadow-sm">
             <TrendingUp className="w-5 h-5 text-[#00D2B4] shrink-0 mt-0.5" />
             <div>
-              <p className="font-black text-sm text-[#181920]">Personalized Language Coach</p>
+              <p className="font-black text-sm text-[#181920]">Resume-Tailored Questions</p>
               <p className="text-[#767E94] text-[11px] mt-0.5 leading-relaxed">
-                Tracks filler words, sentence length, and pacing over time with instant "What You Said" vs "Better Way to Say It" guidance.
+                Claude AI analyzes your saved resume projects and skills to ask authentic technical trade-off and STAR behavioral questions.
               </p>
             </div>
           </div>
         </div>
+
+        {/* Resume Connected Quick-Action Callout */}
+        {activeResume && (
+          <div className="p-5 rounded-3xl bg-[#13141B] text-white shadow-quixel flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-slate-800">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full bg-[#D7FC51] text-slate-950 font-black text-[10px] uppercase tracking-wider">
+                  Resume Connected
+                </span>
+                <span className="text-xs font-mono text-slate-300">
+                  {activeResume.title}
+                </span>
+              </div>
+              <p className="text-xs text-slate-300">
+                Ready for AI mock interview with {activeResume.skillsCount > 0 ? `${activeResume.skillsCount} detected skills` : "technical profile"} and {activeResume.projectsCount > 0 ? `${activeResume.projectsCount} portfolio projects` : "experience"}.
+              </p>
+            </div>
+            <Link
+              href="/interviews/swe"
+              className="btn-shine px-5 py-2.5 rounded-2xl bg-[#D7FC51] hover:bg-[#c9f03d] text-slate-950 font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-md shrink-0"
+            >
+              <span>Launch Interview with Resume</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        )}
 
         {/* 1. Daily Personalized Practice Drill Card */}
         <DailyPracticeCard
@@ -252,7 +305,7 @@ export default function InterviewsHubPage() {
                 </div>
                 <h3 className="font-black text-[#181920] text-base">Full Verbal Studio</h3>
                 <p className="text-xs text-[#767E94] leading-relaxed">
-                  Multi-question verbal interview with camera engagement, STAR rubric scoring, and level progression.
+                  Multi-question verbal interview with camera engagement, STAR rubric scoring, and resume project deep-dives.
                 </p>
               </div>
               <Link
