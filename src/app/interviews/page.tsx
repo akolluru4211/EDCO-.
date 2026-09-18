@@ -170,14 +170,14 @@ export default function InterviewsHubPage() {
                 Full AI Interview Studio is for Career Track (18+)
               </h1>
               <p className="text-xs text-[#8E95A5] leading-relaxed">
-                Minors practice presentation and verbal clarity inside the School Communication Trainer and Curiosity Quests.
+                Minors practice presentation and verbal clarity inside standard practice modules.
               </p>
             </div>
             <Link
-              href="/school/trainer"
+              href="/dashboard"
               className="w-full py-3.5 px-4 rounded-2xl bg-[#13141B] hover:bg-[#252632] text-white text-xs font-bold uppercase tracking-wider shadow-md transition-all flex items-center justify-center gap-2"
             >
-              <span>Open School Communication Trainer</span>
+              <span>Return to Dashboard</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>

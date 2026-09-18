@@ -3,7 +3,6 @@ import { studentTools } from "./tools/student";
 import { employeeTools } from "./tools/employee";
 import { hrTools } from "./tools/hr";
 import { founderTools } from "./tools/founder";
-import { teacherTools } from "./tools/teacher";
 import { collegeTools } from "./tools/college";
 import { adminTools } from "./tools/admin";
 import { developerTools } from "./tools/developer";
@@ -19,7 +18,6 @@ export const ALL_MCP_TOOLS: MCPToolDefinition[] = [
   ...employeeTools,
   ...hrTools,
   ...founderTools,
-  ...teacherTools,
   ...collegeTools,
   ...adminTools
 ];
@@ -38,8 +36,7 @@ export function getAvailableTools(userRole: string = "CLIENT"): Omit<MCPToolDefi
   const isAdmin = normRole === "ADMIN" || normRole === "SUPER_ADMIN";
   const isFounder = normRole === "FOUNDER" || normRole === "EXECUTIVE" || isAdmin;
   const isHR = normRole === "HR" || isFounder;
-  const isTeacher = normRole === "TEACHER" || isAdmin;
-  const isCollege = normRole === "COLLEGE_ADMIN" || normRole === "PLACEMENT_OFFICER" || isAdmin;
+    const isCollege = normRole === "COLLEGE_ADMIN" || normRole === "PLACEMENT_OFFICER" || isAdmin;
   const isEmployee = normRole === "EMPLOYEE" || isHR;
 
   return ALL_MCP_TOOLS.filter(tool => {
@@ -50,8 +47,7 @@ export function getAvailableTools(userRole: string = "CLIENT"): Omit<MCPToolDefi
       if (target === "EMPLOYEE" && isEmployee) return true;
       if (target === "HR" && isHR) return true;
       if ((target === "FOUNDER" || target === "EXECUTIVE") && isFounder) return true;
-      if (target === "TEACHER" && isTeacher) return true;
-      if ((target === "COLLEGE_ADMIN" || target === "PLACEMENT_OFFICER") && isCollege) return true;
+            if ((target === "COLLEGE_ADMIN" || target === "PLACEMENT_OFFICER") && isCollege) return true;
       return false;
     });
   }).map(({ handler, ...rest }) => rest);
@@ -104,8 +100,7 @@ export async function executeMCPTool(
   const isAdmin = normRole === "ADMIN" || normRole === "SUPER_ADMIN";
   const isFounder = normRole === "FOUNDER" || normRole === "EXECUTIVE" || isAdmin;
   const isHR = normRole === "HR" || isFounder;
-  const isTeacher = normRole === "TEACHER" || isAdmin;
-  const isCollege = normRole === "COLLEGE_ADMIN" || normRole === "PLACEMENT_OFFICER" || isAdmin;
+    const isCollege = normRole === "COLLEGE_ADMIN" || normRole === "PLACEMENT_OFFICER" || isAdmin;
   const isEmployee = normRole === "EMPLOYEE" || isHR;
 
   const hasPermission = isAdmin || tool.requiredRoles.some(r => {
@@ -114,8 +109,7 @@ export async function executeMCPTool(
     if (target === "EMPLOYEE" && isEmployee) return true;
     if (target === "HR" && isHR) return true;
     if ((target === "FOUNDER" || target === "EXECUTIVE") && isFounder) return true;
-    if (target === "TEACHER" && isTeacher) return true;
-    if ((target === "COLLEGE_ADMIN" || target === "PLACEMENT_OFFICER") && isCollege) return true;
+        if ((target === "COLLEGE_ADMIN" || target === "PLACEMENT_OFFICER") && isCollege) return true;
     return false;
   });
 

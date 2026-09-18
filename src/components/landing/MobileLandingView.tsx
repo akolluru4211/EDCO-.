@@ -211,7 +211,7 @@ export default function MobileLandingView() {
         <div className="flex items-center justify-center gap-4 text-slate-700 font-medium">
           <Link href="/pricing" className="hover:underline">Pricing</Link>
           <span>&bull;</span>
-          <Link href="/for-schools" className="hover:underline">For Schools</Link>
+          <Link href="/colleges" className="hover:underline">For Colleges & Placements</Link>
           <span>&bull;</span>
           <Link href="/privacy" className="hover:underline">Privacy</Link>
           <span>&bull;</span>

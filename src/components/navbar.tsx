@@ -114,15 +114,7 @@ export default function Navbar() {
       desc: "Financial metrics, burn rate & valuation sandbox",
       visible: isFounder || isAdmin || isSuperAdmin
     },
-    { 
-      href: "/school/teacher", 
-      label: "Teacher Studio", 
-      shortLabel: "Teacher Studio",
-      icon: School, 
-      desc: "Class rosters, attendance & lesson planner",
-      visible: isTeacher || isFounder || isAdmin
-    },
-    { 
+        { 
       href: "/colleges", 
       label: "Colleges & Placements", 
       shortLabel: "Placements",
@@ -168,7 +160,7 @@ export default function Navbar() {
             
             {/* Left: Brand Logo */}
             <Link 
-              href={user ? (isStaff ? (isFounder ? "/founder" : isHR ? "/hr" : isTeacher ? "/school/teacher" : "/employee") : "/dashboard") : "/"} 
+              href={user ? (isStaff ? (isFounder ? "/founder" : isHR ? "/hr" : "/employee") : "/dashboard") : "/"} 
               className="flex items-center gap-2.5 group"
             >
               <div className="w-9 h-9 rounded-2xl bg-[#1C1D26] border border-white/15 p-1 flex items-center justify-center shadow-md group-hover:scale-105 group-hover:border-[#D7FC51]/50 transition-all overflow-hidden shrink-0">
@@ -217,26 +209,8 @@ export default function Navbar() {
                 })}
 
                 {/* Strict Conditional Guards required by verification suite */}
-                {(isTeacher || isAdmin) && (
-                  <Link
-                    href="/teacher"
-                    className="hidden"
-                    tabIndex={-1}
-                    aria-hidden="true"
-                  >
-                    Teacher Cohort
-                  </Link>
-                )}
-                {(isSchoolAdmin || isAdmin) && (
-                  <Link
-                    href="/school-admin"
-                    className="hidden"
-                    tabIndex={-1}
-                    aria-hidden="true"
-                  >
-                    School Admin
-                  </Link>
-                )}
+                
+                
                 {isAdmin && (
                   <Link
                     href="/admin"
@@ -484,8 +458,7 @@ export default function Navbar() {
                       {[
                         { href: "/about", label: "About Edworld", icon: Compass },
                         { href: "/pricing", label: "Plans & Pricing", icon: Layers },
-                        { href: "/for-schools", label: "For Schools & Institutions", icon: School },
-                        { href: "/contact", label: "Contact & Support", icon: Users },
+                                                { href: "/contact", label: "Contact & Support", icon: Users },
                         { href: "/privacy", label: "Privacy Policy", icon: Lock },
                         { href: "/terms", label: "Terms of Service", icon: FileText },
                       ].map((item) => {

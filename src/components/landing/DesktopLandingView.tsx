@@ -134,7 +134,7 @@ export default function DesktopLandingView() {
               Pricing
             </Link>
             <Link
-              href="/for-schools"
+              href="/colleges"
               className="text-xs font-bold text-slate-600 hover:text-slate-950 transition-colors"
             >
               For Schools
@@ -415,7 +415,7 @@ export default function DesktopLandingView() {
 
           <div className="flex items-center gap-6 font-medium">
             <Link href="/pricing" className="hover:text-slate-950 transition-colors">Pricing</Link>
-            <Link href="/for-schools" className="hover:text-slate-950 transition-colors">For Schools</Link>
+            <Link href="/colleges" className="hover:text-slate-950 transition-colors">For Colleges & Placements</Link>
             <Link href="/privacy" className="hover:text-slate-950 transition-colors">Privacy Policy</Link>
             <Link href="/terms" className="hover:text-slate-950 transition-colors">Terms of Service</Link>
             <Link href="/contact" className="hover:text-slate-950 transition-colors">Contact Support</Link>

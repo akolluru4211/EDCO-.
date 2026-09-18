@@ -145,7 +145,7 @@ export default function PortalLayout({
           <nav className="flex-1 px-3 py-3 space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
-              const isActive = pathname === item.href || (item.href !== "/dashboard" && item.href !== "/employee" && item.href !== "/hr" && item.href !== "/founder" && item.href !== "/colleges" && item.href !== "/school/teacher" && item.href !== "/admin" && pathname.startsWith(item.href));
+              const isActive = pathname === item.href || (item.href !== "/dashboard" && item.href !== "/employee" && item.href !== "/hr" && item.href !== "/founder" && item.href !== "/colleges"  && item.href !== "/admin" && pathname.startsWith(item.href));
 
               return (
                 <Link

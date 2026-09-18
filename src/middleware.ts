@@ -32,7 +32,6 @@ const PUBLIC_PAGE_PREFIXES = [
   "/about",
   "/contact",
   "/pricing",
-  "/for-schools",
   "/consent/verify",
 ];
 

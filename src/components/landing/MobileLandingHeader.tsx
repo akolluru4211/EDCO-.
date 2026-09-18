@@ -203,7 +203,7 @@ export default function MobileLandingHeader() {
                 </Link>
 
                 <Link
-                  href="/for-schools"
+                  href="/colleges"
                   onClick={() => setMenuOpen(false)}
                   className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl text-slate-200 hover:text-white hover:bg-white/5 text-xs font-bold flex items-center justify-between transition-colors"
                 >

@@ -380,9 +380,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       case "FOUNDER":
       case "EXECUTIVE":
         return "/founder";
-      case "TEACHER":
-        return "/school/teacher";
-      case "COLLEGE_ADMIN":
+            case "COLLEGE_ADMIN":
       case "PLACEMENT_OFFICER":
         return "/colleges";
       case "ADMIN":

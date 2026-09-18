@@ -24,7 +24,7 @@ export default function PrivacyPolicyPage() {
           <ul className="list-disc list-inside space-y-1.5 pl-2 text-xs text-ink-soft">
             <li><strong>DOB Isolation:</strong> Dates of birth are stored in a dedicated, unlinked table (`user_dob_records`) with zero client SELECT policies.</li>
             <li><strong>Minor Protections:</strong> Learners under 18 cannot be discovered by adult users, cannot be cold-messaged, and are isolated into verified classroom spaces.</li>
-            <li><strong>Teacher Progress Boundaries:</strong> Teachers have access only to enrolled progress metrics via dedicated security-invoker views (`teacher_visible_student_progress`). Private journals and messages are strictly hidden.</li>
+            
           </ul>
         </section>
 

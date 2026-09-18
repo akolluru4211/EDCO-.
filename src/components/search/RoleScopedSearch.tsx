@@ -70,8 +70,7 @@ export default function RoleScopedSearch({ onClose }: { onClose: () => void }) {
     { id: "f-3", title: "Strategic Roadmap & Cap Table", category: "Founder Executive", href: "/founder", icon: Building2, allowedRoles: ["FOUNDER", "ADMIN", "SUPER_ADMIN"] },
 
     // --- TEACHER DOMAIN ---
-    { id: "t-1", title: "Class Rosters & Assignments", category: "Teacher Studio", href: "/school/teacher", icon: School, allowedRoles: ["TEACHER", "ADMIN", "SUPER_ADMIN"] },
-
+    
     // --- COLLEGE PLACEMENT DOMAIN ---
     { id: "c-1", title: "Campus Placement Drives & CRM", category: "College Placements", href: "/colleges", icon: GraduationCap, allowedRoles: ["COLLEGE_ADMIN", "PLACEMENT_OFFICER", "ADMIN", "SUPER_ADMIN"] },
 

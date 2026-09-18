@@ -250,10 +250,10 @@ export default function ActiveInterviewStudioPage() {
           </div>
           <h1 className="text-xl font-bold text-slate-900">Career Track Restricted</h1>
           <p className="text-xs text-slate-500">
-            Mock interviews and speech diagnostics are available for 18+ Career Track members. Junior learners can practice communication drills in the School Hub.
+            Mock interviews and speech diagnostics are available for 18+ Career Track members. Practice modules are tailored for career progression.
           </p>
-          <Link href="/school" className="inline-block px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold">
-            Go to School Hub
+          <Link href="/dashboard" className="inline-block px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold">
+            Return to Dashboard
           </Link>
         </div>
       </div>

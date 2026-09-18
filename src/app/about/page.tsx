@@ -58,7 +58,7 @@ export default function AboutPage() {
             </div>
             <h3 className="text-xl font-bold font-display text-ink">Ethical Institutional Integrity</h3>
             <p className="text-xs text-ink-soft leading-relaxed">
-              Teachers see subject-scoped task completion without invasive PII browsing. School admins receive aggregate-only district telemetry, preserving individual student autonomy.
+              Educational and institutional partners receive aggregate-only telemetry, preserving individual learner autonomy.
             </p>
           </div>
         </div>

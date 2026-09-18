@@ -66,19 +66,19 @@ export default async function PricingPage() {
       badge: "Best Value"
     },
     {
-      id: "institutional",
-      name: "For Schools & Colleges",
+      id: "colleges",
+      name: "For Colleges & Universities",
       priceInr: 0,
-      period: "Custom Cohort",
-      description: "Dedicated classroom management, teacher progress telemetry, and minor-safe environments.",
+      period: "Campus Plan",
+      description: "Dedicated campus recruitment drives, student placement telemetry, and verified company outreach.",
       features: [
-        "Narrow Teacher Progress Dashboards",
-        "Classroom Study Group Lounges",
-        "Minor Data Protection & Guardian Digest",
-        "Dedicated Institution Success Manager"
+        "Campus Placement Drive Management",
+        "Student ATS Readiness Analytics",
+        "Direct Employer & Recruiter Outreach",
+        "Dedicated Placement Cell Manager"
       ],
-      ctaLabel: "Request Institutional Demo",
-      ctaHref: "/for-schools"
+      ctaLabel: "View College Solutions",
+      ctaHref: "/colleges"
     }
   ];
 
@@ -106,9 +106,9 @@ export default async function PricingPage() {
         <div className="bg-paper-raised rounded-3xl p-8 border border-line text-center space-y-4 max-w-2xl mx-auto">
           <h3 className="text-lg font-bold font-display text-ink">Have institutional questions?</h3>
           <p className="text-xs text-ink-soft">
-            We partner with secondary schools, skill foundations, and university placement cells.
+            We partner with skill foundations, and university placement cells.
           </p>
-          <Button variant="secondary" href="/for-schools">
+          <Button variant="secondary" href="/colleges">
             Speak to Institutional Team
           </Button>
         </div>

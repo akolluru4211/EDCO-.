@@ -296,7 +296,7 @@ export default function TabletLandingView() {
           </div>
           <div className="flex items-center gap-4 text-[11px] font-medium text-slate-600">
             <Link href="/pricing" className="hover:underline">Pricing</Link>
-            <Link href="/for-schools" className="hover:underline">For Schools</Link>
+            <Link href="/colleges" className="hover:underline">For Colleges & Placements</Link>
             <Link href="/privacy" className="hover:underline">Privacy</Link>
             <Link href="/terms" className="hover:underline">Terms</Link>
           </div>

@@ -128,9 +128,7 @@ export function getRedirectForRole(role: UserRole | string, careerStage?: string
     case "FOUNDER":
     case "EXECUTIVE":
       return "/founder";
-    case "TEACHER":
-      return "/school/teacher";
-    case "COLLEGE_ADMIN":
+        case "COLLEGE_ADMIN":
     case "PLACEMENT_OFFICER":
       return "/colleges";
     case "ADMIN":

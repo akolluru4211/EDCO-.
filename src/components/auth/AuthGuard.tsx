@@ -44,8 +44,7 @@ export default function AuthGuard({
         if (currentRole === "EMPLOYEE") targetPortal = "/employee";
         else if (currentRole === "HR") targetPortal = "/hr";
         else if (currentRole === "FOUNDER" || currentRole === "EXECUTIVE") targetPortal = "/founder";
-        else if (currentRole === "TEACHER") targetPortal = "/school/teacher";
-        else if (currentRole === "COLLEGE_ADMIN" || currentRole === "PLACEMENT_OFFICER") targetPortal = "/colleges";
+                else if (currentRole === "COLLEGE_ADMIN" || currentRole === "PLACEMENT_OFFICER") targetPortal = "/colleges";
         else if (currentRole === "ADMIN" || currentRole === "SUPER_ADMIN") targetPortal = "/admin";
 
         router.replace(targetPortal);
