@@ -33,7 +33,10 @@ import {
   FileCheck,
   Target,
   Trophy,
-  AlertCircle
+  AlertCircle,
+  Users,
+  Share2,
+  Scale
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import GrowthRing from "@/components/ui/GrowthRing";
@@ -823,6 +826,170 @@ export default function DashboardPage() {
 
             </div>
 
+          </div>
+
+          {/* FEATURE 17: EXPANSION HUBS & TOOLS */}
+          <div className="space-y-6 pt-4">
+            <div className="flex items-center justify-between border-b border-[#E8ECF2] pb-3">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-[#5C38FF]" />
+                <h2 className="text-xl font-black text-[#181920]">Career Acceleration &amp; Pro Hubs</h2>
+              </div>
+              <span className="text-xs font-bold text-[#767E94]">
+                {careerStage === "college" ? "College & Early Career Track" : "Working Professional Track"}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {/* Interview Experiences */}
+              <Link
+                href="/interview-experiences"
+                className="card-quixel p-5 group hover:border-[#5C38FF]/40 transition-all hover:shadow-md flex flex-col justify-between"
+              >
+                <div className="space-y-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#EDE8FD] text-[#5C38FF] flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Building2 className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-[#181920] group-hover:text-[#5C38FF] transition-colors">
+                      Interview Experiences
+                    </h3>
+                    <p className="text-xs text-[#767E94] mt-1 line-clamp-2">
+                      Browse and submit peer-reviewed, verified interview debriefs and round breakdowns.
+                    </p>
+                  </div>
+                </div>
+                <div className="pt-4 flex items-center text-xs font-bold text-[#5C38FF] group-hover:translate-x-1 transition-transform">
+                  <span>Explore Reports</span>
+                  <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                </div>
+              </Link>
+
+              {/* Mock Panel Interview */}
+              <Link
+                href="/interviews/panel"
+                className="card-quixel p-5 group hover:border-[#5C38FF]/40 transition-all hover:shadow-md flex flex-col justify-between"
+              >
+                <div className="space-y-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#FFEFEA] text-[#FF7A50] flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Users className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-black text-[#181920] group-hover:text-[#5C38FF] transition-colors">
+                        Mock Panel Interview
+                      </h3>
+                      <span className="text-[9px] font-black uppercase tracking-wider bg-[#FF7A50]/15 text-[#FF7A50] px-1.5 py-0.5 rounded">
+                        Multi-Persona
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#767E94] mt-1 line-clamp-2">
+                      Practice with Tech Lead, Engineering Director &amp; Culture Lead in sequential turns.
+                    </p>
+                  </div>
+                </div>
+                <div className="pt-4 flex items-center text-xs font-bold text-[#FF7A50] group-hover:translate-x-1 transition-transform">
+                  <span>Start Panel Simulation</span>
+                  <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                </div>
+              </Link>
+
+              {/* Offer Comparison Tool */}
+              <Link
+                href="/offers/compare"
+                className="card-quixel p-5 group hover:border-[#5C38FF]/40 transition-all hover:shadow-md flex flex-col justify-between"
+              >
+                <div className="space-y-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#E8F8F0] text-[#00C48C] flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Scale className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-[#181920] group-hover:text-[#5C38FF] transition-colors">
+                      Offer Comparison Tool
+                    </h3>
+                    <p className="text-xs text-[#767E94] mt-1 line-clamp-2">
+                      Confidential side-by-side compensation, stock vesting, and benefits evaluator.
+                    </p>
+                  </div>
+                </div>
+                <div className="pt-4 flex items-center text-xs font-bold text-[#00C48C] group-hover:translate-x-1 transition-transform">
+                  <span>Compare Offers</span>
+                  <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                </div>
+              </Link>
+
+              {/* Personal Branding & LinkedIn Assistant */}
+              <Link
+                href="/branding-assistant"
+                className="card-quixel p-5 group hover:border-[#5C38FF]/40 transition-all hover:shadow-md flex flex-col justify-between"
+              >
+                <div className="space-y-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#E0F2FE] text-[#0284C7] flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Share2 className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-[#181920] group-hover:text-[#5C38FF] transition-colors">
+                      LinkedIn Post Assistant
+                    </h3>
+                    <p className="text-xs text-[#767E94] mt-1 line-clamp-2">
+                      Draft high-engagement project updates, milestone celebrations, and insights with AI.
+                    </p>
+                  </div>
+                </div>
+                <div className="pt-4 flex items-center text-xs font-bold text-[#0284C7] group-hover:translate-x-1 transition-transform">
+                  <span>Draft Post</span>
+                  <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                </div>
+              </Link>
+
+              {/* Leadership Readiness Self-Assessment */}
+              <Link
+                href="/leadership-assessment"
+                className="card-quixel p-5 group hover:border-[#5C38FF]/40 transition-all hover:shadow-md flex flex-col justify-between"
+              >
+                <div className="space-y-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#EDE8FD] text-[#7B57FF] flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Brain className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-[#181920] group-hover:text-[#5C38FF] transition-colors">
+                      Leadership Self-Assessment
+                    </h3>
+                    <p className="text-xs text-[#767E94] mt-1 line-clamp-2">
+                      Reflective qualitative evaluation for ICs exploring Engineering Management and Tech Lead paths.
+                    </p>
+                  </div>
+                </div>
+                <div className="pt-4 flex items-center text-xs font-bold text-[#7B57FF] group-hover:translate-x-1 transition-transform">
+                  <span>Start Assessment</span>
+                  <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                </div>
+              </Link>
+
+              {/* Freelance & Consulting Opportunities */}
+              <Link
+                href="/jobs?type=freelance"
+                className="card-quixel p-5 group hover:border-[#5C38FF]/40 transition-all hover:shadow-md flex flex-col justify-between"
+              >
+                <div className="space-y-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#FFFBEB] text-[#D97706] flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Briefcase className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-[#181920] group-hover:text-[#5C38FF] transition-colors">
+                      Freelance &amp; Contract Board
+                    </h3>
+                    <p className="text-xs text-[#767E94] mt-1 line-clamp-2">
+                      Explore vetted consulting contracts, part-time advisory, and freelance project scopes.
+                    </p>
+                  </div>
+                </div>
+                <div className="pt-4 flex items-center text-xs font-bold text-[#D97706] group-hover:translate-x-1 transition-transform">
+                  <span>Browse Contracts</span>
+                  <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                </div>
+              </Link>
+            </div>
           </div>
 
           {/* CAMPUS PLACEMENT DRIVES & HACKATHONS */}

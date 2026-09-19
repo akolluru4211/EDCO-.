@@ -498,7 +498,51 @@ export interface WeeklyScheduleDay {
 // Phase 3 Data Models: Job Board, Monetization, and Moderation
 // ==============================================================================
 
-export type JobType = "internship" | "full-time" | "part-time";
+export type JobType = "internship" | "full-time" | "part-time" | "freelance";
+
+export interface InterviewExperience {
+  id: string;
+  userId: string;
+  company: string;
+  role: string;
+  rounds: Array<{
+    roundName: string;
+    format: string;
+    questionsAsked: string[];
+  }>;
+  overallNotes: string;
+  difficultyRating?: number;
+  isAnonymous: boolean;
+  moderationStatus: "pending" | "approved" | "rejected";
+  createdAt: string;
+  authorName?: string;
+}
+
+export interface CompanyResearch {
+  id: string;
+  companyName: string;
+  cultureNotes?: string;
+  interviewProcessNotes?: string;
+  commonQuestionThemes?: string[];
+  compensationInsights?: string;
+  sourceUrl?: string;
+  lastVerifiedAt: string;
+}
+
+export interface JobOfferItem {
+  id: string;
+  company: string;
+  role: string;
+  baseComp: string;
+  bonus?: string;
+  equity?: string;
+  location: string;
+  workMode: "Remote" | "Hybrid" | "On-site";
+  benefits?: string;
+  pros?: string;
+  cons?: string;
+}
+
 export type ModerationStatus = "pending" | "approved" | "rejected";
 export type ApplicationStatus = "applied" | "viewed" | "rejected" | "interview" | "offer";
 
