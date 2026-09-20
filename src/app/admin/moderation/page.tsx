@@ -107,9 +107,17 @@ export default function AdminModerationPage() {
             </div>
             <h1 className="text-2xl font-black text-slate-900 mt-1">Minor Safety & Showcase Review Queue</h1>
           </div>
-          <span className="text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 px-3 py-1 rounded-full">
-            {submissions.filter(s => s.moderation_status === "pending").length} Pending Reviews
-          </span>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/admin/ambassadors"
+              className="px-4 py-2 rounded-xl bg-[#5C38FF] hover:bg-[#4D2CE0] text-white text-xs font-black shadow-sm"
+            >
+              Ambassador Applications Queue &rarr;
+            </Link>
+            <span className="text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 px-3 py-1 rounded-full">
+              {submissions.filter(s => s.moderation_status === "pending").length} Pending Reviews
+            </span>
+          </div>
         </div>
 
         {actionMessage && (

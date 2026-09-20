@@ -2,7 +2,7 @@
 
 import React, { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth, translateAuthError } from "@/lib/auth-context";
 import { 
   ArrowRight, 
@@ -15,12 +15,15 @@ import {
   EyeOff, 
   Mail, 
   User, 
-  Loader2 
+  Loader2,
+  Gift
 } from "lucide-react";
 import EdworldLogo from "@/components/ui/EdworldLogo";
+import { supabase } from "@/lib/supabase";
 
 function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { signupWithEmail, loginWithGoogle } = useAuth();
 
   const [name, setName] = useState("");
@@ -29,6 +32,7 @@ function SignupForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [termsAgreed, setTermsAgreed] = useState(false);
+  const [referralCode, setReferralCode] = useState(searchParams.get("ref") || "");
 
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState("Creating your account...");
@@ -74,6 +78,25 @@ function SignupForm() {
       setTimeout(() => setLoadingStep("Creating your personalized profile..."), 800);
       setTimeout(() => setLoadingStep("Setting up your workspace..."), 1800);
       const { needsEmailVerification } = await signupWithEmail(name.trim(), email.trim(), password);
+
+      // Record referral attribution if provided
+      if (referralCode.trim()) {
+        try {
+          const { data: { user: createdUser } } = await supabase.auth.getUser();
+          if (createdUser) {
+            await fetch("/api/ambassador/record-referral", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                referralCode: referralCode.trim(),
+                newUserId: createdUser.id
+              })
+            });
+          }
+        } catch (refErr) {
+          console.warn("Ambassador referral record note:", refErr);
+        }
+      }
 
       if (needsEmailVerification) {
         router.push(`/auth/verify-email?email=${encodeURIComponent(email.trim())}`);
@@ -274,6 +297,23 @@ function SignupForm() {
                     )}
                   </div>
                 )}
+              </div>
+            </div>
+
+            {/* Referral Code (Optional) */}
+            <div>
+              <label className="block text-xs font-bold text-[#13141B] uppercase tracking-wider mb-1.5">
+                Campus Ambassador Referral Code (Optional)
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value)}
+                  placeholder="e.g. EDW-IITM-1234"
+                  className="w-full pl-10 pr-4 py-3 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] text-xs font-mono font-bold text-[#13141B] focus:border-[#13141B] focus:outline-none transition-colors"
+                />
+                <Gift className="w-4 h-4 text-[#8E95A5] absolute left-3.5 top-1/2 -translate-y-1/2" />
               </div>
             </div>
 

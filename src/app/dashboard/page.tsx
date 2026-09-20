@@ -1078,6 +1078,34 @@ export default function DashboardPage() {
                   )}
                 </div>
               </div>
+
+              {/* CAMPUS AMBASSADOR PROGRAM PORTAL */}
+              <div className="card-quixel p-6 sm:p-7 bg-gradient-to-r from-[#EDE8FD]/60 via-white to-[#FFEFEA]/40 border-[#5C38FF]/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-[#5C38FF] text-white flex items-center justify-center font-bold shadow-md">
+                    <Award className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-base font-black text-[#181920]">Edworld Campus Ambassador Program</h3>
+                      <span className="text-[9px] font-black uppercase tracking-wider bg-[#5C38FF] text-white px-2 py-0.5 rounded-full">
+                        Applications Open
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#767E94] mt-0.5">
+                      Represent Edworld Co at your university, organize student mock interview circles, and earn leadership credentials.
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  href="/ambassador"
+                  className="px-5 py-2.5 rounded-2xl bg-[#5C38FF] hover:bg-[#4D2CE0] text-white text-xs font-black shadow-lg flex items-center gap-2 whitespace-nowrap transition-all hover:scale-105"
+                >
+                  <span>Ambassador Portal</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+
             </div>
           )}
 
