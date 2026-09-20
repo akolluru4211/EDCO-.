@@ -1419,3 +1419,81 @@ export interface SystemAuditLog {
   ipAddress?: string;
   timestamp: string;
 }
+
+// --- FEATURE 17 COMPLETE EXPANSION TYPES ---
+export type CareerEvidenceType = 
+  | 'project' 
+  | 'certification' 
+  | 'award' 
+  | 'hackathon' 
+  | 'publication' 
+  | 'internship' 
+  | 'work_achievement' 
+  | 'leadership' 
+  | 'open_source' 
+  | 'competition';
+
+export interface CareerEvidenceItem {
+  id: string;
+  user_id: string;
+  type: CareerEvidenceType;
+  title: string;
+  description?: string;
+  date?: string;
+  evidence_url?: string;
+  skills: string[];
+  visibility: 'private' | 'portfolio' | 'resume';
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface CareerDocumentItem {
+  id: string;
+  user_id: string;
+  name: string;
+  document_type: 'resume' | 'cover_letter' | 'certificate' | 'experience_letter' | 'offer_letter' | 'portfolio_doc' | 'other';
+  file_url: string;
+  file_size?: number;
+  file_type?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface InterviewReflectionItem {
+  id: string;
+  user_id: string;
+  company: string;
+  role: string;
+  interview_date: string;
+  went_well?: string;
+  difficult_aspects?: string;
+  difficult_questions: string[];
+  improvement_areas?: string;
+  personal_notes?: string;
+  ai_summary?: string;
+  created_at?: string;
+}
+
+export interface NetworkingGoalItem {
+  id: string;
+  user_id: string;
+  goals: string[];
+  target_industries: string[];
+  target_roles: string[];
+  study_focus?: string;
+  created_at?: string;
+}
+
+export interface ReferralRequestItem {
+  id: string;
+  requester_id: string;
+  referrer_id: string;
+  job_id?: string;
+  company: string;
+  role: string;
+  status: 'pending' | 'accepted' | 'declined' | 'completed';
+  message?: string;
+  resume_url?: string;
+  created_at?: string;
+}
+

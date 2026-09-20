@@ -7,6 +7,7 @@ import { collegeTools } from "./tools/college";
 import { adminTools } from "./tools/admin";
 import { developerTools } from "./tools/developer";
 import { claudeMCPTools } from "./tools/claude-tools";
+import { careerTools } from "./tools/career";
 import { recordAuditLog } from "@/lib/audit-logger";
 import { RoleType } from "@/lib/server-role-guard";
 
@@ -14,6 +15,7 @@ import { RoleType } from "@/lib/server-role-guard";
 export const ALL_MCP_TOOLS: MCPToolDefinition[] = [
   ...studentTools,
   ...claudeMCPTools,
+  ...careerTools,
   ...developerTools,
   ...employeeTools,
   ...hrTools,
