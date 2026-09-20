@@ -181,7 +181,7 @@ export default function DesktopLandingView() {
 
           {/* Subtitle */}
           <p className="text-lg lg:text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed font-medium">
-            Edworld Co. meets you exactly where you are today. Whether you are discovering early STEM passions, stepping from campus into tech, or breaking through senior career milestones, your journey is personalized with zero generic rubrics.
+            Edworld Co. meets you exactly where you are today. Whether stepping from campus into engineering placements or accelerating as an experienced professional, practice with calibrated interview simulators, ATS-matched resumes, and verified project proofs.
           </p>
 
           {/* Primary Action Row */}

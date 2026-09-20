@@ -161,7 +161,7 @@ export default function AmbassadorHubPage() {
           <div className="card-quixel p-6 space-y-1">
             <span className="text-xs font-bold text-[#767E94]">Total Attributed Campus Signups</span>
             <div className="text-3xl font-black text-[#181920]">{totalReferrals}</div>
-            <p className="text-[11px] text-[#767E94] pt-1">Students empowered through your campus code</p>
+            <p className="text-[11px] text-[#767E94] pt-1">Students registered using your campus referral code</p>
           </div>
           <div className="card-quixel p-6 space-y-1 bg-[#EDE8FD]/30 border-[#5C38FF]/20">
             <span className="text-xs font-bold text-[#5C38FF]">Ambassador Recognition Badge</span>
