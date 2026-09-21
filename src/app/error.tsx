@@ -2,11 +2,10 @@
 
 import React, { useEffect } from "react";
 import Link from "next/link";
-import Button from "@/components/ui/Button";
-import EdworldLogo from "@/components/ui/EdworldLogo";
 import { AlertTriangle, RefreshCw, Home } from "lucide-react";
+import EdworldLogo from "@/components/ui/EdworldLogo";
 
-export default function GlobalError({
+export default function ErrorPage({
   error,
   reset,
 }: {
@@ -14,25 +13,30 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[Global App Error]:", error);
+    console.error("[App Segment Error]:", error);
   }, [error]);
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-3xl border border-slate-200 shadow-2xl p-8 text-center space-y-6 animate-in fade-in zoom-in-95 duration-200">
-        <div className="w-14 h-14 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto shadow-lg shadow-rose-500/10">
-          <AlertTriangle className="w-7 h-7" />
+      <div className="max-w-md w-full bg-white rounded-3xl border border-[#E8ECF2] shadow-2xl p-8 text-center space-y-6 animate-in fade-in zoom-in-95 duration-200">
+        <div className="w-16 h-16 rounded-2xl bg-[#FFEFEA] border border-[#FF7A50]/20 text-[#FF7A50] flex items-center justify-center mx-auto shadow-sm">
+          <AlertTriangle className="w-8 h-8" />
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Something Went Wrong</h1>
-          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-            Our platform encountered an unexpected error. Your saved progress, resume drafts, and scores are safe.
+          <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700">
+            Error Segment Handled
+          </span>
+          <h1 className="text-2xl font-black text-[#13141B] tracking-tight">
+            Application Encountered an Error
+          </h1>
+          <p className="text-xs sm:text-sm text-[#5E6573] leading-relaxed">
+            This module encountered an unexpected state. Your saved progress, resume drafts, and scores remain safe.
           </p>
         </div>
 
-        {error.message && (
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-[11px] text-slate-500 font-mono overflow-x-auto text-left">
+        {error?.message && (
+          <div className="p-3 bg-[#F4F6FB] rounded-xl border border-[#E8ECF2] text-[11px] text-[#5E6573] font-mono overflow-x-auto text-left">
             {error.message}
           </div>
         )}
@@ -40,7 +44,7 @@ export default function GlobalError({
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
           <button
             onClick={() => reset()}
-            className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-md shadow-brand-500/20 flex items-center justify-center gap-2 transition-all hover:scale-105"
+            className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-[#13141B] hover:bg-[#2A2C38] text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer"
           >
             <RefreshCw className="w-4 h-4" />
             <span>Try Again</span>
@@ -48,14 +52,14 @@ export default function GlobalError({
 
           <Link
             href="/dashboard"
-            className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs border border-slate-300 flex items-center justify-center gap-2 transition-all"
+            className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-white hover:bg-slate-50 text-[#13141B] font-bold text-xs border border-[#E8ECF2] flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95"
           >
-            <Home className="w-4 h-4" />
-            <span>Return to Dashboard</span>
+            <Home className="w-4 h-4 text-[#8E95A5]" />
+            <span>Open Dashboard</span>
           </Link>
         </div>
 
-        <div className="pt-4 border-t border-slate-100 flex items-center justify-center">
+        <div className="pt-4 border-t border-[#E8ECF2] flex items-center justify-center">
           <EdworldLogo size="sm" showText={true} />
         </div>
       </div>
