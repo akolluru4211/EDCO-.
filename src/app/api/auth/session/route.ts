@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     // Fetch fresh profile
     const { data: profile } = await supabase
       .from("profiles")
-      .select("id, email, name, role, age_band, career_stage, grade_level, phone, is_suspended")
+      .select("id, email, name, role, age_band, career_stage, grade_level, phone, is_suspended, onboarding_completed")
       .eq("id", userId)
       .maybeSingle();
 
@@ -36,11 +36,16 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ authenticated: false, error: "ACCOUNT_SUSPENDED" }, { status: 403 });
     }
 
+    const isOnboardingDone = Boolean(profile?.onboarding_completed);
+
     return NextResponse.json({
       authenticated: true,
       userId,
       role: role || profile?.role || "CLIENT",
-      profile,
+      profile: {
+        ...profile,
+        onboarding_completed: isOnboardingDone,
+      },
       user: {
         uid: userId,
         email: profile?.email || "",
@@ -49,6 +54,7 @@ export async function GET(req: NextRequest) {
         ageBand: profile?.age_band || "18+",
         careerStage: profile?.career_stage || (profile?.age_band === "13-15" ? "JUNIOR" : profile?.age_band === "16-18" ? "STUDENT" : "PROFESSIONAL"),
         gradeLevel: profile?.grade_level || "College",
+        onboarding_completed: isOnboardingDone,
       }
     });
   } catch (err) {

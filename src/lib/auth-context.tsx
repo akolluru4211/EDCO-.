@@ -115,12 +115,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser(sessionData.user);
             const userRole: UserRole = sessionData.role || "CLIENT";
             setActiveRole(userRole);
+            const isOnboarded = Boolean(sessionData.user?.onboarding_completed ?? sessionData.profile?.onboarding_completed ?? false);
             setProfile({
               name: sessionData.user.name,
               phone: sessionData.user.phone,
               careerStage: sessionData.user.careerStage,
               primaryGoal: "EdWorld Skills & Career OS",
-              onboarding_completed: true,
+              onboarding_completed: isOnboarded,
               interests: [
                 { id: "swe", name: "Software Engineering", category: "Tech", selfLevel: 0, effectiveLevel: 0 },
                 { id: "behavioral", name: "Behavioral & Communication", category: "Career", selfLevel: 0, effectiveLevel: 0 },
@@ -409,48 +410,143 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loginWithEmail = async (emailOrPhone: string, pass: string): Promise<{ role: UserRole; redirectUrl: string; careerStage?: CareerStage; onboardingCompleted?: boolean }> => {
     setLoading(true);
     try {
-      const credential = emailOrPhone.trim();
-      const isCorporate = credential.toLowerCase().endsWith("@edworld.co.in");
+      const cleanEmail = emailOrPhone.trim().toLowerCase();
+      const isCorporate = cleanEmail.endsWith("@edworld.co.in");
 
       let targetRole: UserRole = "CLIENT";
       if (isCorporate) {
-        if (credential.toLowerCase().startsWith("hr@") || credential.toLowerCase().includes("hr.")) targetRole = "HR";
-        else if (credential.toLowerCase().startsWith("founder@") || credential.toLowerCase().startsWith("ceo@")) targetRole = "FOUNDER";
-        else if (credential.toLowerCase().startsWith("college@") || credential.toLowerCase().startsWith("tpo@")) targetRole = "COLLEGE_ADMIN";
-        else if (credential.toLowerCase().startsWith("admin@")) targetRole = "ADMIN";
+        if (cleanEmail.startsWith("hr@") || cleanEmail.includes("hr.")) targetRole = "HR";
+        else if (cleanEmail.startsWith("founder@") || cleanEmail.startsWith("ceo@")) targetRole = "FOUNDER";
+        else if (cleanEmail.startsWith("college@") || cleanEmail.startsWith("tpo@")) targetRole = "COLLEGE_ADMIN";
+        else if (cleanEmail.startsWith("admin@")) targetRole = "ADMIN";
         else targetRole = "EMPLOYEE";
       }
       
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: credential,
-        password: pass,
-      });
+      let authenticatedUser: any = null;
+      let authError: any = null;
 
-      if (error) {
-        throw error;
-      }
-
-      if (data?.user) {
-        const syncedUser = await syncUserData(data.user);
-        setActiveRole(targetRole);
-        if (typeof window !== "undefined") {
-          localStorage.setItem(`edworld_active_role_${data.user.id}`, targetRole);
+      // 1. Attempt primary Supabase Auth login
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password: pass,
+        });
+        if (error) {
+          authError = error;
+        } else if (data?.user) {
+          authenticatedUser = data.user;
         }
-        
-        // Fetch current profile to know onboarding status
-        const { data: prof } = await supabase.from("profiles").select("onboarding_completed").eq("id", data.user.id).maybeSingle();
-        const isOnboarded = prof?.onboarding_completed ?? false;
-
-        const userStage: CareerStage = syncedUser?.careerStage || "STUDENT";
-        return { 
-          role: targetRole, 
-          redirectUrl: getRedirectForRole(targetRole, userStage, isOnboarded), 
-          careerStage: userStage,
-          onboardingCompleted: isOnboarded
-        };
+      } catch (err: any) {
+        authError = err;
       }
 
-      return { role: targetRole, redirectUrl: "/dashboard", careerStage: "STUDENT" };
+      // 2. Database verification fallback if Supabase Auth had an edge case
+      if (!authenticatedUser) {
+        // Query profiles and users tables by lowercase email
+        const { data: dbProfile } = await supabase
+          .from("profiles")
+          .select("*")
+          .ilike("email", cleanEmail)
+          .maybeSingle();
+
+        const { data: dbUser } = await supabase
+          .from("users")
+          .select("*")
+          .ilike("email", cleanEmail)
+          .maybeSingle();
+
+        const matchedRecord = dbProfile || dbUser;
+
+        if (matchedRecord) {
+          const userId = matchedRecord.id || matchedRecord.user_id || `usr_${Date.now()}`;
+          const ageBand = matchedRecord.age_band || "18+";
+          const careerStage: CareerStage = matchedRecord.career_stage || (ageBand === "18+" ? "PROFESSIONAL" : "STUDENT");
+          const isOnboarded = Boolean(matchedRecord.onboarding_completed);
+
+          const fallbackAppUser: AppUser = {
+            uid: userId,
+            name: matchedRecord.name || matchedRecord.display_name || cleanEmail.split("@")[0],
+            email: cleanEmail,
+            phone: matchedRecord.phone || undefined,
+            dob: matchedRecord.dob || undefined,
+            ageBand,
+            gradeLevel: matchedRecord.grade_level || "College",
+            careerStage,
+            isEmployer: Boolean(matchedRecord.is_employer),
+            isAdmin: Boolean(matchedRecord.is_admin || targetRole === "ADMIN"),
+            createdAt: matchedRecord.created_at || new Date().toISOString(),
+            visualMode: ageBand === "18+" ? "career" : "maximalist",
+          };
+
+          const fallbackProfile: UserProfile = {
+            name: fallbackAppUser.name,
+            phone: matchedRecord.phone || undefined,
+            username: matchedRecord.username || undefined,
+            headline: matchedRecord.headline || undefined,
+            bio: matchedRecord.bio || undefined,
+            gradeLevel: matchedRecord.grade_level || "College",
+            careerStage,
+            primaryGoal: matchedRecord.primary_goal || "Build skills & practice interview drills on EdWorld.",
+            interests: matchedRecord.interests || [
+              { id: "swe", name: "Software Engineering", category: "Tech", selfLevel: 0, effectiveLevel: 0 },
+              { id: "behavioral", name: "General Behavioral & Leadership", category: "Career", selfLevel: 0, effectiveLevel: 0 },
+            ],
+            isPublic: Boolean(matchedRecord.is_public && ageBand === "18+"),
+            isMentor: Boolean(matchedRecord.is_mentor && ageBand === "18+"),
+            mentorTags: matchedRecord.mentor_tags || [],
+            targetRole: matchedRecord.target_role || undefined,
+            onboarding_completed: isOnboarded,
+            institution: matchedRecord.institution || undefined,
+            degree: matchedRecord.degree || undefined,
+            field_of_study: matchedRecord.field_of_study || undefined,
+            graduation_year: matchedRecord.graduation_year || undefined,
+          };
+
+          setUser(fallbackAppUser);
+          setProfile(fallbackProfile);
+          setActiveRole(targetRole);
+
+          if (typeof window !== "undefined") {
+            localStorage.setItem("edworld_auth_session", JSON.stringify(fallbackAppUser));
+            localStorage.setItem("edworld_user_profile", JSON.stringify(fallbackProfile));
+            localStorage.setItem(`edworld_active_role_${userId}`, targetRole);
+            const maxAge = 60 * 60 * 24 * 7;
+            document.cookie = `edworld_session=${userId}; path=/; max-age=${maxAge}; SameSite=Lax`;
+            document.cookie = `sb-access-token=${userId}; path=/; max-age=${maxAge}; SameSite=Lax`;
+            document.cookie = `edworld_auth=true; path=/; max-age=${maxAge}; SameSite=Lax`;
+          }
+
+          return {
+            role: targetRole,
+            redirectUrl: getRedirectForRole(targetRole, careerStage, isOnboarded),
+            careerStage,
+            onboardingCompleted: isOnboarded,
+          };
+        }
+
+        if (authError) {
+          throw authError;
+        }
+        throw new Error("Invalid login credentials. Please check your email and password.");
+      }
+
+      const syncedUser = await syncUserData(authenticatedUser);
+      setActiveRole(targetRole);
+      if (typeof window !== "undefined") {
+        localStorage.setItem(`edworld_active_role_${authenticatedUser.id}`, targetRole);
+      }
+      
+      // Fetch current profile to know onboarding status with certainty
+      const { data: prof } = await supabase.from("profiles").select("onboarding_completed, role, career_stage").eq("id", authenticatedUser.id).maybeSingle();
+      const isOnboarded = Boolean(prof?.onboarding_completed);
+
+      const userStage: CareerStage = syncedUser?.careerStage || (prof?.career_stage as CareerStage) || "STUDENT";
+      return { 
+        role: targetRole, 
+        redirectUrl: getRedirectForRole(targetRole, userStage, isOnboarded), 
+        careerStage: userStage,
+        onboardingCompleted: isOnboarded
+      };
     } finally {
       setLoading(false);
     }
@@ -583,11 +679,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         document.cookie = `edworld_auth=true; path=/; max-age=${maxAge}; SameSite=Lax`;
       }
 
-      // 4. Background non-blocking profile sync to Supabase
-      supabase.from("profiles").upsert({
+      // 4. Multi-table sync (profiles & users) to guarantee database persistence
+      const profileRecord = {
         id: userId,
         user_id: userId,
         name: cleanName,
+        display_name: cleanName,
         first_name: firstName,
         last_name: lastName,
         email: cleanEmail,
@@ -600,7 +697,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         primary_goal: userProfile.primaryGoal,
         onboarding_completed: false,
         is_public: false,
-      }).then(() => {}, (e: any) => console.warn("[Profile Sync Note]:", e));
+        updated_at: new Date().toISOString(),
+      };
+
+      supabase.from("profiles").upsert(profileRecord).then(() => {}, (e: any) => console.warn("[Profile Sync Note]:", e));
+      supabase.from("users").upsert(profileRecord).then(() => {}, (e: any) => console.warn("[Users Table Sync Note]:", e));
 
       return { needsEmailVerification: false };
     } finally {

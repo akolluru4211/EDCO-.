@@ -19,7 +19,7 @@ export default function AuthGuard({
 }: AuthGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, role, loading } = useAuth();
+  const { user, profile, role, loading } = useAuth();
   const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
@@ -52,9 +52,28 @@ export default function AuthGuard({
       }
     }
 
-    // 3. User is authenticated and authorized
+    // 3. Strict Onboarding Gate: If user has not completed onboarding, do not allow into dashboard!
+    const currentRole = role || "CLIENT";
+    const isStandardUser = currentRole === "CLIENT";
+    const isOnboardingPage = pathname === "/onboarding" || pathname?.startsWith("/onboarding/");
+
+    if (requireAuth && user && isStandardUser) {
+      const isOnboarded = Boolean(profile?.onboarding_completed);
+      
+      if (!isOnboarded && !isOnboardingPage) {
+        router.replace("/onboarding");
+        return;
+      }
+
+      if (isOnboarded && isOnboardingPage) {
+        router.replace("/dashboard");
+        return;
+      }
+    }
+
+    // 4. User is authenticated and authorized
     setIsAuthorized(true);
-  }, [user, role, loading, pathname, allowedRoles, requireAuth, router]);
+  }, [user, profile, role, loading, pathname, allowedRoles, requireAuth, router]);
 
   if (loading || !isAuthorized) {
     return <AuthLoadingScreen message={loading ? "Checking session..." : "Verifying permissions..."} />;
