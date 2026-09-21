@@ -159,9 +159,6 @@ export default function BillingPage() {
             <h1 className="text-3xl sm:text-4xl font-black font-display text-ink tracking-tight">
               Invest in Your Career Acceleration
             </h1>
-            <p className="text-sm text-ink-soft max-w-xl mx-auto leading-relaxed">
-              Transparent, student-friendly pricing. Cancel anytime. Pro plan at ₹49/mo, Premium VIP at ₹99/mo.
-            </p>
 
             {/* Billing Cycle Toggle */}
             <div className="inline-flex items-center gap-2 p-1 bg-paper-raised border border-line rounded-2xl shadow-sm mt-4">

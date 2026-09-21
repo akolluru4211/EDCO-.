@@ -299,9 +299,6 @@ export default function ProjectStudioPage() {
             <h1 className="text-3xl sm:text-4xl font-black text-[#181920] tracking-tight">
               Engineering Project Showcases
             </h1>
-            <p className="text-sm text-[#767E94] max-w-2xl leading-relaxed font-medium">
-              Import repositories with GitHub verification badges, publish public shareable showcase links, and link projects directly into your ATS resumes.
-            </p>
           </div>
 
           <div className="flex items-center flex-wrap gap-3">

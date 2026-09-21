@@ -162,7 +162,6 @@ export default function CareerEvidencePage() {
               </div>
               <div>
                 <h1 className="text-2xl font-black text-[#181920]">Career Evidence Vault</h1>
-                <p className="text-xs text-[#767E94]">Store, verify, and reuse authenticated career milestones for resumes and portfolios.</p>
               </div>
             </div>
           </div>

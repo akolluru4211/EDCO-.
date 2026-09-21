@@ -126,8 +126,7 @@ export default function CareerDocumentsPage() {
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <div>
-                <h1 className="text-2xl font-black text-[#181920]">Career Document Vault</h1>
-                <p className="text-xs text-[#767E94]">Private, encrypted storage for resumes, offer letters, cover letters, and experience credentials.</p>
+                <h1 className="text-2xl font-black text-[#181920]">Career Documents Vault</h1>
               </div>
             </div>
           </div>

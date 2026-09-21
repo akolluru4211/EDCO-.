@@ -137,7 +137,6 @@ export default function InterviewExperiencesPage() {
                   Moderated UGC
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">Real interview breakdowns, round formats, and question patterns shared by candidates</p>
             </div>
           </div>
 

@@ -130,9 +130,6 @@ export default function ProblemBoardPage() {
             <h1 className="text-3xl sm:text-4xl font-bold font-display text-ink tracking-tight mt-2">
               Real-World Problem Board
             </h1>
-            <p className="text-sm text-ink-soft max-w-xl leading-relaxed mt-1">
-              Pick up curated community, environmental, and technical challenges. Build solutions, link projects, and receive structured mentor feedback.
-            </p>
           </div>
 
           {successMessage && (

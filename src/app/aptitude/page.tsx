@@ -141,7 +141,6 @@ export default function AptitudeStudioPage() {
                   +50 XP
                 </span>
               </div>
-              <p className="text-xs text-slate-400">10 Daily rotating questions across Quant, Logic, Verbal &amp; CS</p>
             </div>
           </div>
 

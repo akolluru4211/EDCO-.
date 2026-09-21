@@ -78,7 +78,6 @@ export default function CareerTimelinePage() {
             </div>
             <div>
               <h1 className="text-2xl font-black text-[#181920]">Career Timeline</h1>
-              <p className="text-xs text-[#767E94]">A verified, chronological record of your career milestones, projects, credentials, and simulations.</p>
             </div>
           </div>
         </div>

@@ -45,11 +45,6 @@ export const UserGreeting: React.FC<UserGreetingProps> = ({
           </span>
         )}
       </div>
-      {subtitle && (
-        <p className="text-xs sm:text-sm font-medium text-ink-soft">
-          {subtitle}
-        </p>
-      )}
     </div>
   );
 };

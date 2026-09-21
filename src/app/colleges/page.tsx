@@ -228,9 +228,6 @@ export default function CollegesPlacementHubPage() {
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white font-sans">
             Colleges &amp; Placement Operations
           </h1>
-          <p className="text-xs text-[#8E95A5]">
-            Campus drive scheduling, student placement radar, syllabus industry alignment, and corporate recruiter CRM.
-          </p>
         </div>
 
         <div className="flex items-center gap-3">

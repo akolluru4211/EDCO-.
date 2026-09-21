@@ -113,9 +113,6 @@ export default function MentorsDirectoryPage() {
               <h1 className="text-2xl sm:text-4xl font-bold font-display text-ink tracking-tight mt-1">
                 Discover Industry Mentors
               </h1>
-              <p className="text-xs sm:text-sm text-ink-soft">
-                Book calibrated 1:1 sessions for resume audits, architecture deep-dives, and mock interview guidance.
-              </p>
             </div>
 
             <Link

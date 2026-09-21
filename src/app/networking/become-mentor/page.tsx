@@ -109,9 +109,6 @@ export default function BecomeMentorPage() {
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">
               Register as an Industry Mentor
             </h1>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Help candidates calibrate their technical depth, run mock interview reviews, and guide future engineers.
-            </p>
           </div>
 
           {isSuccess ? (

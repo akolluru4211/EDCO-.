@@ -91,7 +91,6 @@ export default function AlumniNetworkPage() {
             </div>
             <div>
               <h1 className="text-2xl font-black text-[#181920]">Alumni Directory &amp; Connections</h1>
-              <p className="text-xs text-[#767E94]">Connect with verified alumni from your university across top tech engineering and product companies.</p>
             </div>
           </div>
         </div>

@@ -122,9 +122,6 @@ export default function OfferComparisonPage() {
                   <Lock className="w-3 h-3" /> Confidential
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Fact-only side-by-side comparison organizer for job offers and compensation structures.
-              </p>
             </div>
           </div>
 

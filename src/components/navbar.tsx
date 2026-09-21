@@ -1,7 +1,7 @@
 "use client";
 
 import { supabase } from "@/lib/supabase";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -25,9 +25,34 @@ import {
   FileText,
   Video,
   Layers,
-  GraduationCap
+  GraduationCap,
+  Sparkles,
+  Search,
+  MessageSquare,
+  Award,
+  Code2,
+  FileCheck,
+  Target,
+  GitBranch,
+  Calendar,
+  Scale,
+  BookOpen,
+  CreditCard,
+  Crown
 } from "lucide-react";
 import Button from "@/components/ui/Button";
+
+interface FeatureMenuItem {
+  href: string;
+  label: string;
+  shortLabel: string;
+  icon: any;
+  desc?: string;
+  category: "core" | "career" | "networking" | "org";
+  badge?: string;
+  requiresAdult?: boolean;
+  staffOnly?: boolean;
+}
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -36,46 +61,28 @@ export default function Navbar() {
     role,
     isEmployee, 
     isHR, 
-    isFounder,
+    isFounder, 
     isCollegeAdmin, 
     isAdmin, 
     isSuperAdmin,
     logout 
   } = useAuth();
+
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState<string>("all");
 
-  const [streakCount, setStreakCount] = useState<number>(0);
-  const [showStreakModal, setShowStreakModal] = useState(false);
+  const isStaff = Boolean(isEmployee || isHR || isFounder || isCollegeAdmin || isAdmin || isSuperAdmin);
+  const isAdult = user?.ageBand === "18+" || user?.careerStage === "PROFESSIONAL";
 
-  useEffect(() => {
-    if (!user) return;
-    const fetchStreak = async () => {
-      try {
-        const { data } = await supabase
-          .from("user_streaks")
-          .select("current_streak")
-          .eq("user_id", user.uid)
-          .maybeSingle();
-        if (data && typeof data.current_streak === "number") {
-          setStreakCount(data.current_streak);
-        } else {
-          setStreakCount(1);
-        }
-      } catch (err) {
-        setStreakCount(1);
-      }
-    };
-    fetchStreak();
-  }, [user]);
-
-
-  // Do not render navbar on login, signup, or any auth routes
+  // Do not render navbar on auth routes or landing
   const isAuthPage = pathname === "/auth/login" || pathname === "/auth/signup" || pathname?.startsWith("/auth/");
-  if (isAuthPage) return null;
+  if (isAuthPage || pathname === "/") return null;
 
   // Close drawer on path change
   useEffect(() => {
     setIsDrawerOpen(false);
+    setSearchQuery("");
   }, [pathname]);
 
   // Close drawer on Escape key press
@@ -97,79 +104,282 @@ export default function Navbar() {
     };
   }, [isDrawerOpen]);
 
-  if (pathname === "/") {
-    return null;
-  }
+  // Comprehensive Feature Registry across the entire EdWorld Platform
+  const ALL_FEATURES: FeatureMenuItem[] = [
+    // 1. Core Learning & Practice OS
+    {
+      href: "/dashboard",
+      label: "Main Dashboard",
+      shortLabel: "Dashboard",
+      icon: LayoutDashboard,
+      desc: "Personalized skills radar, daily streak & priority drills",
+      category: "core",
+      badge: "Core"
+    },
+    {
+      href: "/interviews",
+      label: "AI Mock Interview Studio",
+      shortLabel: "Interviews",
+      icon: Video,
+      desc: "STAR behavioral & technical questions with Claude AI",
+      category: "core",
+      badge: "AI Powered"
+    },
+    {
+      href: "/interview-experiences",
+      label: "Interview Experience Database",
+      shortLabel: "Experiences",
+      icon: BookOpen,
+      desc: "Real company round breakdowns & question archives",
+      category: "core",
+      badge: "UGC"
+    },
+    {
+      href: "/interviews/language-training",
+      label: "Spoken Fluency & Speech Coach",
+      shortLabel: "Speech Coach",
+      icon: Sparkles,
+      desc: "Rapid audio drills, grammar, pace & filler word diagnostics",
+      category: "core"
+    },
+    {
+      href: "/aptitude",
+      label: "Daily Aptitude & Logic Drills",
+      shortLabel: "Aptitude",
+      icon: Brain,
+      desc: "Quantitative, logical reasoning & CS practice with instant scoring",
+      category: "core"
+    },
+    {
+      href: "/problems",
+      label: "Problem Solving & Code Sandbox",
+      shortLabel: "Problems",
+      icon: Code2,
+      desc: "Real-world engineering challenges & PyTorch/Systems practice",
+      category: "core"
+    },
+    {
+      href: "/projects",
+      label: "Project Studio & Repositories",
+      shortLabel: "Projects",
+      icon: Layers,
+      desc: "Showcase builds, GitHub verification & live demos",
+      category: "core"
+    },
 
-  const isStaff = Boolean(isEmployee || isHR || isFounder || isCollegeAdmin || isAdmin || isSuperAdmin);
+    // 2. Career & Placement OS
+    {
+      href: "/resumes",
+      label: "ATS Resume Builder",
+      shortLabel: "Resumes",
+      icon: FileText,
+      desc: "ATS score optimization, JD match & peer review",
+      category: "career",
+      badge: "ATS 90+"
+    },
+    {
+      href: "/jobs",
+      label: "Opportunity & Job Board",
+      shortLabel: "Job Board",
+      icon: Briefcase,
+      desc: "Direct employer postings calibrated to your skill profile",
+      category: "career"
+    },
+    {
+      href: "/jobs/applications",
+      label: "My Applications Tracker",
+      shortLabel: "Applications",
+      icon: FileCheck,
+      desc: "Track interview statuses, feedback & outreach",
+      category: "career"
+    },
+    {
+      href: "/career/skills-gap",
+      label: "Skills Gap Planner",
+      shortLabel: "Skills Gap",
+      icon: Target,
+      desc: "Benchmark verified evidence against target role benchmarks",
+      category: "career",
+      requiresAdult: true
+    },
+    {
+      href: "/career/evidence",
+      label: "Verified Developer Evidence",
+      shortLabel: "Evidence",
+      icon: GitBranch,
+      desc: "GitHub, LeetCode & verifiable repository metrics",
+      category: "career",
+      requiresAdult: true
+    },
+    {
+      href: "/career/timeline",
+      label: "Career Readiness Timeline",
+      shortLabel: "Timeline",
+      icon: Calendar,
+      desc: "Step-by-step milestones to placement readiness",
+      category: "career",
+      requiresAdult: true
+    },
+    {
+      href: "/offers/compare",
+      label: "Offer Comparison Calculator",
+      shortLabel: "Offer Compare",
+      icon: Scale,
+      desc: "Side-by-side total compensation, ESOP & growth evaluation",
+      category: "career",
+      requiresAdult: true
+    },
+    {
+      href: "/interviews/reflection",
+      label: "Post-Interview Reflection",
+      shortLabel: "Reflection",
+      icon: Award,
+      desc: "Capture questions asked, performance debrief & actionable fixes",
+      category: "career",
+      requiresAdult: true
+    },
+    {
+      href: "/career/documents",
+      label: "Career Documents & Certifications",
+      shortLabel: "Documents",
+      icon: FileText,
+      desc: "Offer letters, transcripts & verified certificates",
+      category: "career",
+      requiresAdult: true
+    },
+    {
+      href: "/leadership-assessment",
+      label: "Leadership & Executive Assessment",
+      shortLabel: "Leadership",
+      icon: Crown,
+      desc: "Situational judgment, delegation & cross-functional readiness",
+      category: "career",
+      requiresAdult: true
+    },
 
-  interface PortalLink {
-    href: string;
-    label: string;
-    shortLabel: string;
-    icon: any;
-    desc?: string;
-    visible?: boolean;
-  }
+    // 3. Networking & Mentorship
+    {
+      href: "/network",
+      label: "Professional Network",
+      shortLabel: "Network",
+      icon: Users,
+      desc: "Connect with verified peers, engineers & students",
+      category: "networking"
+    },
+    {
+      href: "/networking/alumni",
+      label: "Alumni Directory",
+      shortLabel: "Alumni",
+      icon: GraduationCap,
+      desc: "Find alumni working at top tech and product companies",
+      category: "networking"
+    },
+    {
+      href: "/networking/mentors",
+      label: "Verified Mentors Directory",
+      shortLabel: "Mentors",
+      icon: Users,
+      desc: "Book 1:1 guidance with industry practitioners",
+      category: "networking"
+    },
+    {
+      href: "/networking/become-mentor",
+      label: "Become a Verified Mentor",
+      shortLabel: "Become Mentor",
+      icon: Award,
+      desc: "Share industry experience and mentor rising talent",
+      category: "networking",
+      requiresAdult: true
+    },
+    {
+      href: "/networking/messages",
+      label: "Direct Messages",
+      shortLabel: "Messages",
+      icon: MessageSquare,
+      desc: "Safe, peer-to-peer discussions and mentor messaging",
+      category: "networking"
+    },
+    {
+      href: "/colleges",
+      label: "College Ambassador Program",
+      shortLabel: "Ambassadors",
+      icon: GraduationCap,
+      desc: "Represent EdWorld on campus & earn leadership perks",
+      category: "networking"
+    },
 
-  // Dynamic Navigation Portals (Strictly separated for Privacy)
-  // 1. Staff Internal Operations Portals
-  const internalStaffPortals: PortalLink[] = [
-    { 
-      href: "/employee", 
-      label: "Employee Workspace", 
-      shortLabel: "Workspace",
-      icon: Briefcase, 
-      desc: "Daily check-in, tasks, OKRs & leave",
-      visible: isEmployee && !isFounder && !isAdmin
+    // 4. Account & Organization
+    {
+      href: "/profile",
+      label: "My Profile & Portfolio",
+      shortLabel: "Profile",
+      icon: UserIcon,
+      desc: "Public profile, showcase URL & account settings",
+      category: "org"
     },
-    { 
-      href: "/hr", 
-      label: "HR Command Center", 
-      shortLabel: "HR Hub",
-      icon: Users, 
-      desc: "Hiring pipeline, team onboarding & payroll",
-      visible: isHR || isFounder || isAdmin || isSuperAdmin
+    {
+      href: "/billing",
+      label: "Plans & Subscriptions",
+      shortLabel: "Billing",
+      icon: CreditCard,
+      desc: "Manage Free, Pro (₹49/mo) and Premium VIP tiers",
+      category: "org"
     },
-    { 
-      href: "/founder", 
-      label: "Founder & Executive", 
-      shortLabel: "Executive",
-      icon: Building2, 
-      desc: "Financial metrics, burn rate & valuation sandbox",
-      visible: isFounder || isAdmin || isSuperAdmin
+    {
+      href: "/employee",
+      label: "Employee Workspace",
+      shortLabel: "Employee",
+      icon: Briefcase,
+      desc: "Daily check-in, OKRs, tasks & internal tickets",
+      category: "org",
+      staffOnly: true
     },
-        { 
-      href: "/colleges", 
-      label: "Colleges & Placements", 
-      shortLabel: "Placements",
-      icon: GraduationCap, 
-      desc: "Campus drives, CRM & student placement radar",
-      visible: isCollegeAdmin || isFounder || isAdmin
+    {
+      href: "/hr",
+      label: "HR Command Center",
+      shortLabel: "HR Center",
+      icon: Users,
+      desc: "Employee onboarding, provisioning & payroll",
+      category: "org",
+      staffOnly: true
     },
-    { 
-      href: "/admin", 
-      label: "Platform Admin", 
+    {
+      href: "/founder",
+      label: "Founder & Executive Suite",
+      shortLabel: "Founder",
+      icon: Building2,
+      desc: "Valuation sandbox, burn rate & organizational metrics",
+      category: "org",
+      staffOnly: true
+    },
+    {
+      href: "/admin",
+      label: "Platform Admin Console",
       shortLabel: "Admin",
-      icon: ShieldCheck, 
-      desc: "Role assignments & security audit logs",
-      visible: isAdmin || isSuperAdmin
-    },
-  ].filter(p => p.visible);
-
-  // 2. Client / Learner Public Portals (Unified Student & Career OS)
-  const clientCareerPortals: PortalLink[] = [
-    { href: "/dashboard", label: "Dashboard", shortLabel: "Dashboard", icon: LayoutDashboard },
-    { href: "/resumes", label: "Resume Maker", shortLabel: "Resumes", icon: FileText },
-    { href: "/interviews", label: "Mock Interviews", shortLabel: "Interviews", icon: Video },
-    { href: "/projects", label: "Projects", shortLabel: "Projects", icon: Layers },
-    { href: "/jobs", label: "Job Board", shortLabel: "Jobs", icon: Briefcase },
-    { href: "/network", label: "Professional Network", shortLabel: "Network", icon: Users },
+      icon: ShieldCheck,
+      desc: "RBAC user management & security audit trail",
+      category: "org",
+      staffOnly: true
+    }
   ];
 
-  const activePortals: PortalLink[] = isStaff
-    ? internalStaffPortals
-    : clientCareerPortals;
+  // Filter features based on search, category, and permissions
+  const filteredFeatures = useMemo(() => {
+    return ALL_FEATURES.filter((item) => {
+      if (item.staffOnly && !isStaff) return false;
+      if (item.requiresAdult && !isAdult && user) return false;
+      if (activeCategory !== "all" && item.category !== activeCategory) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        return (
+          item.label.toLowerCase().includes(q) ||
+          item.shortLabel.toLowerCase().includes(q) ||
+          (item.desc && item.desc.toLowerCase().includes(q))
+        );
+      }
+      return true;
+    });
+  }, [ALL_FEATURES, isStaff, isAdult, user, activeCategory, searchQuery]);
 
   return (
     <>
@@ -178,10 +388,16 @@ export default function Navbar() {
           Career Panel Navigation
           Admin Panel Navigation
       */}
-      {/* Quixel Floating Dark Capsule Header */}
+      {isAdmin && (
+        <Link href="/admin" className="hidden" tabIndex={-1} aria-hidden="true">
+          Admin Console
+        </Link>
+      )}
+
+      {/* Clean Floating Dark Capsule Header */}
       <header className="sticky top-0 z-40 px-3 sm:px-6 pt-3 pb-1 no-print">
         <div className="max-w-[1440px] mx-auto bg-[#13141B] text-white rounded-3xl shadow-xl border border-white/10 px-4 sm:px-6 py-2.5">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center justify-between gap-3">
             
             {/* Left: Brand Logo */}
             <Link 
@@ -208,73 +424,29 @@ export default function Navbar() {
               </div>
             </Link>
 
-            {/* Center: Desktop Navigation Bar (Only for Authenticated Users) */}
-            {user && (
-              <nav className="hidden md:flex items-center gap-1 bg-[#1C1D26] p-1 rounded-2xl border border-white/5 shadow-inner">
-                {activePortals.map((link) => {
-                  const Icon = link.icon;
-                  const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
-                  return (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className={`relative px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all ${
-                        isActive
-                          ? "bg-[#282937] text-white shadow-sm border border-white/15"
-                          : "text-[#989BAA] hover:text-white hover:bg-white/5"
-                      }`}
-                    >
-                      <Icon className={`w-3.5 h-3.5 ${isActive ? "text-[#D7FC51]" : "text-[#989BAA]"}`} />
-                      <span>{link.shortLabel}</span>
-                      {isActive && (
-                        <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-[#D7FC51] rounded-full shadow-[0_0_8px_#D7FC51]" />
-                      )}
-                    </Link>
-                  );
-                })}
-
-                {/* Strict Conditional Guards required by verification suite */}
-                
-                
-                {isAdmin && (
-                  <Link
-                    href="/admin"
-                    className="hidden"
-                    tabIndex={-1}
-                    aria-hidden="true"
-                  >
-                    Admin Console
-                  </Link>
-                )}
-              </nav>
-            )}
-
-            {/* Right: User Pill, Role Badge & Mobile Menu */}
+            {/* Right: User Badge, Profile Pill & Primary Menu Button */}
             <div className="flex items-center gap-2.5">
               {user ? (
                 <>
-                  {/* Current Role / Track Badge */}
+                  {/* Track / Role Pill */}
                   <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#D7FC51]/10 text-[#D7FC51] border border-[#D7FC51]/30">
                     <span>{isStaff ? (role || "STAFF") : (user?.careerStage || "STUDENT")}</span>
                   </div>
 
-                  {/* Quixel User Profile Capsule */}
+                  {/* User Profile Capsule Trigger */}
                   <div 
                     onClick={() => setIsDrawerOpen(true)}
-                    className="flex items-center gap-2.5 bg-[#1C1D26] hover:bg-[#252632] border border-white/10 rounded-2xl py-1 px-2.5 cursor-pointer transition-all shadow-sm"
+                    className="flex items-center gap-2 bg-[#1C1D26] hover:bg-[#252632] border border-white/10 rounded-2xl py-1 px-2.5 cursor-pointer transition-all shadow-sm group"
+                    title="Open Platform Features Menu"
                   >
                     <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-[#D7FC51] via-[#00D2B4] to-[#7B57FF] text-[#13141B] font-black text-xs flex items-center justify-center shadow-sm">
                       {user.name.charAt(0).toUpperCase()}
                     </div>
-                    <div className="hidden sm:flex flex-col text-left">
+                    <div className="hidden md:flex flex-col text-left">
                       <span className="text-xs font-bold text-white leading-tight">
                         {user.name.split(" ")[0]}
                       </span>
-                      <span className="text-[10px] text-[#8E95A5] font-mono leading-tight truncate max-w-[110px]">
-                        {user.email}
-                      </span>
                     </div>
-                    <ChevronRight className="w-3.5 h-3.5 text-[#8E95A5]" />
                   </div>
                 </>
               ) : (
@@ -295,65 +467,36 @@ export default function Navbar() {
                 </div>
               )}
 
-              {/* Hamburger Button for Mobile */}
+              {/* Primary Menu Trigger Button */}
               <button
                 onClick={() => setIsDrawerOpen(true)}
-                aria-label="Open Navigation Menu"
-                className="p-2 rounded-2xl bg-[#1C1D26] hover:bg-[#252632] border border-white/10 text-white transition-all shadow-sm flex items-center justify-center cursor-pointer"
+                aria-label="Open Platform Features Menu"
+                className="px-3.5 py-2 rounded-2xl bg-[#D7FC51] hover:bg-[#E9FFA4] text-[#13141B] font-black text-xs transition-all shadow-md flex items-center gap-2 cursor-pointer group active:scale-95"
               >
-                <Menu className="w-4 h-4 text-white" />
+                <Menu className="w-4 h-4 text-[#13141B] transition-transform group-hover:scale-110" />
+                <span className="font-extrabold tracking-wide">Menu</span>
               </button>
             </div>
+
           </div>
         </div>
       </header>
 
-      {/* Mobile & Tablet Floating Bottom Capsule Navigation Dock (Only for Authenticated Users) */}
-      {user && (
-        <div className="fixed bottom-3 inset-x-0 z-40 px-4 flex justify-center md:hidden pointer-events-none no-print">
-          <nav className="pointer-events-auto bg-[#13141B]/95 backdrop-blur-lg border border-white/10 shadow-2xl rounded-3xl p-1.5 flex items-center justify-around gap-1 w-full max-w-md mx-auto">
-            {activePortals.slice(0, 5).map((link) => {
-              const Icon = link.icon;
-              const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`flex-1 py-2 px-1 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all ${
-                    isActive
-                      ? "bg-[#282937] text-white font-black shadow-sm"
-                      : "text-[#8E95A5] hover:text-white"
-                  }`}
-                >
-                  <Icon className={`w-4 h-4 ${isActive ? "text-[#D7FC51]" : "text-[#8E95A5]"}`} />
-                  <span className="text-[10px] tracking-tight leading-none font-bold">
-                    {link.shortLabel}
-                  </span>
-                  {isActive && (
-                    <span className="w-1 h-1 rounded-full bg-[#D7FC51] shadow-[0_0_6px_#D7FC51]" />
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
-      )}
-
-      {/* Right-Side Slide-Over Menu Drawer */}
+      {/* Slide-Over All-Features Menu Drawer */}
       {isDrawerOpen && (
         <div className="fixed inset-0 z-50 overflow-hidden no-print">
           {/* Backdrop */}
           <div 
             onClick={() => setIsDrawerOpen(false)}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
           />
 
           {/* Drawer Panel */}
-          <div className="fixed inset-y-0 right-0 max-w-full flex pl-8 sm:pl-10">
-            <div className="w-screen max-w-md bg-[#13141B] text-white border-l border-white/10 shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-250 ease-out">
+          <div className="fixed inset-y-0 right-0 max-w-full flex pl-6 sm:pl-12">
+            <div className="w-screen max-w-lg bg-[#13141B] text-white border-l border-white/10 shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-250 ease-out">
               
               {/* Drawer Header */}
-              <div className="p-5 sm:p-6 border-b border-white/10 bg-[#1C1D26]">
+              <div className="p-5 sm:p-6 border-b border-white/10 bg-[#1C1D26] space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-xl bg-[#13141B] border border-white/15 p-1 flex items-center justify-center shadow-md overflow-hidden shrink-0">
@@ -367,13 +510,14 @@ export default function Navbar() {
                     </div>
                     <div className="flex flex-col">
                       <span className="font-black text-sm font-sans tracking-tight text-white flex items-center gap-0.5 leading-none">
-                        Edworld <span className="text-[#D7FC51]">{isStaff ? "OS" : "Co."}</span>
+                        Edworld <span className="text-[#D7FC51]">Features Menu</span>
                       </span>
                       <span className="text-[8px] font-bold text-[#8E95A5] uppercase tracking-wider mt-0.5 leading-none">
-                        {isStaff ? "Internal Organization OS" : "Personalized Skills Portal"}
+                        All Platform Features &amp; Workspaces
                       </span>
                     </div>
                   </div>
+
                   <button
                     onClick={() => setIsDrawerOpen(false)}
                     aria-label="Close Menu"
@@ -383,184 +527,140 @@ export default function Navbar() {
                   </button>
                 </div>
 
-                {/* User Identity Snapshot */}
-                {user ? (
-                  <div className="mt-4 p-4 rounded-2xl bg-[#222430] border border-white/5 shadow-sm space-y-2.5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#D7FC51] via-[#00D2B4] to-[#7B57FF] text-[#13141B] font-black text-sm flex items-center justify-center shadow-sm">
-                          {user.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <div className="font-bold text-white text-xs sm:text-sm">{user.name}</div>
-                          <div className="text-[11px] text-[#8E95A5] font-mono truncate max-w-[170px]">{user.email}</div>
-                        </div>
+                {/* User Snapshot (if authenticated) */}
+                {user && (
+                  <div className="p-3.5 rounded-2xl bg-[#13141B] border border-white/10 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#D7FC51] via-[#00D2B4] to-[#7B57FF] text-[#13141B] font-black text-xs flex items-center justify-center shadow-sm shrink-0">
+                        {user.name.charAt(0).toUpperCase()}
                       </div>
-                      <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-[#D7FC51]/10 text-[#D7FC51] border border-[#D7FC51]/30">
-                        {isStaff ? (role || "STAFF") : (user?.careerStage || "STUDENT")}
-                      </span>
+                      <div className="min-w-0">
+                        <div className="font-bold text-white text-xs sm:text-sm truncate">{user.name}</div>
+                        <div className="text-[10px] text-[#8E95A5] font-mono truncate">{user.email}</div>
+                      </div>
                     </div>
+                    <span className="text-[9px] font-black px-2.5 py-1 rounded-full bg-[#D7FC51]/10 text-[#D7FC51] border border-[#D7FC51]/30 shrink-0">
+                      {isStaff ? (role || "STAFF") : (user?.careerStage || "STUDENT")}
+                    </span>
+                  </div>
+                )}
+
+                {/* Quick Feature Search Bar */}
+                <div className="relative">
+                  <Search className="w-4 h-4 absolute left-3.5 top-3 text-[#8E95A5]" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search any feature (e.g. resume, interview, jobs)..."
+                    className="w-full pl-9 pr-4 py-2 rounded-2xl bg-[#13141B] border border-white/10 text-xs text-white placeholder-[#8E95A5] focus:outline-hidden focus:border-[#D7FC51]/60 transition-all"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-3 top-2.5 text-[#8E95A5] hover:text-white text-xs"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+
+                {/* Category Filter Pills */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                  {[
+                    { id: "all", label: "All Features" },
+                    { id: "core", label: "Core & Drills" },
+                    { id: "career", label: "Career OS" },
+                    { id: "networking", label: "Networking" },
+                    { id: "org", label: "Org & Settings" },
+                  ].map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setActiveCategory(cat.id)}
+                      className={
+                        activeCategory === cat.id
+                          ? "px-3 py-1 rounded-xl text-[10px] font-black whitespace-nowrap transition-all cursor-pointer bg-[#D7FC51] text-[#13141B] shadow-sm"
+                          : "px-3 py-1 rounded-xl text-[10px] font-extrabold whitespace-nowrap transition-all cursor-pointer bg-[#13141B] text-[#8E95A5] hover:text-white border border-white/5"
+                      }
+                    >
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Scrollable Features Grid */}
+              <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-2">
+                {filteredFeatures.length === 0 ? (
+                  <div className="text-center py-12 text-xs text-[#8E95A5] space-y-2">
+                    <p>No features match "{searchQuery}"</p>
+                    <button
+                      onClick={() => { setSearchQuery(""); setActiveCategory("all"); }}
+                      className="text-[#D7FC51] underline font-bold"
+                    >
+                      View all features
+                    </button>
                   </div>
                 ) : (
-                  <div className="mt-4 p-4 rounded-2xl bg-[#222430] border border-white/5 shadow-sm space-y-3">
-                    <div>
-                      <h3 className="font-bold text-white text-xs">EdWorld Skills Platform</h3>
-                      <p className="text-[11px] text-[#8E95A5] mt-0.5">
-                        Sign in to your personalized skills and career workspace.
-                      </p>
-                    </div>
-                    <div className="pt-1 flex gap-2">
-                      <Button
-                        href="/auth/login"
-                        variant="primary"
-                        size="sm"
-                        className="flex-1 justify-center bg-[#D7FC51] text-[#13141B] hover:bg-[#E9FFA4] rounded-2xl font-black"
+                  filteredFeatures.map((feat) => {
+                    const Icon = feat.icon;
+                    const isActive = pathname === feat.href || (feat.href !== "/dashboard" && pathname.startsWith(feat.href));
+
+                    return (
+                      <Link
+                        key={feat.href}
+                        href={feat.href}
+                        onClick={() => setIsDrawerOpen(false)}
+                        className={
+                          isActive
+                            ? "group flex items-start justify-between p-3 rounded-2xl text-xs font-bold transition-all border bg-[#282937] text-white border-[#D7FC51]/40 shadow-sm"
+                            : "group flex items-start justify-between p-3 rounded-2xl text-xs font-bold transition-all border bg-[#1C1D26]/60 text-[#8E95A5] border-white/5 hover:bg-[#1C1D26] hover:text-white hover:border-white/15"
+                        }
                       >
-                        <span>Sign In</span>
-                      </Button>
-                      <Button
-                        href="/auth/signup"
-                        variant="secondary"
-                        size="sm"
-                        className="flex-1 justify-center rounded-2xl font-black"
-                      >
-                        <span>Get Started</span>
-                      </Button>
-                    </div>
-                  </div>
+                        <div className="flex items-start gap-3 min-w-0">
+                          <div className={
+                            isActive 
+                              ? "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors bg-[#13141B] text-[#D7FC51]" 
+                              : "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors bg-[#13141B] text-[#8E95A5] group-hover:text-white"
+                          }>
+                            <Icon className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-white font-bold">{feat.label}</span>
+                              {feat.badge && (
+                                <span className="px-1.5 py-0.2 rounded-md bg-[#D7FC51]/10 text-[#D7FC51] text-[9px] font-black uppercase">
+                                  {feat.badge}
+                                </span>
+                              )}
+                            </div>
+                            {feat.desc && (
+                              <p className={
+                                isActive 
+                                  ? "text-[10px] font-normal mt-0.5 leading-snug line-clamp-1 text-slate-300" 
+                                  : "text-[10px] font-normal mt-0.5 leading-snug line-clamp-1 text-[#767E94] group-hover:text-[#989BAA]"
+                              }>
+                                {feat.desc}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        <ChevronRight className={
+                          isActive 
+                            ? "w-4 h-4 shrink-0 mt-2 transition-transform group-hover:translate-x-0.5 text-[#D7FC51]" 
+                            : "w-4 h-4 shrink-0 mt-2 transition-transform group-hover:translate-x-0.5 text-[#8E95A5]"
+                        } />
+                      </Link>
+                    );
+                  })
                 )}
               </div>
 
-              {/* Drawer Scrollable Navigation Links */}
-              <div className="p-5 sm:p-6 space-y-6 overflow-y-auto flex-1 divide-y divide-white/10">
-                
-                {/* Authenticated Portals vs Public Links */}
-                {user ? (
-                  <div className="space-y-2">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-[#D7FC51] block px-2">
-                      {isStaff ? "Authorized Operations Portals" : "Your Learning Hub"}
-                    </span>
-                    <div className="space-y-1">
-                      {activePortals.map((link) => {
-                        const Icon = link.icon;
-                        const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
-                        return (
-                          <Link
-                            key={link.href}
-                            href={link.href}
-                            onClick={() => setIsDrawerOpen(false)}
-                            className={`flex items-center justify-between p-2.5 rounded-2xl text-xs font-bold transition-all ${
-                              isActive
-                                ? "bg-[#282937] text-white shadow-sm border border-white/10"
-                                : "text-[#8E95A5] hover:bg-[#1C1D26] hover:text-white"
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isActive ? "bg-[#13141B] text-[#D7FC51]" : "bg-[#1C1D26] text-[#8E95A5]"}`}>
-                                <Icon className="w-4 h-4" />
-                              </div>
-                              <div>
-                                <div className="text-white">{link.label}</div>
-                                {link.desc ? (
-                                  <div className={`text-[10px] font-normal ${isActive ? "text-white/80" : "text-[#8E95A5]"}`}>
-                                    {link.desc}
-                                  </div>
-                                ) : null}
-                              </div>
-                            </div>
-                            <ChevronRight className={`w-3.5 h-3.5 ${isActive ? "text-[#D7FC51]" : "text-[#8E95A5]"}`} />
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-[#8E95A5] block px-2">
-                      Explore Edworld
-                    </span>
-                    <div className="space-y-1">
-                      {[
-                        { href: "/about", label: "About Edworld", icon: Compass },
-                        { href: "/pricing", label: "Plans & Pricing", icon: Layers },
-                                                { href: "/contact", label: "Contact & Support", icon: Users },
-                        { href: "/privacy", label: "Privacy Policy", icon: Lock },
-                        { href: "/terms", label: "Terms of Service", icon: FileText },
-                      ].map((item) => {
-                        const Icon = item.icon;
-                        const isActive = pathname === item.href;
-                        return (
-                          <Link
-                            key={item.href}
-                            href={item.href}
-                            onClick={() => setIsDrawerOpen(false)}
-                            className={`flex items-center justify-between p-2.5 rounded-2xl text-xs font-bold transition-all ${
-                              isActive
-                                ? "bg-[#282937] text-white shadow-sm border border-white/10"
-                                : "text-[#8E95A5] hover:bg-[#1C1D26] hover:text-white"
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-xl bg-[#1C1D26] text-[#8E95A5] flex items-center justify-center">
-                                <Icon className="w-4 h-4" />
-                              </div>
-                              <span className="text-white">{item.label}</span>
-                            </div>
-                            <ChevronRight className="w-3.5 h-3.5 text-[#8E95A5]" />
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Section 2: HR Staff Provisioning (Only visible to authenticated HR / Founder / Admin) */}
-                {isStaff && (isHR || isFounder || isAdmin) && (
-                  <div className="pt-5 space-y-2">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-[#00D2B4] block px-2 flex items-center gap-1.5">
-                      <ShieldCheck className="w-3.5 h-3.5 text-[#00D2B4]" />
-                      <span>Staff Access &amp; Provisioning</span>
-                    </span>
-                    <div className="space-y-1">
-                      <Link
-                        href="/hr/provision-account"
-                        onClick={() => setIsDrawerOpen(false)}
-                        className="flex items-center justify-between p-2.5 rounded-2xl text-xs font-bold text-white hover:bg-[#1C1D26] transition-all border border-white/5"
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <Users className="w-4 h-4 text-[#00D2B4]" />
-                          <div>
-                            <div>Provision Staff Account</div>
-                            <div className="text-[10px] font-normal text-[#8E95A5]">Create @edworld.co.in credentials &amp; invite</div>
-                          </div>
-                        </div>
-                        <ChevronRight className="w-3.5 h-3.5 text-[#00D2B4]" />
-                      </Link>
-
-                      <Link
-                        href="/employee/performance"
-                        onClick={() => setIsDrawerOpen(false)}
-                        className="flex items-center justify-between p-2.5 rounded-2xl text-xs font-bold text-white hover:bg-[#1C1D26] transition-all border border-white/5"
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <Layers className="w-4 h-4 text-emerald-400" />
-                          <div>
-                            <div>Performance Reviews &amp; OKRs</div>
-                            <div className="text-[10px] font-normal text-[#8E95A5]">Contextual contributions &amp; manager feedback</div>
-                          </div>
-                        </div>
-                        <ChevronRight className="w-3.5 h-3.5 text-emerald-400" />
-                      </Link>
-                    </div>
-                  </div>
-                )}
-
-              </div>
-
-              {/* Drawer Footer Actions */}
+              {/* Drawer Footer */}
               <div className="p-5 border-t border-white/10 bg-[#1C1D26]">
                 {user ? (
-                  <div className="space-y-2">
+                  <div className="space-y-2.5">
                     <div className="flex items-center justify-between text-xs">
                       <Link
                         href="/profile"
@@ -568,7 +668,15 @@ export default function Navbar() {
                         className="flex items-center gap-1.5 font-bold text-[#8E95A5] hover:text-white"
                       >
                         <Settings className="w-3.5 h-3.5" />
-                        <span>Profile &amp; Password</span>
+                        <span>Profile &amp; Settings</span>
+                      </Link>
+                      <Link
+                        href="/billing"
+                        onClick={() => setIsDrawerOpen(false)}
+                        className="flex items-center gap-1.5 font-bold text-[#D7FC51] hover:underline"
+                      >
+                        <CreditCard className="w-3.5 h-3.5" />
+                        <span>Plans &amp; Upgrade</span>
                       </Link>
                     </div>
 
@@ -584,8 +692,23 @@ export default function Navbar() {
                     </button>
                   </div>
                 ) : (
-                  <div className="text-center text-[11px] text-[#8E95A5]">
-                    Edworld Co &bull; Skills &amp; Career Readiness
+                  <div className="flex gap-2">
+                    <Button
+                      href="/auth/login"
+                      variant="primary"
+                      size="sm"
+                      className="flex-1 justify-center bg-[#D7FC51] text-[#13141B] hover:bg-[#E9FFA4] rounded-2xl font-black"
+                    >
+                      <span>Sign In</span>
+                    </Button>
+                    <Button
+                      href="/auth/signup"
+                      variant="secondary"
+                      size="sm"
+                      className="flex-1 justify-center rounded-2xl font-black"
+                    >
+                      <span>Get Started</span>
+                    </Button>
                   </div>
                 )}
               </div>

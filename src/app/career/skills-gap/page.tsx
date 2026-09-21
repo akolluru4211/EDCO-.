@@ -87,7 +87,6 @@ export default function SkillsGapPage() {
             </div>
             <div>
               <h1 className="text-2xl font-black text-[#181920]">Skills Gap Planner</h1>
-              <p className="text-xs text-[#767E94]">Compare your real evidence against target role requirements with actionable practice recommendations.</p>
             </div>
           </div>
         </div>

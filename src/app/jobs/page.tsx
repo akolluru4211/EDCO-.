@@ -181,9 +181,6 @@ export default function JobBoardPage() {
             <h1 className="text-3xl sm:text-4xl font-black text-[#181920] tracking-tight">
               Opportunity &amp; Placement Board
             </h1>
-            <p className="text-sm text-[#767E94] max-w-2xl leading-relaxed font-medium">
-              Opportunities calibrated to your target track with direct employer routing and automated resume keyword alignment.
-            </p>
           </div>
 
           <div className="flex items-center gap-3">

@@ -288,9 +288,6 @@ export default function ProfilePage() {
             <span className="text-xs text-[#8E95A5]">🏢 EdWorld Organization Identity</span>
           </div>
           <h1 className="text-2xl font-black text-white">Profile &amp; Security Settings</h1>
-          <p className="text-xs text-[#8E95A5]">
-            Manage your personal profile, credentials, and notification preferences.
-          </p>
         </div>
 
         <div className="flex items-center gap-2">

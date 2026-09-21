@@ -74,7 +74,6 @@ export default function LeadershipAssessmentPage() {
             </div>
             <div>
               <h1 className="text-lg sm:text-xl font-black text-white">Manager &amp; Leadership Self-Assessment</h1>
-              <p className="text-xs text-slate-400 mt-0.5">Reflective prompts to evaluate leadership readiness and mentorship dimensions</p>
             </div>
           </div>
 

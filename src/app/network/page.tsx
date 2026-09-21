@@ -290,9 +290,6 @@ export default function NetworkPage() {
               <h1 className="text-2xl sm:text-4xl font-black font-display text-[#13141B] tracking-tight">
                 Network
               </h1>
-              <p className="text-xs sm:text-sm text-[#5E6573] max-w-2xl font-medium">
-                Connect with students and professionals on EdWorld Co.
-              </p>
             </div>
 
             <div className="flex items-center gap-3 relative z-10">
