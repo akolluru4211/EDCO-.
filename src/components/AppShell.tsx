@@ -15,7 +15,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   const visualMode = user?.ageBand === "18+" || !user?.ageBand ? "career" : "maximalist";
   const isAuthPage = pathname === "/auth/login" || pathname === "/auth/signup" || pathname?.startsWith("/auth/");
-  const isLandingPage = pathname === "/";
+  const isLandingPage = pathname === "/" || pathname === "/pricing" || pathname === "/for-college" || pathname === "/for-professionals" || pathname === "/for-career" || pathname?.startsWith("/sector-landing");
   const noBottomPadding = isAuthPage || isLandingPage;
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           isLandingPage ? "bg-white text-slate-900 overflow-hidden" : "bg-[#F4F6FB] text-[#181920]"
         }`}
       >
-        {!isAuthPage && <Navbar />}
+        {!isAuthPage && !isLandingPage && <Navbar />}
         <main className={`flex-1 ${noBottomPadding ? "" : "pb-24 md:pb-20 lg:pb-0"}`}>{children}</main>
 
         <ReconsentModal
