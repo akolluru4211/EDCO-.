@@ -30,6 +30,8 @@ import {
 
 import { supabase } from "@/lib/supabase";
 import { normalizeDisplayName } from "@/lib/services/user-profile";
+import EdIdBadge from "@/components/ui/EdIdBadge";
+import { formatEdId } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -160,6 +162,7 @@ export default function PublicProfileViewPage() {
 
           const found: PublicUserProfile = {
             userId: targetId,
+            edId: formatEdId(targetId),
             username: dbProfile.username || usernameParam,
             name: displayName || dbProfile.name || "EdWorld Member",
             avatarUrl: dbProfile.avatar_url || null,
@@ -372,9 +375,10 @@ export default function PublicProfileViewPage() {
         {/* Profile Card */}
         <div className="bg-paper-raised rounded-3xl border border-line p-6 sm:p-8 space-y-6 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 flex-wrap">
+            <div className="space-y-2.5">
+              <div className="flex items-center gap-2.5 flex-wrap">
                 <h1 className="text-2xl sm:text-3xl font-bold font-display text-ink">{profileData.name}</h1>
+                <EdIdBadge userId={profileData.userId} customId={profileData.edId} size="md" variant="pill" />
                 {profileData.isMentor && (
                   <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-forest text-white">
                     Verified Mentor
@@ -399,7 +403,15 @@ export default function PublicProfileViewPage() {
 
             {/* Actions for other users */}
             {!isOwnProfile && user && (
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                <Link
+                  href={`/networking/messages/${profileData.userId}`}
+                  className="px-4 py-2 rounded-xl bg-ink text-white hover:bg-black text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors"
+                >
+                  <MessageSquare className="w-3.5 h-3.5 text-forest" />
+                  <span>Chat</span>
+                </Link>
+
                 {connectionStatus === "none" && (
                   <button
                     onClick={() => setShowConnectModal(true)}
@@ -420,13 +432,10 @@ export default function PublicProfileViewPage() {
                   </span>
                 )}
                 {connectionStatus === "accepted" && (
-                  <Link
-                    href={`/networking/messages/${[user.uid, profileData.userId].sort().join("_")}`}
-                    className="px-4 py-2 rounded-xl bg-forest text-white text-xs font-bold flex items-center gap-1.5 shadow-sm"
-                  >
-                    <MessageSquare className="w-3.5 h-3.5" />
-                    <span>Message</span>
-                  </Link>
+                  <span className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Connected</span>
+                  </span>
                 )}
                 <button
                   onClick={() => setShowReportModal(true)}

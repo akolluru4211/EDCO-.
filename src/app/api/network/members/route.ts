@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { PublicUserProfile } from "@/lib/types";
+import { formatEdId } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -161,6 +162,7 @@ export async function GET(req: NextRequest) {
 
       return {
         userId: p.id,
+        edId: formatEdId(p.id),
         username: p.username || (p.name ? p.name.toLowerCase().replace(/\s+/g, "_") : p.id.slice(0, 8)),
         name: p.name || "EdWorld Member",
         avatarUrl: p.avatar_url || null,
@@ -197,6 +199,7 @@ export async function GET(req: NextRequest) {
       filtered = mappedMembers.filter((m) => {
         const matchName = m.name.toLowerCase().includes(searchQuery);
         const matchUsername = m.username.toLowerCase().includes(searchQuery);
+        const matchEdId = (m.edId || "").toLowerCase().includes(searchQuery);
         const matchHeadline = (m.headline || "").toLowerCase().includes(searchQuery);
         const matchBio = (m.bio || "").toLowerCase().includes(searchQuery);
         const matchCollege = (m.college || "").toLowerCase().includes(searchQuery);
@@ -211,6 +214,7 @@ export async function GET(req: NextRequest) {
         return (
           matchName ||
           matchUsername ||
+          matchEdId ||
           matchHeadline ||
           matchBio ||
           matchCollege ||

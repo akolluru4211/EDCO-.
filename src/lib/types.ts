@@ -840,6 +840,7 @@ export interface PublicUserProfile {
   isMentor?: boolean;
   mentorTags?: string[];
   ageBand: AgeBand;
+  edId?: string;
   showResume?: boolean;
   publicResumeId?: string;
   mutualConnectionsCount?: number;

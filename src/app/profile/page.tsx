@@ -23,11 +23,13 @@ import {
   Mail,
   Phone
 } from "lucide-react";
+import Link from "next/link";
 import Button from "@/components/ui/Button";
 import { supabase } from "@/lib/supabase";
 import { recordAuditLog } from "@/lib/audit-logger";
 import AuthGuard from "@/components/auth/AuthGuard";
 import SyncedAccountsCard from "@/components/dashboard/SyncedAccountsCard";
+import EdIdBadge from "@/components/ui/EdIdBadge";
 import { SyncedAccounts } from "@/lib/types";
 
 export default function ProfilePage() {
@@ -279,21 +281,29 @@ export default function ProfilePage() {
       <div className="min-h-screen bg-[#0E0F15] text-white p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1280px] mx-auto">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#13141B] p-6 rounded-3xl border border-white/10 shadow-xl">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#13141B] p-6 rounded-3xl border border-white/10 shadow-xl">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#D7FC51]/10 text-[#D7FC51] border border-[#D7FC51]/30">
               {role || "STAFF"}
             </span>
-            <span className="text-xs text-[#8E95A5]">🏢 EdWorld Organization Identity</span>
+            <span className="text-xs text-[#8E95A5]">🏢 EdWorld Verified Member</span>
           </div>
           <h1 className="text-2xl font-black text-white">Profile &amp; Security Settings</h1>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3 flex-wrap">
+          <EdIdBadge userId={user?.uid} size="md" variant="dark" />
           <span className="text-xs font-mono text-[#8E95A5] bg-[#1C1D26] px-3 py-1.5 rounded-xl border border-white/5">
             {user?.email || "staff@edworld.co.in"}
           </span>
+          <Link
+            href={`/u/${profile?.username || user?.uid}`}
+            className="px-3 py-1.5 rounded-xl bg-[#D7FC51] hover:bg-[#E9FFA4] text-[#13141B] font-black text-xs transition-all shadow-md flex items-center gap-1"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            <span>Public Profile</span>
+          </Link>
         </div>
       </div>
 

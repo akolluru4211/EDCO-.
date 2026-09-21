@@ -91,3 +91,25 @@ export function calculateScoreColor(score: number): string {
   return "text-rose-600";
 }
 
+/**
+ * Generates a deterministic, unique official EdWorld Special ID (Ed ID)
+ * e.g., "usr_abc123" -> "ED-8241-K9"
+ */
+export function formatEdId(userId?: string | null): string {
+  if (!userId) return "ED-2026-0001";
+  
+  let hash = 0;
+  for (let i = 0; i < userId.length; i++) {
+    hash = (hash << 5) - hash + userId.charCodeAt(i);
+    hash |= 0;
+  }
+  const absHash = Math.abs(hash);
+  const numPart = String((absHash % 9000) + 1000);
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const char1 = chars[(absHash >> 3) % chars.length];
+  const char2 = chars[(absHash >> 7) % chars.length];
+  
+  return `ED-${numPart}-${char1}${char2}`;
+}
+
+
