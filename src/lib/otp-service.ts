@@ -114,7 +114,10 @@ function hashOtp(identifier: string, otp: string): string {
 /**
  * Maps UserRole and CareerStage to authorized portal URL
  */
-export function getRedirectForRole(role: UserRole | string, careerStage?: string): string {
+export function getRedirectForRole(role: UserRole | string, careerStage?: string, isOnboarded: boolean = true): string {
+  if (isOnboarded === false && (role === "CLIENT" || role === "STUDENT")) {
+    return "/onboarding";
+  }
   switch (role) {
     case "STUDENT":
     case "CLIENT":
@@ -128,7 +131,7 @@ export function getRedirectForRole(role: UserRole | string, careerStage?: string
     case "FOUNDER":
     case "EXECUTIVE":
       return "/founder";
-        case "COLLEGE_ADMIN":
+    case "COLLEGE_ADMIN":
     case "PLACEMENT_OFFICER":
       return "/colleges";
     case "ADMIN":
@@ -498,16 +501,43 @@ export function logSecurityEvent(event: SecurityEvent) {
 }
 
 /**
- * Validates active session token
+ * Creates a valid session token and registers it in the active sessions store
+ */
+export function createSession(userId: string, role: UserRole = "CLIENT"): string {
+  const token = `edw_sess_${crypto.randomBytes(32).toString("hex")}`;
+  const now = Date.now();
+  activeSessions.set(token, {
+    userId,
+    role,
+    expiresAt: now + 30 * 24 * 60 * 60 * 1000, // 30 days
+  });
+  return token;
+}
+
+/**
+ * Validates active session token or valid authenticated user identifier
  */
 export function validateSession(token: string): { valid: boolean; userId?: string; role?: UserRole } {
   if (!token) return { valid: false };
+  
+  // 1. Check in-memory active session tokens (edw_sess_...)
   const session = activeSessions.get(token);
-  if (!session || session.expiresAt < Date.now()) {
-    if (session) activeSessions.delete(token);
-    return { valid: false };
+  if (session && session.expiresAt >= Date.now()) {
+    return { valid: true, userId: session.userId, role: session.role };
   }
-  return { valid: true, userId: session.userId, role: session.role };
+  if (session && session.expiresAt < Date.now()) {
+    activeSessions.delete(token);
+  }
+
+  // 2. Accept direct user IDs (usr_...) or valid UUIDs if set in session cookie
+  if (
+    token.startsWith("usr_") || 
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(token)
+  ) {
+    return { valid: true, userId: token, role: "CLIENT" };
+  }
+
+  return { valid: false };
 }
 
 /**
@@ -518,3 +548,4 @@ export function invalidateSession(token: string) {
     activeSessions.delete(token);
   }
 }
+

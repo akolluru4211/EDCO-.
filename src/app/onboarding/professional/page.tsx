@@ -107,6 +107,7 @@ export default function ProfessionalOnboardingPage() {
         careerStage: "PROFESSIONAL",
         primaryGoal: obj ? `${obj.title} - ${obj.desc}` : "Senior Career Advancement & System Architecture",
         interests,
+        onboarding_completed: true,
       });
 
       router.push("/dashboard");

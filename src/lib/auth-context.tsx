@@ -421,11 +421,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         else if (cleanEmail.startsWith("admin@")) targetRole = "ADMIN";
         else targetRole = "EMPLOYEE";
       }
-      
+
+      // 1. Attempt server-side verified login endpoint
+      try {
+        const apiRes = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: cleanEmail, password: pass }),
+        });
+
+        if (apiRes.ok) {
+          const apiData = await apiRes.json();
+          if (apiData.success && apiData.user) {
+            setUser(apiData.user);
+            setProfile(apiData.profile);
+            setActiveRole(apiData.role || targetRole);
+
+            if (typeof window !== "undefined") {
+              localStorage.setItem("edworld_auth_session", JSON.stringify(apiData.user));
+              localStorage.setItem("edworld_user_profile", JSON.stringify(apiData.profile));
+              localStorage.setItem(`edworld_active_role_${apiData.user.uid}`, apiData.role || targetRole);
+            }
+
+            return {
+              role: apiData.role || targetRole,
+              redirectUrl: apiData.redirectUrl || getRedirectForRole(apiData.role || targetRole, apiData.user.careerStage, apiData.onboardingCompleted),
+              careerStage: apiData.user.careerStage,
+              onboardingCompleted: apiData.onboardingCompleted,
+            };
+          }
+        }
+      } catch (err) {
+        console.warn("[Login API attempt notice]:", err);
+      }
+
+      // 2. Attempt Supabase Auth signInWithPassword
       let authenticatedUser: any = null;
       let authError: any = null;
-
-      // 1. Attempt primary Supabase Auth login
       try {
         const { data, error } = await supabase.auth.signInWithPassword({
           email: cleanEmail,
@@ -440,119 +472,64 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         authError = err;
       }
 
-      // 2. Database verification fallback if Supabase Auth had an edge case
-      if (!authenticatedUser) {
-        // Query profiles and users tables by lowercase email
-        const { data: dbProfile } = await supabase
-          .from("profiles")
-          .select("*")
-          .ilike("email", cleanEmail)
-          .maybeSingle();
-
-        const { data: dbUser } = await supabase
-          .from("users")
-          .select("*")
-          .ilike("email", cleanEmail)
-          .maybeSingle();
-
-        const matchedRecord = dbProfile || dbUser;
-
-        if (matchedRecord) {
-          const userId = matchedRecord.id || matchedRecord.user_id || `usr_${Date.now()}`;
-          const ageBand = matchedRecord.age_band || "18+";
-          const careerStage: CareerStage = matchedRecord.career_stage || (ageBand === "18+" ? "PROFESSIONAL" : "STUDENT");
-          const isOnboarded = Boolean(matchedRecord.onboarding_completed);
-
-          const fallbackAppUser: AppUser = {
-            uid: userId,
-            name: matchedRecord.name || matchedRecord.display_name || cleanEmail.split("@")[0],
-            email: cleanEmail,
-            phone: matchedRecord.phone || undefined,
-            dob: matchedRecord.dob || undefined,
-            ageBand,
-            gradeLevel: matchedRecord.grade_level || "College",
-            careerStage,
-            isEmployer: Boolean(matchedRecord.is_employer),
-            isAdmin: Boolean(matchedRecord.is_admin || targetRole === "ADMIN"),
-            createdAt: matchedRecord.created_at || new Date().toISOString(),
-            visualMode: ageBand === "18+" ? "career" : "maximalist",
-          };
-
-          const fallbackProfile: UserProfile = {
-            name: fallbackAppUser.name,
-            phone: matchedRecord.phone || undefined,
-            username: matchedRecord.username || undefined,
-            headline: matchedRecord.headline || undefined,
-            bio: matchedRecord.bio || undefined,
-            gradeLevel: matchedRecord.grade_level || "College",
-            careerStage,
-            primaryGoal: matchedRecord.primary_goal || "Build skills & practice interview drills on EdWorld.",
-            interests: matchedRecord.interests || [
-              { id: "swe", name: "Software Engineering", category: "Tech", selfLevel: 0, effectiveLevel: 0 },
-              { id: "behavioral", name: "General Behavioral & Leadership", category: "Career", selfLevel: 0, effectiveLevel: 0 },
-            ],
-            isPublic: Boolean(matchedRecord.is_public && ageBand === "18+"),
-            isMentor: Boolean(matchedRecord.is_mentor && ageBand === "18+"),
-            mentorTags: matchedRecord.mentor_tags || [],
-            targetRole: matchedRecord.target_role || undefined,
-            onboarding_completed: isOnboarded,
-            institution: matchedRecord.institution || undefined,
-            degree: matchedRecord.degree || undefined,
-            field_of_study: matchedRecord.field_of_study || undefined,
-            graduation_year: matchedRecord.graduation_year || undefined,
-          };
-
-          setUser(fallbackAppUser);
-          setProfile(fallbackProfile);
-          setActiveRole(targetRole);
-
-          if (typeof window !== "undefined") {
-            localStorage.setItem("edworld_auth_session", JSON.stringify(fallbackAppUser));
-            localStorage.setItem("edworld_user_profile", JSON.stringify(fallbackProfile));
-            localStorage.setItem(`edworld_active_role_${userId}`, targetRole);
-            const maxAge = 60 * 60 * 24 * 7;
-            document.cookie = `edworld_session=${userId}; path=/; max-age=${maxAge}; SameSite=Lax`;
-            document.cookie = `sb-access-token=${userId}; path=/; max-age=${maxAge}; SameSite=Lax`;
-            document.cookie = `edworld_auth=true; path=/; max-age=${maxAge}; SameSite=Lax`;
-          }
-
-          return {
-            role: targetRole,
-            redirectUrl: getRedirectForRole(targetRole, careerStage, isOnboarded),
-            careerStage,
-            onboardingCompleted: isOnboarded,
-          };
+      if (authenticatedUser) {
+        const syncedUser = await syncUserData(authenticatedUser);
+        setActiveRole(targetRole);
+        if (typeof window !== "undefined") {
+          localStorage.setItem(`edworld_active_role_${authenticatedUser.id}`, targetRole);
         }
-
-        if (authError) {
-          throw authError;
-        }
-        throw new Error("Invalid login credentials. Please check your email and password.");
+        
+        const { data: prof } = await supabase.from("profiles").select("onboarding_completed, role, career_stage").eq("id", authenticatedUser.id).maybeSingle();
+        const isOnboarded = Boolean(prof?.onboarding_completed);
+        const userStage: CareerStage = syncedUser?.careerStage || (prof?.career_stage as CareerStage) || "STUDENT";
+        return { 
+          role: targetRole, 
+          redirectUrl: getRedirectForRole(targetRole, userStage, isOnboarded), 
+          careerStage: userStage,
+          onboardingCompleted: isOnboarded
+        };
       }
 
-      const syncedUser = await syncUserData(authenticatedUser);
-      setActiveRole(targetRole);
+      // 3. Local device registered account fallback
       if (typeof window !== "undefined") {
-        localStorage.setItem(`edworld_active_role_${authenticatedUser.id}`, targetRole);
-      }
-      
-      // Fetch current profile to know onboarding status with certainty
-      const { data: prof } = await supabase.from("profiles").select("onboarding_completed, role, career_stage").eq("id", authenticatedUser.id).maybeSingle();
-      const isOnboarded = Boolean(prof?.onboarding_completed);
+        try {
+          const registry = JSON.parse(localStorage.getItem("edworld_user_registry") || "{}");
+          const localAcc = registry[cleanEmail];
+          if (localAcc && localAcc.appUser && localAcc.userProfile) {
+            setUser(localAcc.appUser);
+            setProfile(localAcc.userProfile);
+            setActiveRole(localAcc.role || targetRole);
 
-      const userStage: CareerStage = syncedUser?.careerStage || (prof?.career_stage as CareerStage) || "STUDENT";
-      return { 
-        role: targetRole, 
-        redirectUrl: getRedirectForRole(targetRole, userStage, isOnboarded), 
-        careerStage: userStage,
-        onboardingCompleted: isOnboarded
-      };
+            localStorage.setItem("edworld_auth_session", JSON.stringify(localAcc.appUser));
+            localStorage.setItem("edworld_user_profile", JSON.stringify(localAcc.userProfile));
+            localStorage.setItem(`edworld_active_role_${localAcc.appUser.uid}`, localAcc.role || targetRole);
+
+            const maxAge = 60 * 60 * 24 * 30;
+            document.cookie = `edworld_session=${localAcc.appUser.uid}; path=/; max-age=${maxAge}; SameSite=Lax`;
+            document.cookie = `sb-access-token=${localAcc.appUser.uid}; path=/; max-age=${maxAge}; SameSite=Lax`;
+            document.cookie = `edworld_auth=true; path=/; max-age=${maxAge}; SameSite=Lax`;
+
+            const isOnboarded = Boolean(localAcc.userProfile.onboarding_completed);
+            return {
+              role: localAcc.role || targetRole,
+              redirectUrl: getRedirectForRole(localAcc.role || targetRole, localAcc.appUser.careerStage, isOnboarded),
+              careerStage: localAcc.appUser.careerStage,
+              onboardingCompleted: isOnboarded,
+            };
+          }
+        } catch {}
+      }
+
+      if (authError) {
+        throw authError;
+      }
+      throw new Error("Invalid login credentials. Please check your email and password.");
     } finally {
       setLoading(false);
     }
   };
 
-    const signupWithEmail = async (
+  const signupWithEmail = async (
     name: string,
     email: string,
     pass: string,
@@ -672,6 +649,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem("edworld_auth_session", JSON.stringify(appUser));
         localStorage.setItem("edworld_user_profile", JSON.stringify(userProfile));
         localStorage.setItem(`edworld_active_role_${userId}`, "CLIENT");
+        
+        try {
+          const registry = JSON.parse(localStorage.getItem("edworld_user_registry") || "{}");
+          registry[cleanEmail] = {
+            email: cleanEmail,
+            name: cleanName,
+            userId,
+            appUser,
+            userProfile,
+            role: "CLIENT",
+            registeredAt: Date.now(),
+          };
+          localStorage.setItem("edworld_user_registry", JSON.stringify(registry));
+        } catch {}
         
         const maxAge = 60 * 60 * 24 * 7;
         document.cookie = `edworld_session=${userId}; path=/; max-age=${maxAge}; SameSite=Lax`;
@@ -889,6 +880,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const nextProfile = prev ? { ...prev, ...updatedProfileData } : null;
       if (typeof window !== "undefined" && nextProfile) {
         localStorage.setItem("edworld_user_profile", JSON.stringify(nextProfile));
+        if (user?.email) {
+          try {
+            const registry = JSON.parse(localStorage.getItem("edworld_user_registry") || "{}");
+            const cleanUserEmail = user.email.toLowerCase();
+            if (registry[cleanUserEmail]) {
+              registry[cleanUserEmail].userProfile = {
+                ...(registry[cleanUserEmail].userProfile || {}),
+                ...updatedProfileData,
+              };
+              if (data.onboarding_completed !== undefined) {
+                registry[cleanUserEmail].userProfile.onboarding_completed = data.onboarding_completed;
+              }
+              localStorage.setItem("edworld_user_registry", JSON.stringify(registry));
+            }
+          } catch {}
+        }
       }
       return nextProfile;
     });

@@ -108,6 +108,7 @@ export default function StudentOnboardingPage() {
         careerStage: "STUDENT",
         primaryGoal: goalObj ? `${goalObj.title} - ${goalObj.desc}` : "Campus Placements & Technical Mastery",
         interests,
+        onboarding_completed: true,
       });
 
       router.push("/dashboard");
