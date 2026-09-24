@@ -31,10 +31,53 @@ import {
   MessageSquare
 } from "lucide-react";
 import EdworldLogo from "@/components/ui/EdworldLogo";
+import BackToTop from "@/components/ui/BackToTop";
+import ScrollProgress from "@/components/ui/ScrollProgress";
+import CookieConsentBanner from "@/components/ui/CookieConsentBanner";
+import FloatingContactButton from "@/components/ui/FloatingContactButton";
+import { ChevronDown, HelpCircle, Mail, Phone } from "lucide-react";
 
 export default function ModernEdworldLanding() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+
+  const faqs = [
+    {
+      q: "What is EdWorld Co. and who is it designed for?",
+      a: "EdWorld Co. is a student education, networking, and career readiness platform designed for learners from 9th grade to B.Tech/M.Tech, researchers, and early-career professionals. It connects structured roadmaps, daily practice drills, ATS resume optimization, AI mock interviews, and verified opportunities into one cohesive Career Learning OS."
+    },
+    {
+      q: "How does the AI Mock Interview Studio evaluate my performance?",
+      a: "The Mock Interview Studio assesses technical correctness, STAR framework structuring (Situation, Task, Action, Result), speech cadence, and filler word frequency using Claude AI. Real-time feedback helps you refine your communication before actual campus drives or job interviews."
+    },
+    {
+      q: "How does the Single-Column ATS Resume Maker work?",
+      a: "Our ATS Resume Maker produces single-column, parser-optimized layouts that conform to corporate applicant tracking system standards. It performs real-time keyword density checks, action-verb audits, and ATS readability scoring."
+    },
+    {
+      q: "Can colleges and institutional placement cells use EdWorld?",
+      a: "Yes. EdWorld provides dedicated campus cohort monitoring, campus placement drive scheduling, and student readiness benchmarking for colleges and placement cells."
+    },
+    {
+      q: "How is my personal data and privacy protected?",
+      a: "We adhere strictly to DPDP Act 2023, COPPA, and GDPR principles. Date of birth is stored in an isolated, restricted database table, minors are shielded from cold unsolicited messaging, and video/audio media is never shared with third parties."
+    }
+  ];
+
+  // Mobile menu keyboard and outside click listeners
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && mobileMenuOpen) {
+        setMobileMenuOpen(false);
+      }
+    };
+    if (mobileMenuOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [mobileMenuOpen]);
+
 
   const coreFlow = [
     {
@@ -810,6 +853,73 @@ export default function ModernEdworldLanding() {
       </section>
 
 
+      
+      {/* 8.5 FREQUENTLY ASKED QUESTIONS SECTION */}
+      <section id="faq" className="py-20 sm:py-28 border-b border-[#EBECEF] bg-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          
+          <div className="text-center space-y-3">
+            <span className="px-3 py-1 rounded-full bg-[#F4F6FB] border border-[#EBECEF] text-xs font-semibold text-[#5E6573]">
+              Frequently Asked Questions
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#13141B] tracking-tight">
+              Everything you need to know about EdWorld Co.
+            </h2>
+            <p className="text-sm text-[#5E6573] max-w-xl mx-auto">
+              Answers to common questions about our platform, learning tracks, and security.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {faqs.map((faq, idx) => {
+              const isOpen = openFaqIndex === idx;
+              return (
+                <div
+                  key={idx}
+                  className="rounded-2xl border border-[#EBECEF] bg-[#FCFCFB] overflow-hidden transition-all duration-200"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
+                    aria-expanded={isOpen}
+                    aria-controls={`faq-ans-${idx}`}
+                    className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 cursor-pointer hover:bg-slate-50 transition-colors"
+                  >
+                    <span className="text-sm sm:text-base font-extrabold text-[#13141B]">
+                      {faq.q}
+                    </span>
+                    <ChevronDown
+                      className={`w-5 h-5 text-[#8E95A5] shrink-0 transition-transform duration-200 ${
+                        isOpen ? "rotate-180 text-[#00D2B4]" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {isOpen && (
+                    <div
+                      id={`faq-ans-${idx}`}
+                      className="px-5 pb-6 sm:px-6 sm:pb-6 text-xs sm:text-sm text-[#5E6573] leading-relaxed border-t border-[#F0F2F6] pt-3 animate-fade-in"
+                    >
+                      {faq.a}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="text-center pt-4">
+            <p className="text-xs text-[#8E95A5]">
+              Have more questions? Visit our{" "}
+              <Link href="/contact" className="text-[#0C7869] font-bold underline hover:text-[#13141B]">
+                Help &amp; Grievance Redressal Center
+              </Link>
+            </p>
+          </div>
+
+        </div>
+      </section>
+
       {/* 9. FINAL CTA SECTION */}
       <section className="py-24 sm:py-32 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
@@ -889,6 +999,10 @@ export default function ModernEdworldLanding() {
         </div>
       </footer>
 
+      <ScrollProgress />
+      <BackToTop />
+      <FloatingContactButton />
+      <CookieConsentBanner />
     </div>
   );
 }

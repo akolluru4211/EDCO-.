@@ -33,7 +33,7 @@ let provisionedEmployeesStore: ProvisionedEmployee[] = [
     startDate: "2026-10-01",
     managerName: "Arun K. (VP Eng)",
     workLocation: "Bengaluru / Hybrid",
-    portalUrl: "https://edworld.co/employee",
+    portalUrl: "https://edworld.co.in/employee",
     status: "Active",
     createdAt: "2026-09-08T10:30:00.000Z",
     lastEmailSentAt: "2026-09-08T10:35:00.000Z"
@@ -50,7 +50,7 @@ let provisionedEmployeesStore: ProvisionedEmployee[] = [
     startDate: "2026-10-15",
     managerName: "Arun K. (VP Eng)",
     workLocation: "Remote (India)",
-    portalUrl: "https://edworld.co/employee",
+    portalUrl: "https://edworld.co.in/employee",
     status: "Invited - Pending First Login",
     createdAt: "2026-09-09T08:15:00.000Z",
     lastEmailSentAt: "2026-09-09T08:20:00.000Z"
@@ -67,7 +67,7 @@ let provisionedEmployeesStore: ProvisionedEmployee[] = [
     startDate: "2026-10-05",
     managerName: "Neha T. (Director of Product)",
     workLocation: "Delhi NCR / Hybrid",
-    portalUrl: "https://edworld.co/employee",
+    portalUrl: "https://edworld.co.in/employee",
     status: "Active",
     createdAt: "2026-09-09T14:20:00.000Z",
     lastEmailSentAt: "2026-09-09T14:25:00.000Z"

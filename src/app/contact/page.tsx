@@ -48,10 +48,10 @@ export default function ContactPage() {
                 <div>
                   <strong>Email:</strong>{" "}
                   <a
-                    href="mailto:grievance-officer@edworld.co?subject=Grievance%20Redressal%20Inquiry"
+                    href="mailto:grievance-officer@edworld.co.in?subject=Grievance%20Redressal%20Inquiry"
                     className="text-forest hover:underline font-bold"
                   >
-                    grievance-officer@edworld.co
+                    grievance-officer@edworld.co.in
                   </a>
                 </div>
                 <div><strong>Response SLA:</strong> Within 24–48 hours</div>
@@ -64,10 +64,10 @@ export default function ContactPage() {
                 <span>
                   General Support:{" "}
                   <a
-                    href="mailto:support@edworld.co?subject=EdWorld%20Support%20Request"
+                    href="mailto:support@edworld.co.in?subject=EdWorld%20Support%20Request"
                     className="text-forest hover:underline font-bold"
                   >
-                    support@edworld.co
+                    support@edworld.co.in
                   </a>
                 </span>
               </div>

@@ -247,6 +247,6 @@ export function getResumeProfileDefaults(user: AppUser | null, profile: UserProf
     location: "",
     linkedin: profile?.username ? `linkedin.com/in/${profile.username}` : "",
     github: profile?.username ? `github.com/${profile.username}` : "",
-    portfolio: profile?.username ? `edworld.co/u/${profile.username}` : "",
+    portfolio: profile?.username ? `edworld.co.in/u/${profile.username}` : "",
   };
 }

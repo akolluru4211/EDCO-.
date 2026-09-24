@@ -57,7 +57,7 @@ export default async function PricingPage() {
         "Everything in Pro Tier",
         "1:1 Verified Mentor Connect & Messaging",
         "AI Multi-Persona Group Discussion Studio",
-        "Senior Executive Portfolio at edworld.co/u/name",
+        "Senior Executive Portfolio at edworld.co.in/u/name",
         "Direct Engineering Referrals Generator",
         "Priority 24/7 Fast-Track Support"
       ],

@@ -80,7 +80,7 @@ const DESKTOP_STAGES: Record<StageKey, DesktopStageInfo> = {
     features: [
       "Single-column ATS resume builder with real-time scoring",
       "Multimodal STAR mock interview studio with audio/video feedback",
-      "Verified public portfolio at edworld.co/u/yourname",
+      "Verified public portfolio at edworld.co.in/u/yourname",
       "Curated high-growth tech jobs and salary benchmarks",
     ],
     ctaUrl: "/auth/signup?track=pro&stage=professional",

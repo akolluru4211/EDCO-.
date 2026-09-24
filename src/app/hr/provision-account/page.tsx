@@ -160,7 +160,7 @@ export default function HrProvisionAccountPage() {
 
   const handleCopyInvitation = () => {
     if (!createdRecord) return;
-    const text = `Welcome to EdWorld Organization!\n\nHi ${createdRecord.employeeName},\nYour corporate account has been provisioned.\nCorporate Email: ${createdRecord.corporateEmail}\nRole: ${assignedRole}\nActivation Link: https://edworld.co/auth/login?token=${createdRecord.activationToken}\n\nPlease set your private password on first login.\n\nBest,\nPeople Operations Team`;
+    const text = `Welcome to EdWorld Organization!\n\nHi ${createdRecord.employeeName},\nYour corporate account has been provisioned.\nCorporate Email: ${createdRecord.corporateEmail}\nRole: ${assignedRole}\nActivation Link: https://edworld.co.in/auth/login?token=${createdRecord.activationToken}\n\nPlease set your private password on first login.\n\nBest,\nPeople Operations Team`;
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 3000);

@@ -40,8 +40,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         isLandingPage ? "bg-white text-slate-900" : "bg-[#F4F6FB] text-[#181920]"
       }`}
     >
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2.5 focus:bg-[#13141B] focus:text-[#D7FC51] focus:rounded-2xl focus:shadow-2xl focus:font-black focus:text-xs focus:ring-2 focus:ring-[#00D2B4]"
+      >
+        Skip to main content
+      </a>
+
       {!isAuthPage && !isLandingPage && <Navbar />}
-      <main className={`flex-1 w-full max-w-full ${noBottomPadding ? "" : "pb-24 md:pb-20 lg:pb-0"}`}>{children}</main>
+      <main id="main-content" tabIndex={-1} className={`flex-1 w-full max-w-full outline-none ${noBottomPadding ? "" : "pb-24 md:pb-20 lg:pb-0"}`}>{children}</main>
 
       <ReconsentModal
         isOpen={showReconsent}
