@@ -188,17 +188,17 @@ export default function InterviewsHubPage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-[calc(100vh-5rem)] bg-[#F4F6FB] text-[#181920] pb-16">
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-8 animate-in fade-in duration-300">
+      <div className="min-h-[calc(100vh-5rem)] bg-[#F4F6FB] text-[#181920] pb-20">
+      <div className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 pt-6 sm:pt-8 space-y-8 animate-in fade-in duration-300">
         
         {/* Header */}
-        <div className="card-quixel p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="space-y-1.5">
+        <div className="card-quixel p-6 sm:p-8 lg:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-black uppercase tracking-wider bg-[#13141B] text-[#D7FC51] px-3 py-1 rounded-xl">
+              <span className="text-xs sm:text-sm font-black uppercase tracking-wider bg-[#13141B] text-[#D7FC51] px-3.5 py-1.5 rounded-xl">
                 Career Track
               </span>
-              <span className="text-xs font-mono text-[#8E95A5]">Claude AI &bull; Resume-Connected Studio</span>
+              <span className="text-xs sm:text-sm font-mono text-[#8E95A5]">Claude AI &bull; Resume-Connected Studio</span>
             </div>
             <UserGreeting
               context="interview"
@@ -206,11 +206,11 @@ export default function InterviewsHubPage() {
             />
           </div>
 
-          <div className="p-5 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] flex items-start gap-3 max-w-sm text-xs text-[#181920] shadow-sm">
-            <TrendingUp className="w-5 h-5 text-[#00D2B4] shrink-0 mt-0.5" />
+          <div className="p-5 sm:p-6 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] flex items-start gap-3.5 max-w-md text-xs sm:text-sm text-[#181920] shadow-sm">
+            <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-[#00D2B4] shrink-0 mt-0.5" />
             <div>
-              <p className="font-black text-sm text-[#181920]">Resume-Tailored Questions</p>
-              <p className="text-[#767E94] text-[11px] mt-0.5 leading-relaxed">
+              <p className="font-black text-sm sm:text-base text-[#181920]">Resume-Tailored Questions</p>
+              <p className="text-[#767E94] text-xs sm:text-sm mt-1 leading-relaxed">
                 Claude AI analyzes your saved resume projects and skills to ask authentic technical trade-off and STAR behavioral questions.
               </p>
             </div>
@@ -219,26 +219,26 @@ export default function InterviewsHubPage() {
 
         {/* Resume Connected Quick-Action Callout */}
         {activeResume && (
-          <div className="p-5 rounded-3xl bg-[#13141B] text-white shadow-quixel flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-slate-800">
-            <div className="space-y-1">
+          <div className="p-5 sm:p-6 rounded-3xl bg-[#13141B] text-white shadow-quixel flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-slate-800">
+            <div className="space-y-1.5">
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full bg-[#D7FC51] text-slate-950 font-black text-[10px] uppercase tracking-wider">
+                <span className="px-3 py-1 rounded-full bg-[#D7FC51] text-slate-950 font-black text-xs uppercase tracking-wider">
                   Resume Connected
                 </span>
-                <span className="text-xs font-mono text-slate-300">
+                <span className="text-xs sm:text-sm font-mono text-slate-300">
                   {activeResume.title}
                 </span>
               </div>
-              <p className="text-xs text-slate-300">
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
                 Ready for AI mock interview with {activeResume.skillsCount > 0 ? `${activeResume.skillsCount} detected skills` : "technical profile"} and {activeResume.projectsCount > 0 ? `${activeResume.projectsCount} portfolio projects` : "experience"}.
               </p>
             </div>
             <Link
               href="/interviews/swe"
-              className="btn-shine px-5 py-2.5 rounded-2xl bg-[#D7FC51] hover:bg-[#c9f03d] text-slate-950 font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-md shrink-0"
+              className="btn-shine px-6 py-3 rounded-2xl bg-[#D7FC51] hover:bg-[#c9f03d] text-slate-950 font-black text-xs sm:text-sm uppercase tracking-wider flex items-center gap-2 shadow-md shrink-0"
             >
               <span>Launch Interview with Resume</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         )}
@@ -253,43 +253,43 @@ export default function InterviewsHubPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-[10px] font-black uppercase tracking-wider text-[#7B57FF] bg-[#EDE8FD] border border-[#7B57FF]/30 px-3 py-1 rounded-full">
+              <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-[#7B57FF] bg-[#EDE8FD] border border-[#7B57FF]/30 px-3.5 py-1 rounded-full">
                 Practice Formats
               </span>
-              <h2 className="text-2xl font-black text-[#181920] tracking-tight mt-1">Choose Interview Mode</h2>
-              <p className="text-xs text-[#767E94]">Practice verbal Q&amp;A, standalone language training drills, live coding, or group discussions.</p>
+              <h2 className="text-2xl sm:text-3xl font-black text-[#181920] tracking-tight mt-1.5">Choose Interview Mode</h2>
+              <p className="text-xs sm:text-sm text-[#767E94] mt-0.5">Practice verbal Q&amp;A, standalone language training drills, live coding, or group discussions.</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             
             {/* Format 1: Standalone Language Training Drills */}
             <SpotlightCard
               spotlightColor="rgba(215, 252, 81, 0.2)"
               spotlightSize={300}
-              className="card-quixel p-5 border-2 border-[#13141B] shadow-quixel space-y-3 flex flex-col justify-between"
+              className="card-quixel p-5 sm:p-6 border-2 border-[#13141B] shadow-quixel space-y-4 flex flex-col justify-between"
             >
               <BorderBeam size={160} duration={8} colorFrom="#D7FC51" colorTo="#00D2B4" />
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 rounded-2xl bg-[#13141B] text-[#D7FC51] flex items-center justify-center font-bold">
-                    <Sparkles className="w-5 h-5 animate-pulse" />
+                  <div className="w-11 h-11 rounded-2xl bg-[#13141B] text-[#D7FC51] flex items-center justify-center font-bold shadow-sm">
+                    <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 animate-pulse" />
                   </div>
-                  <span className="text-[9px] font-black uppercase tracking-wider text-slate-950 bg-[#D7FC51] px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-950 bg-[#D7FC51] px-2.5 py-1 rounded-full">
                     NEW &bull; Fast Drill
                   </span>
                 </div>
-                <h3 className="font-black text-[#181920] text-base">Language Training</h3>
-                <p className="text-xs text-[#767E94] leading-relaxed">
+                <h3 className="font-black text-[#181920] text-base sm:text-lg">Language Training</h3>
+                <p className="text-xs sm:text-sm text-[#767E94] leading-relaxed">
                   Rapid 60-second spoken drills with live speech-to-text, filler counting, and "Try Again" attempt comparison.
                 </p>
               </div>
               <Link
                 href="/interviews/language-training"
-                className="btn-shine w-full py-2.5 rounded-2xl bg-[#13141B] hover:bg-black text-[#D7FC51] text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-all hover:scale-102"
+                className="btn-shine w-full py-3 rounded-2xl bg-[#13141B] hover:bg-black text-[#D7FC51] text-xs sm:text-sm font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-all hover:scale-102"
               >
                 <span>Launch Language Drills</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <ArrowRight className="w-4 h-4" />
               </Link>
             </SpotlightCard>
 
@@ -297,23 +297,23 @@ export default function InterviewsHubPage() {
             <SpotlightCard
               spotlightColor="rgba(123, 87, 255, 0.16)"
               spotlightSize={300}
-              className="card-quixel p-5 border border-[#E8ECF2] shadow-sm space-y-3 flex flex-col justify-between"
+              className="card-quixel p-5 sm:p-6 border border-[#E8ECF2] shadow-sm space-y-4 flex flex-col justify-between"
             >
-              <div className="space-y-2">
-                <div className="w-10 h-10 rounded-2xl bg-[#EDE8FD] text-[#7B57FF] flex items-center justify-center">
-                  <Video className="w-5 h-5" />
+              <div className="space-y-2.5">
+                <div className="w-11 h-11 rounded-2xl bg-[#EDE8FD] text-[#7B57FF] flex items-center justify-center shadow-sm">
+                  <Video className="w-5 h-5 sm:w-6 sm:h-6" />
                 </div>
-                <h3 className="font-black text-[#181920] text-base">Full Verbal Studio</h3>
-                <p className="text-xs text-[#767E94] leading-relaxed">
+                <h3 className="font-black text-[#181920] text-base sm:text-lg">Full Verbal Studio</h3>
+                <p className="text-xs sm:text-sm text-[#767E94] leading-relaxed">
                   Multi-question verbal interview with camera engagement, STAR rubric scoring, and resume project deep-dives.
                 </p>
               </div>
               <Link
                 href="/interviews/swe"
-                className="w-full py-2.5 rounded-2xl bg-white hover:bg-slate-100 text-slate-900 border border-slate-200 text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-xs"
+                className="w-full py-3 rounded-2xl bg-white hover:bg-slate-100 text-slate-900 border border-slate-200 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-xs"
               >
                 <span>Launch Verbal Session</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <ArrowRight className="w-4 h-4" />
               </Link>
             </SpotlightCard>
 

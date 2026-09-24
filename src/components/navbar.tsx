@@ -395,71 +395,71 @@ export default function Navbar() {
       )}
 
       {/* Clean Floating Dark Capsule Header */}
-      <header className="sticky top-0 z-40 px-3 sm:px-6 pt-3 pb-1 no-print">
-        <div className="max-w-[1440px] mx-auto bg-[#13141B] text-white rounded-3xl shadow-xl border border-white/10 px-4 sm:px-6 py-2.5">
-          <div className="flex items-center justify-between gap-3">
+      <header className="sticky top-0 z-40 px-3 sm:px-6 lg:px-8 pt-3 pb-1 no-print">
+        <div className="max-w-[1536px] mx-auto bg-[#13141B] text-white rounded-3xl shadow-xl border border-white/10 px-4 sm:px-6 lg:px-8 py-3 sm:py-3.5">
+          <div className="flex items-center justify-between gap-4">
             
             {/* Left: Brand Logo */}
             <Link 
               href={user ? (isStaff ? (isFounder ? "/founder" : isHR ? "/hr" : "/employee") : "/dashboard") : "/"} 
-              className="flex items-center gap-2.5 group"
+              className="flex items-center gap-3 group"
             >
-              <div className="w-9 h-9 rounded-2xl bg-[#1C1D26] border border-white/15 p-1 flex items-center justify-center shadow-md group-hover:scale-105 group-hover:border-[#D7FC51]/50 transition-all overflow-hidden shrink-0">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-[#1C1D26] border border-white/15 p-1.5 flex items-center justify-center shadow-md group-hover:scale-105 group-hover:border-[#D7FC51]/50 transition-all overflow-hidden shrink-0">
                 <Image
                   src="/images/edworld-logo.png"
                   alt="Edworld Logo"
-                  width={28}
-                  height={28}
+                  width={32}
+                  height={32}
                   className="object-contain"
                   priority
                 />
               </div>
               <div className="flex flex-col">
-                <span className="text-lg font-black tracking-tight text-white font-sans flex items-center gap-0.5 leading-none">
-                  Edworld <span className="text-[#D7FC51] font-black text-xl leading-none">{isStaff ? "OS" : "Co."}</span>
+                <span className="text-lg sm:text-xl font-black tracking-tight text-white font-sans flex items-center gap-0.5 leading-none">
+                  Edworld <span className="text-[#D7FC51] font-black text-xl sm:text-2xl leading-none">{isStaff ? "OS" : "Co."}</span>
                 </span>
-                <span className="text-[8px] font-bold text-[#8E95A5] uppercase tracking-wider mt-0.5 leading-none">
+                <span className="text-[9px] sm:text-[11px] font-bold text-[#8E95A5] uppercase tracking-wider mt-1 leading-none">
                   {isStaff ? "Organization Portal" : "Student & Career OS"}
                 </span>
               </div>
             </Link>
 
             {/* Right: User Badge, Profile Pill & Primary Menu Button */}
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-3">
               {user ? (
                 <>
                   {/* Track / Role Pill */}
-                  <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#D7FC51]/10 text-[#D7FC51] border border-[#D7FC51]/30">
+                  <div className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider bg-[#D7FC51]/10 text-[#D7FC51] border border-[#D7FC51]/30">
                     <span>{isStaff ? (role || "STAFF") : (user?.careerStage || "STUDENT")}</span>
                   </div>
 
                   {/* User Profile Capsule Trigger */}
                   <div 
                     onClick={() => setIsDrawerOpen(true)}
-                    className="flex items-center gap-2 bg-[#1C1D26] hover:bg-[#252632] border border-white/10 rounded-2xl py-1 px-2.5 cursor-pointer transition-all shadow-sm group"
+                    className="flex items-center gap-2.5 bg-[#1C1D26] hover:bg-[#252632] border border-white/10 rounded-2xl py-1.5 px-3 sm:px-3.5 cursor-pointer transition-all shadow-sm group"
                     title="Open Platform Features Menu"
                   >
-                    <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-[#D7FC51] via-[#00D2B4] to-[#7B57FF] text-[#13141B] font-black text-xs flex items-center justify-center shadow-sm">
+                    <div className="w-8 h-8 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-tr from-[#D7FC51] via-[#00D2B4] to-[#7B57FF] text-[#13141B] font-black text-xs sm:text-sm flex items-center justify-center shadow-sm">
                       {user.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="hidden md:flex flex-col text-left">
-                      <span className="text-xs font-bold text-white leading-tight">
+                      <span className="text-xs sm:text-sm font-bold text-white leading-tight">
                         {user.name.split(" ")[0]}
                       </span>
                     </div>
                   </div>
                 </>
               ) : (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                   <Link
                     href="/auth/login"
-                    className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#A6ABB9] hover:text-white transition-all"
+                    className="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-[#A6ABB9] hover:text-white transition-all"
                   >
                     Sign In
                   </Link>
                   <Link
                     href="/auth/signup"
-                    className="px-4 py-1.5 rounded-xl text-xs font-bold bg-[#D7FC51] text-[#13141B] hover:bg-[#E9FFA4] transition-all shadow-sm flex items-center gap-1"
+                    className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-[#D7FC51] text-[#13141B] hover:bg-[#E9FFA4] transition-all shadow-sm flex items-center gap-1.5"
                   >
                     <span>Get Started</span>
                     <span>&rarr;</span>
@@ -471,9 +471,9 @@ export default function Navbar() {
               <button
                 onClick={() => setIsDrawerOpen(true)}
                 aria-label="Open Platform Features Menu"
-                className="px-3.5 py-2 rounded-2xl bg-[#D7FC51] hover:bg-[#E9FFA4] text-[#13141B] font-black text-xs transition-all shadow-md flex items-center gap-2 cursor-pointer group active:scale-95"
+                className="px-4 py-2 sm:py-2.5 rounded-2xl bg-[#D7FC51] hover:bg-[#E9FFA4] text-[#13141B] font-black text-xs sm:text-sm transition-all shadow-md flex items-center gap-2 cursor-pointer group active:scale-95"
               >
-                <Menu className="w-4 h-4 text-[#13141B] transition-transform group-hover:scale-110" />
+                <Menu className="w-4 h-4 sm:w-5 sm:h-5 text-[#13141B] transition-transform group-hover:scale-110" />
                 <span className="font-extrabold tracking-wide">Menu</span>
               </button>
             </div>

@@ -215,27 +215,27 @@ Thanks so much for your time!`);
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-[#F4F6FB] py-8 px-4 sm:px-6 lg:px-8 text-[#13141B]">
-      <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in">
+    <div className="min-h-[calc(100vh-4rem)] bg-[#F4F6FB] py-8 px-4 sm:px-6 lg:px-8 xl:px-10 text-[#13141B]">
+      <div className="max-w-[1536px] mx-auto space-y-8 animate-in fade-in">
         
         {/* Hub Header & Sector Switcher */}
-        <div className="card-quixel rounded-3xl p-6 sm:p-8 border border-[#E8ECF2] flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden bg-white shadow-sm">
-          <div className="space-y-2 relative z-10">
-            <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-[#13141B] text-white">
+        <div className="card-quixel rounded-3xl p-6 sm:p-8 lg:p-10 border border-[#E8ECF2] flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden bg-white shadow-sm">
+          <div className="space-y-2.5 relative z-10">
+            <div className="flex items-center gap-2.5">
+              <span className="px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-[#13141B] text-white">
                 {selectedTrack === "college" ? "Higher Ed / College Track (18–22)" : "Working Professional Track (22+)"}
               </span>
-              <span className="text-xs font-bold text-[#8F9CAE]">Career Acceleration Studio</span>
+              <span className="text-xs sm:text-sm font-bold text-[#8F9CAE]">Career Acceleration Studio</span>
             </div>
-            <h1 className="text-2xl sm:text-4xl font-black font-display text-[#13141B] tracking-tight">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black font-display text-[#13141B] tracking-tight">
               {selectedTrack === "college" ? "Placements, Hackathons & Micro-Certs" : "Career Switches, Pipeline & Performance Appraisal"}
             </h1>
-            <p className="text-xs sm:text-sm text-[#5E6573] max-w-2xl font-medium">
+            <p className="text-xs sm:text-sm lg:text-base text-[#5E6573] max-w-2xl font-medium">
               Calibrated practice, JD-tailored resumes, live mock interviews, and verifiable milestone credentials.
             </p>
           </div>
 
-          <div className="flex items-center flex-wrap gap-2.5 self-start md:self-auto">
+          <div className="flex items-center flex-wrap gap-3 self-start md:self-auto">
             <button
               onClick={() => {
                 setClaudeAnalysisType(selectedTrack === "college" ? "resume_ats" : "appraisal_performance");
@@ -246,7 +246,7 @@ Thanks so much for your time!`);
                 );
                 setIsClaudeModalOpen(true);
               }}
-              className="px-4 py-2.5 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-800 border border-amber-500/30 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer"
+              className="px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-800 border border-amber-500/30 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer"
             >
               <Bot className="w-4 h-4 text-amber-600" />
               <span>Claude MCP Analyzer</span>
@@ -256,7 +256,7 @@ Thanks so much for your time!`);
             <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-[#13141B] text-white shadow-md">
               <button
                 onClick={() => setSelectedTrack("college")}
-                className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
+                className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer ${
                   selectedTrack === "college" ? "bg-[#D7FC51] text-[#13141B] shadow-sm" : "text-[#8E95A5] hover:text-white"
                 }`}
               >
@@ -264,7 +264,7 @@ Thanks so much for your time!`);
               </button>
               <button
                 onClick={() => setSelectedTrack("professional")}
-                className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
+                className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer ${
                   selectedTrack === "professional" ? "bg-[#D7FC51] text-[#13141B] shadow-sm" : "text-[#8E95A5] hover:text-white"
                 }`}
               >
@@ -275,15 +275,15 @@ Thanks so much for your time!`);
         </div>
 
         {/* 1-Click Career Velocity Action Bar with Micro-Interactions */}
-        <div className="p-6 rounded-3xl bg-white border border-slate-200/90 shadow-sm space-y-4 card-lift-glow">
+        <div className="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200/90 shadow-sm space-y-4 sm:space-y-5 card-lift-glow">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-slate-950 text-[#D7FC51] flex items-center justify-center font-black text-xs animate-bounce">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-950 text-[#D7FC51] flex items-center justify-center font-black text-sm animate-bounce">
                 ⚡
               </div>
               <div>
-                <h2 className="text-sm font-black text-slate-900">Career Acceleration Quick-Launch</h2>
-                <p className="text-xs text-slate-500">Instant shortcuts to ATS optimization, AI mock screens, and verified jobs.</p>
+                <h2 className="text-sm sm:text-base font-black text-slate-900">Career Acceleration Quick-Launch</h2>
+                <p className="text-xs sm:text-sm text-slate-500">Instant shortcuts to ATS optimization, AI mock screens, and verified jobs.</p>
               </div>
             </div>
             <ShimmerBadge variant="slate">
@@ -291,41 +291,41 @@ Thanks so much for your time!`);
             </ShimmerBadge>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 pt-1">
             <Link
               href="/resumes"
-              className="p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-900 hover:text-white group border border-slate-200 transition-all text-left hover:scale-102 active:scale-98"
+              className="p-4 sm:p-5 rounded-2xl bg-slate-50 hover:bg-slate-900 hover:text-white group border border-slate-200 transition-all text-left hover:scale-102 active:scale-98"
             >
-              <FileText className="w-5 h-5 text-emerald-600 group-hover:text-[#D7FC51] mb-2 transition-transform group-hover:scale-110" />
-              <div className="text-xs font-bold text-slate-900 group-hover:text-white">ATS Resume Maker</div>
-              <div className="text-[11px] text-slate-500 group-hover:text-slate-300">Single-column ATS scorer</div>
+              <FileText className="w-6 h-6 text-emerald-600 group-hover:text-[#D7FC51] mb-2.5 transition-transform group-hover:scale-110" />
+              <div className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-white">ATS Resume Maker</div>
+              <div className="text-xs text-slate-500 group-hover:text-slate-300">Single-column ATS scorer</div>
             </Link>
 
             <Link
               href="/interviews"
-              className="p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-900 hover:text-white group border border-slate-200 transition-all text-left hover:scale-102 active:scale-98"
+              className="p-4 sm:p-5 rounded-2xl bg-slate-50 hover:bg-slate-900 hover:text-white group border border-slate-200 transition-all text-left hover:scale-102 active:scale-98"
             >
-              <Video className="w-5 h-5 text-rose-600 group-hover:text-[#D7FC51] mb-2 transition-transform group-hover:scale-110" />
-              <div className="text-xs font-bold text-slate-900 group-hover:text-white">AI STAR Simulator</div>
-              <div className="text-[11px] text-slate-500 group-hover:text-slate-300">Audio/video mock feedback</div>
+              <Video className="w-6 h-6 text-rose-600 group-hover:text-[#D7FC51] mb-2.5 transition-transform group-hover:scale-110" />
+              <div className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-white">AI STAR Simulator</div>
+              <div className="text-xs text-slate-500 group-hover:text-slate-300">Audio/video mock feedback</div>
             </Link>
 
             <Link
               href="/jobs"
-              className="p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-900 hover:text-white group border border-slate-200 transition-all text-left hover:scale-102 active:scale-98"
+              className="p-4 sm:p-5 rounded-2xl bg-slate-50 hover:bg-slate-900 hover:text-white group border border-slate-200 transition-all text-left hover:scale-102 active:scale-98"
             >
-              <Briefcase className="w-5 h-5 text-indigo-600 group-hover:text-[#D7FC51] mb-2 transition-transform group-hover:scale-110" />
-              <div className="text-xs font-bold text-slate-900 group-hover:text-white">High-Growth Tech Jobs</div>
-              <div className="text-[11px] text-slate-500 group-hover:text-slate-300">Curated &amp; verified roles</div>
+              <Briefcase className="w-6 h-6 text-indigo-600 group-hover:text-[#D7FC51] mb-2.5 transition-transform group-hover:scale-110" />
+              <div className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-white">High-Growth Tech Jobs</div>
+              <div className="text-xs text-slate-500 group-hover:text-slate-300">Curated &amp; verified roles</div>
             </Link>
 
             <Link
               href="/networking"
-              className="p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-900 hover:text-white group border border-slate-200 transition-all text-left hover:scale-102 active:scale-98"
+              className="p-4 sm:p-5 rounded-2xl bg-slate-50 hover:bg-slate-900 hover:text-white group border border-slate-200 transition-all text-left hover:scale-102 active:scale-98"
             >
-              <Users className="w-5 h-5 text-amber-600 group-hover:text-[#D7FC51] mb-2 transition-transform group-hover:scale-110" />
-              <div className="text-xs font-bold text-slate-900 group-hover:text-white">1:1 Mentorship Hub</div>
-              <div className="text-[11px] text-slate-500 group-hover:text-slate-300">Verified peer referrals</div>
+              <Users className="w-6 h-6 text-amber-600 group-hover:text-[#D7FC51] mb-2.5 transition-transform group-hover:scale-110" />
+              <div className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-white">1:1 Mentorship Hub</div>
+              <div className="text-xs text-slate-500 group-hover:text-slate-300">Verified peer referrals</div>
             </Link>
           </div>
         </div>

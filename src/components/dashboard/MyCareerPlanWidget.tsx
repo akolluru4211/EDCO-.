@@ -177,19 +177,19 @@ export default function MyCareerPlanWidget({ userId, userName = "Learner" }: MyC
         <div className="space-y-2">
           <div className="flex items-center flex-wrap gap-2">
             <span className="text-[10px] font-black uppercase tracking-wider bg-[#13141B] text-[#D7FC51] px-2.5 py-1 rounded-xl flex items-center gap-1.5 shadow-sm">
-              <Sparkles className="w-3.5 h-3.5 text-[#D7FC51]" />
+              <Sparkles className="w-4 h-4 text-[#D7FC51]" />
               MY CAREER PLAN
             </span>
-            <span className="text-xs font-bold text-[#767E94]">
+            <span className="text-xs sm:text-sm font-bold text-[#767E94]">
               Personalized Career Learning OS
             </span>
           </div>
 
           <div>
-            <h2 className="text-xl sm:text-2xl font-black text-[#181920] tracking-tight leading-tight">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-[#181920] tracking-tight leading-tight">
               {goal?.target_role || "Full Stack Software Engineer"}
             </h2>
-            <div className="flex items-center flex-wrap gap-2 pt-1.5">
+            <div className="flex items-center flex-wrap gap-2 pt-2">
               {domains.map((d) => {
                 const priorityBadge = 
                   d.priority === "primary" ? "bg-[#EDE8FD] text-[#7B57FF] border-[#7B57FF]/30" :
@@ -199,7 +199,7 @@ export default function MyCareerPlanWidget({ userId, userName = "Learner" }: MyC
                 return (
                   <span
                     key={d.domain_id}
-                    className={`text-[11px] font-bold px-2.5 py-0.5 rounded-lg border ${priorityBadge} flex items-center gap-1`}
+                    className={`text-xs sm:text-sm font-bold px-3 py-1 rounded-xl border ${priorityBadge} flex items-center gap-1.5`}
                   >
                     <span className="capitalize">{d.priority}:</span>
                     <span>{d.domain_name.split("&")[0].trim()}</span>
@@ -211,20 +211,20 @@ export default function MyCareerPlanWidget({ userId, userName = "Learner" }: MyC
         </div>
 
         {/* Phase Progress Capsule */}
-        <div className="flex items-center gap-4 bg-[#F8FAFC] p-3.5 rounded-2xl border border-[#E8ECF2] shadow-inner">
+        <div className="flex items-center gap-4 bg-[#F8FAFC] p-4 sm:p-5 rounded-2xl border border-[#E8ECF2] shadow-inner">
           <div className="space-y-1">
-            <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#8E95A5]">
+            <div className="text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider text-[#8E95A5]">
               Active Phase
             </div>
-            <div className="text-sm font-black text-[#181920] leading-none">
+            <div className="text-sm sm:text-base font-black text-[#181920] leading-none">
               Phase {(roadmap?.current_phase_index || 0) + 1} of {roadmap?.total_phases || 4}
             </div>
-            <div className="text-[11px] text-[#767E94] font-medium truncate max-w-[170px]">
+            <div className="text-xs sm:text-sm text-[#767E94] font-medium truncate max-w-[200px]">
               {currentPhase?.title.replace(/^Phase \d+:\s*/, "") || "Foundations"}
             </div>
           </div>
 
-          <div className="w-12 h-12 rounded-full border-4 border-[#EDE8FD] border-t-[#7B57FF] flex items-center justify-center font-black text-xs text-[#7B57FF] bg-white shadow-sm">
+          <div className="w-14 h-14 rounded-full border-4 border-[#EDE8FD] border-t-[#7B57FF] flex items-center justify-center font-black text-sm text-[#7B57FF] bg-white shadow-sm">
             {todayPercent}%
           </div>
         </div>
@@ -232,24 +232,24 @@ export default function MyCareerPlanWidget({ userId, userName = "Learner" }: MyC
 
       {/* FEEDBACK TOAST / BANNER */}
       {feedbackMessage && (
-        <div className="p-3 bg-[#E0FAF6] border border-[#00D2B4]/40 rounded-2xl flex items-center gap-2.5 text-xs font-bold text-[#008A77] animate-fade-in shadow-sm">
-          <CheckCircle2 className="w-4 h-4 text-[#00D2B4] flex-shrink-0" />
+        <div className="p-3.5 bg-[#E0FAF6] border border-[#00D2B4]/40 rounded-2xl flex items-center gap-2.5 text-xs sm:text-sm font-bold text-[#008A77] animate-fade-in shadow-sm">
+          <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-[#00D2B4] flex-shrink-0" />
           <span>{feedbackMessage}</span>
         </div>
       )}
 
       {/* ACTIVE AI ADAPTATION PROPOSAL BANNER (If Available) */}
       {adaptationProposals.length > 0 && activeTab !== "advisor" && (
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-[#EDE8FD] via-[#F3E8FF] to-[#E0FAF6] border border-[#7B57FF]/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#7B57FF] text-white flex items-center justify-center shadow-md">
-              <Brain className="w-5 h-5 text-[#D7FC51]" />
+        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#EDE8FD] via-[#F3E8FF] to-[#E0FAF6] border border-[#7B57FF]/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#7B57FF] text-white flex items-center justify-center shadow-md shrink-0">
+              <Brain className="w-5 h-5 sm:w-6 sm:h-6 text-[#D7FC51]" />
             </div>
             <div className="space-y-0.5">
-              <div className="text-xs font-black text-[#181920]">
+              <div className="text-xs sm:text-sm font-black text-[#181920]">
                 AI Curriculum Acceleration Proposal
               </div>
-              <p className="text-[11px] text-[#5E6573] leading-relaxed">
+              <p className="text-xs text-[#5E6573] leading-relaxed">
                 {adaptationProposals[0].change_reason}
               </p>
             </div>
@@ -257,7 +257,7 @@ export default function MyCareerPlanWidget({ userId, userName = "Learner" }: MyC
           <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
             <button
               onClick={() => setActiveTab("advisor")}
-              className="px-3.5 py-1.5 rounded-xl bg-[#13141B] text-white text-xs font-bold shadow hover:bg-[#252632] transition-all cursor-pointer whitespace-nowrap"
+              className="px-4 py-2 sm:py-2.5 rounded-xl bg-[#13141B] text-white text-xs sm:text-sm font-bold shadow hover:bg-[#252632] transition-all cursor-pointer whitespace-nowrap"
             >
               Review Adaptation &rarr;
             </button>
@@ -266,40 +266,40 @@ export default function MyCareerPlanWidget({ userId, userName = "Learner" }: MyC
       )}
 
       {/* MODE TABS */}
-      <div className="flex items-center gap-1.5 border-b border-[#F0F2F6] pb-3 overflow-x-auto touch-scroll-x">
+      <div className="flex items-center gap-2 border-b border-[#F0F2F6] pb-3.5 overflow-x-auto touch-scroll-x">
         <button
           onClick={() => setActiveTab("timetable")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+          className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
             activeTab === "timetable"
               ? "bg-[#13141B] text-white shadow-sm"
               : "text-[#767E94] hover:text-[#181920] hover:bg-[#F4F6FB]"
           }`}
         >
-          <Calendar className={`w-4 h-4 ${activeTab === "timetable" ? "text-[#D7FC51]" : "text-[#767E94]"}`} />
+          <Calendar className={`w-4 h-4 sm:w-5 sm:h-5 ${activeTab === "timetable" ? "text-[#D7FC51]" : "text-[#767E94]"}`} />
           <span>Today&apos;s Timetable ({completedTodayCount}/{totalTodayCount})</span>
         </button>
 
         <button
           onClick={() => setActiveTab("roadmap")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+          className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
             activeTab === "roadmap"
               ? "bg-[#13141B] text-white shadow-sm"
               : "text-[#767E94] hover:text-[#181920] hover:bg-[#F4F6FB]"
           }`}
         >
-          <Layers className={`w-4 h-4 ${activeTab === "roadmap" ? "text-[#D7FC51]" : "text-[#767E94]"}`} />
+          <Layers className={`w-4 h-4 sm:w-5 sm:h-5 ${activeTab === "roadmap" ? "text-[#D7FC51]" : "text-[#767E94]"}`} />
           <span>Unified Roadmap ({roadmap?.phases.length || 4} Phases)</span>
         </button>
 
         <button
           onClick={() => setActiveTab("advisor")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+          className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
             activeTab === "advisor"
               ? "bg-[#13141B] text-white shadow-sm"
               : "text-[#767E94] hover:text-[#181920] hover:bg-[#F4F6FB]"
           }`}
         >
-          <Brain className={`w-4 h-4 ${activeTab === "advisor" ? "text-[#D7FC51]" : "text-[#767E94]"}`} />
+          <Brain className={`w-4 h-4 sm:w-5 sm:h-5 ${activeTab === "advisor" ? "text-[#D7FC51]" : "text-[#767E94]"}`} />
           <span>Adaptive AI Advisor {adaptationProposals.length > 0 && <span className="w-2 h-2 rounded-full bg-[#7B57FF] animate-ping" />}</span>
         </button>
       </div>

@@ -257,15 +257,15 @@ export default function ResumesDirectEditorPage() {
     <AuthGuard>
       <div className="min-h-[calc(100vh-4rem)] bg-slate-100 flex flex-col">
         {/* Top Action Bar */}
-        <header className="bg-white border-b border-slate-200 sticky top-16 z-30 px-4 sm:px-6 py-3 shadow-xs">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <header className="bg-white border-b border-slate-200 sticky top-16 z-30 px-4 sm:px-6 lg:px-8 py-3.5 shadow-xs">
+          <div className="max-w-[1536px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <Link
                 href="/dashboard"
                 title="Back to Dashboard"
-                className="p-2 rounded-xl border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+                className="p-2.5 rounded-xl border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors"
               >
-                <ArrowLeft className="w-4 h-4" />
+                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
               </Link>
               <div>
                 <div className="flex items-center gap-2">
@@ -273,13 +273,13 @@ export default function ResumesDirectEditorPage() {
                     type="text"
                     value={resume.title}
                     onChange={(e) => handleTitleChange(e.target.value)}
-                    className="font-bold text-slate-900 text-sm sm:text-base border-b border-transparent hover:border-slate-300 focus:border-slate-900 focus:outline-none bg-transparent px-1 py-0.5"
+                    className="font-bold text-slate-900 text-base sm:text-lg lg:text-xl border-b border-transparent hover:border-slate-300 focus:border-slate-900 focus:outline-none bg-transparent px-1 py-0.5"
                     aria-label="Resume Title"
                   />
                 </div>
-                <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono pl-1">
+                <div className="flex items-center gap-2 text-xs text-slate-400 font-mono pl-1">
                   <span className="flex items-center gap-1">
-                    <Check className="w-3 h-3 text-emerald-500" />
+                    <Check className="w-3.5 h-3.5 text-emerald-500" />
                     {savedStatus}
                   </span>
                   <span>&bull;</span>
@@ -288,14 +288,14 @@ export default function ResumesDirectEditorPage() {
               </div>
             </div>
 
-            <div className="flex items-center flex-wrap gap-2.5">
+            <div className="flex items-center flex-wrap gap-2.5 sm:gap-3">
               {/* Template Selector */}
-              <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold">
+              <div className="flex items-center bg-slate-100 p-1.5 rounded-xl border border-slate-200 text-xs font-bold">
                 {(["classic", "modern", "tech"] as ResumeTemplateId[]).map((tmpl) => (
                   <button
                     key={tmpl}
                     onClick={() => handleTemplateChange(tmpl)}
-                    className={`px-3 py-1.5 rounded-lg uppercase tracking-wider text-[10px] font-mono transition-all ${
+                    className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg uppercase tracking-wider text-[11px] sm:text-xs font-mono transition-all ${
                       activeTemplate === tmpl
                         ? "bg-white text-slate-900 shadow-sm"
                         : "text-slate-500 hover:text-slate-900"
@@ -309,9 +309,9 @@ export default function ResumesDirectEditorPage() {
               {/* AI JD-Match Button */}
               <button
                 onClick={() => setIsJDModalOpen(true)}
-                className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all"
+                className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm transition-all"
               >
-                <Sparkles className="w-3.5 h-3.5 text-brand-300" />
+                <Sparkles className="w-4 h-4 text-brand-300" />
                 <span>AI JD Match</span>
               </button>
 
@@ -326,15 +326,15 @@ export default function ResumesDirectEditorPage() {
         </header>
 
         {/* User Identity Greeting Context Sub-Bar */}
-        <div className="bg-white/80 backdrop-blur-xs border-b border-slate-200/60 px-4 sm:px-6 py-2.5">
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+        <div className="bg-white/80 backdrop-blur-xs border-b border-slate-200/60 px-4 sm:px-6 lg:px-8 py-3">
+          <div className="max-w-[1536px] mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs sm:text-sm">
             <UserGreeting
               context="resume"
               subtitle="All contact details & skills sync seamlessly with your verified profile."
-              className="text-xs"
+              className="text-xs sm:text-sm"
             />
-            <div className="flex items-center gap-2 text-[11px] font-mono text-slate-500 shrink-0">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <div className="flex items-center gap-2 text-xs font-mono text-slate-500 shrink-0">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>Live ATS Studio Active</span>
             </div>
           </div>
@@ -342,9 +342,9 @@ export default function ResumesDirectEditorPage() {
 
         {/* Pre-fill Alert Banner for New Resumes */}
         {showPreFillBanner && (
-          <div className="bg-slate-900 text-white px-4 py-2.5 text-xs flex items-center justify-between border-b border-slate-800">
-            <div className="flex items-center gap-2 max-w-4xl mx-auto flex-1">
-              <Info className="w-4 h-4 text-brand-300 shrink-0" />
+          <div className="bg-slate-900 text-white px-4 sm:px-6 lg:px-8 py-3 text-xs sm:text-sm flex items-center justify-between border-b border-slate-800">
+            <div className="flex items-center gap-2.5 max-w-5xl mx-auto flex-1">
+              <Info className="w-4 h-4 sm:w-5 sm:h-5 text-brand-300 shrink-0" />
               <span>
                 We&apos;ve pre-filled your contact info and starting skills from your profile — feel free to edit or add more.
               </span>
@@ -353,7 +353,7 @@ export default function ResumesDirectEditorPage() {
               onClick={() => setShowPreFillBanner(false)}
               className="p-1 text-slate-400 hover:text-white cursor-pointer"
             >
-              <X className="w-4 h-4" />
+              <X className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
         )}
@@ -362,30 +362,30 @@ export default function ResumesDirectEditorPage() {
         <div className="md:hidden flex border-b border-slate-200 bg-white">
           <button
             onClick={() => setMobileTab("edit")}
-            className={`flex-1 py-2.5 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 ${
+            className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 ${
               mobileTab === "edit"
                 ? "border-b-2 border-slate-900 text-slate-900"
                 : "text-slate-500"
             }`}
           >
-            <FileEdit className="w-3.5 h-3.5" />
+            <FileEdit className="w-4 h-4" />
             <span>Editor</span>
           </button>
           <button
             onClick={() => setMobileTab("preview")}
-            className={`flex-1 py-2.5 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 ${
+            className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 ${
               mobileTab === "preview"
                 ? "border-b-2 border-slate-900 text-slate-900"
                 : "text-slate-500"
             }`}
           >
-            <Eye className="w-3.5 h-3.5" />
+            <Eye className="w-4 h-4" />
             <span>Live Preview</span>
           </button>
         </div>
 
         {/* Main Studio Grid */}
-        <div className="max-w-7xl mx-auto w-full flex-1 p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="max-w-[1536px] mx-auto w-full flex-1 p-4 sm:p-6 lg:p-8 xl:p-10 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
           {/* Form Column */}
           <div className={`lg:col-span-6 w-full ${mobileTab === "preview" ? "hidden md:block" : "block"}`}>
             <ResumeBuilderForm
@@ -396,12 +396,12 @@ export default function ResumesDirectEditorPage() {
 
           {/* Live Preview Column */}
           <div className={`lg:col-span-6 w-full sticky top-36 ${mobileTab === "edit" ? "hidden md:block" : "block"}`}>
-            <div className="bg-slate-200/80 p-4 sm:p-6 rounded-3xl border border-slate-300/80 shadow-inner overflow-hidden">
-              <div className="flex items-center justify-between mb-3 text-[11px] font-mono text-slate-500 px-1">
+            <div className="bg-slate-200/80 p-4 sm:p-6 lg:p-8 rounded-3xl border border-slate-300/80 shadow-inner overflow-hidden">
+              <div className="flex items-center justify-between mb-3 text-xs font-mono text-slate-500 px-1">
                 <span>ATS Vector Preview &bull; {activeTemplate.toUpperCase()}</span>
                 <span>100% Text Selectable</span>
               </div>
-              <div className="shadow-2xl rounded-lg overflow-hidden bg-white">
+              <div className="shadow-2xl rounded-xl overflow-hidden bg-white">
                 <ResumePreview
                   content={resume.content}
                   templateId={activeTemplate}

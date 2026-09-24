@@ -216,19 +216,19 @@ export default function FounderWorkspacePage() {
     <div className="min-h-screen bg-slate-950 text-slate-100">
       {/* Top Banner Header */}
       <header className="border-b border-slate-800 bg-slate-900/60 backdrop-blur-md sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-emerald-500 flex items-center justify-center text-slate-950 font-bold shadow-lg shadow-amber-500/10">
-              <Briefcase className="w-5 h-5 text-slate-950" />
+        <div className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-4 sm:py-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-emerald-500 flex items-center justify-center text-slate-950 font-bold shadow-lg shadow-amber-500/10 shrink-0">
+              <Briefcase className="w-6 h-6 text-slate-950" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold text-white tracking-tight">Founder & Executive Suite</h1>
-                <span className="px-2 py-0.5 text-xs font-semibold rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">Founder &amp; Executive Suite</h1>
+                <span className="px-2.5 py-0.5 text-xs font-bold rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
                   STRICT RBAC VERIFIED
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
                 EdWorld Co. Corporate Operations • Signed in as {profile?.name || user?.name || user?.email} ({role})
               </p>
             </div>
@@ -238,14 +238,14 @@ export default function FounderWorkspacePage() {
             <button 
               onClick={handleRunAiBriefing}
               disabled={aiLoading}
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-md shadow-emerald-600/20 transition disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-4 py-2 sm:py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold shadow-md shadow-emerald-600/20 transition disabled:opacity-50"
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <Sparkles className="w-4 h-4" />
               {aiLoading ? "Analyzing..." : "Claude Executive Briefing"}
             </button>
             <Link
               href="/dashboard"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 transition"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 sm:py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs sm:text-sm font-semibold border border-slate-700 transition"
             >
               Main Dashboard
             </Link>
@@ -253,7 +253,7 @@ export default function FounderWorkspacePage() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex overflow-x-auto gap-1 scrollbar-none border-t border-slate-800/60 pt-2">
+        <div className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 flex overflow-x-auto gap-2 scrollbar-none border-t border-slate-800/60 pt-2 pb-1">
           {[
             { id: "company", label: "Company & KPI Radar", icon: Activity },
             { id: "people", label: "People & Leadership", icon: Users },
@@ -268,13 +268,13 @@ export default function FounderWorkspacePage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as FounderTab)}
-                className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition whitespace-nowrap ${
+                className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 text-xs sm:text-sm font-bold border-b-2 transition whitespace-nowrap ${
                   active 
-                    ? "border-emerald-500 text-emerald-400 bg-emerald-500/10 rounded-t-lg" 
+                    ? "border-emerald-500 text-emerald-400 bg-emerald-500/10 rounded-t-xl" 
                     : "border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700"
                 }`}
               >
-                <Icon className="w-4 h-4" />
+                <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
                 {tab.label}
               </button>
             );
@@ -283,68 +283,68 @@ export default function FounderWorkspacePage() {
       </header>
 
       {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-8 sm:py-10">
         {loading ? (
           <div className="py-24 text-center text-slate-400">
-            <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-3 text-emerald-500" />
-            <p className="text-sm">Loading verified executive telemetry...</p>
+            <RefreshCw className="w-7 h-7 animate-spin mx-auto mb-3 text-emerald-500" />
+            <p className="text-sm sm:text-base">Loading verified executive telemetry...</p>
           </div>
         ) : (
           <>
             {/* TAB 1: COMPANY OVERVIEW */}
             {activeTab === "company" && (
-              <div className="space-y-6">
+              <div className="space-y-8">
                 {/* Metric Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="p-5 rounded-xl bg-slate-900 border border-slate-800 shadow-sm">
-                    <div className="flex items-center justify-between text-slate-400 text-xs font-medium mb-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                  <div className="p-6 sm:p-7 rounded-2xl bg-slate-900 border border-slate-800 shadow-sm">
+                    <div className="flex items-center justify-between text-slate-400 text-xs sm:text-sm font-semibold mb-3">
                       <span>Monthly Recurring Revenue</span>
-                      <TrendingUp className="w-4 h-4 text-emerald-400" />
+                      <TrendingUp className="w-5 h-5 text-emerald-400" />
                     </div>
-                    <div className="text-2xl font-bold text-white">
+                    <div className="text-2xl sm:text-3xl lg:text-4xl font-black text-white">
                       ₹{kpi?.mrr ? kpi.mrr.toLocaleString("en-IN") : "0"}
                     </div>
-                    <div className="text-xs text-emerald-400 mt-2 flex items-center gap-1">
-                      <ArrowUpRight className="w-3.5 h-3.5" />
+                    <div className="text-xs sm:text-sm text-emerald-400 mt-3 flex items-center gap-1.5 font-semibold">
+                      <ArrowUpRight className="w-4 h-4" />
                       <span>Positive Revenue Growth</span>
                     </div>
                   </div>
 
-                  <div className="p-5 rounded-xl bg-slate-900 border border-slate-800 shadow-sm">
-                    <div className="flex items-center justify-between text-slate-400 text-xs font-medium mb-2">
+                  <div className="p-6 sm:p-7 rounded-2xl bg-slate-900 border border-slate-800 shadow-sm">
+                    <div className="flex items-center justify-between text-slate-400 text-xs sm:text-sm font-semibold mb-3">
                       <span>Cash Position & Reserves</span>
-                      <DollarSign className="w-4 h-4 text-cyan-400" />
+                      <DollarSign className="w-5 h-5 text-cyan-400" />
                     </div>
-                    <div className="text-2xl font-bold text-white">
+                    <div className="text-2xl sm:text-3xl lg:text-4xl font-black text-white">
                       ₹{kpi?.cashPosition ? kpi.cashPosition.toLocaleString("en-IN") : "0"}
                     </div>
-                    <div className="text-xs text-slate-400 mt-2">
+                    <div className="text-xs sm:text-sm text-slate-400 mt-3 font-medium">
                       Net Burn: ₹{kpi?.monthlyBurn ? kpi.monthlyBurn.toLocaleString("en-IN") : "0"}/mo
                     </div>
                   </div>
 
-                  <div className="p-5 rounded-xl bg-slate-900 border border-slate-800 shadow-sm">
-                    <div className="flex items-center justify-between text-slate-400 text-xs font-medium mb-2">
+                  <div className="p-6 sm:p-7 rounded-2xl bg-slate-900 border border-slate-800 shadow-sm">
+                    <div className="flex items-center justify-between text-slate-400 text-xs sm:text-sm font-semibold mb-3">
                       <span>Runway Buffer</span>
-                      <Clock className="w-4 h-4 text-amber-400" />
+                      <Clock className="w-5 h-5 text-amber-400" />
                     </div>
-                    <div className="text-2xl font-bold text-white">
-                      {kpi?.runwayMonths ?? 0} <span className="text-sm font-normal text-slate-400">Months</span>
+                    <div className="text-2xl sm:text-3xl lg:text-4xl font-black text-white">
+                      {kpi?.runwayMonths ?? 0} <span className="text-base sm:text-lg font-normal text-slate-400">Months</span>
                     </div>
-                    <div className="text-xs text-amber-400 mt-2">
+                    <div className="text-xs sm:text-sm text-amber-400 mt-3 font-semibold">
                       {(kpi?.runwayMonths ?? 0) >= 12 ? "Comfortable Runway Buffer" : "Requires Capital Monitoring"}
                     </div>
                   </div>
 
-                  <div className="p-5 rounded-xl bg-slate-900 border border-slate-800 shadow-sm">
-                    <div className="flex items-center justify-between text-slate-400 text-xs font-medium mb-2">
+                  <div className="p-6 sm:p-7 rounded-2xl bg-slate-900 border border-slate-800 shadow-sm">
+                    <div className="flex items-center justify-between text-slate-400 text-xs sm:text-sm font-semibold mb-3">
                       <span>Total Active Headcount</span>
-                      <Users className="w-4 h-4 text-indigo-400" />
+                      <Users className="w-5 h-5 text-indigo-400" />
                     </div>
-                    <div className="text-2xl font-bold text-white">
-                      {team.length} <span className="text-sm font-normal text-slate-400">Employees</span>
+                    <div className="text-2xl sm:text-3xl lg:text-4xl font-black text-white">
+                      {team.length} <span className="text-base sm:text-lg font-normal text-slate-400">Employees</span>
                     </div>
-                    <div className="text-xs text-slate-400 mt-2">
+                    <div className="text-xs sm:text-sm text-slate-400 mt-3 font-medium">
                       Across All Operational Departments
                     </div>
                   </div>

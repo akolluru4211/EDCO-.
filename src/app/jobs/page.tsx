@@ -167,37 +167,37 @@ export default function JobBoardPage() {
   return (
     <AuthGuard>
       <div className="min-h-[calc(100vh-5rem)] bg-[#F4F6FB] text-[#181920] pb-16">
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-8 animate-in fade-in duration-300">
+      <div className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 pt-6 space-y-8 animate-in fade-in duration-300">
         
         {/* Header Bar */}
-        <div className="card-quixel p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-black uppercase tracking-wider bg-[#13141B] text-[#D7FC51] px-3 py-1 rounded-xl">
+        <div className="card-quixel p-6 sm:p-8 lg:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2.5">
+              <span className="text-xs sm:text-sm font-black uppercase tracking-wider bg-[#13141B] text-[#D7FC51] px-3.5 py-1.5 rounded-xl">
                 Verified Listings
               </span>
-              <span className="text-xs font-mono text-[#8E95A5]">Curated Jobs &bull; Zero Headhunter Spam</span>
+              <span className="text-xs sm:text-sm font-mono text-[#8E95A5]">Curated Jobs &bull; Zero Headhunter Spam</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-black text-[#181920] tracking-tight">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#181920] tracking-tight">
               Opportunity &amp; Placement Board
             </h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center flex-wrap gap-3 sm:gap-4">
             <Link
               href="/jobs/applications"
-              className="px-4 py-2.5 rounded-2xl bg-white border border-[#E8ECF2] hover:bg-[#F4F6FB] text-[#181920] text-xs font-bold shadow-sm transition-all flex items-center gap-2"
+              className="px-5 py-2.5 sm:py-3 rounded-2xl bg-white border border-[#E8ECF2] hover:bg-[#F4F6FB] text-[#181920] text-xs sm:text-sm font-bold shadow-sm transition-all flex items-center gap-2"
             >
-              <FileCheck className="w-4 h-4 text-[#7B57FF]" />
+              <FileCheck className="w-4 h-4 sm:w-5 sm:h-5 text-[#7B57FF]" />
               <span>My Applications</span>
             </Link>
 
             {isEmployer && (
               <Link
                 href="/jobs/employer"
-                className="px-5 py-2.5 rounded-2xl bg-[#13141B] hover:bg-[#252632] text-white text-xs font-bold shadow-md transition-all flex items-center gap-2"
+                className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-2xl bg-[#13141B] hover:bg-[#252632] text-white text-xs sm:text-sm font-bold shadow-md transition-all flex items-center gap-2"
               >
-                <Building2 className="w-4 h-4 text-[#D7FC51]" />
+                <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-[#D7FC51]" />
                 <span>Employer Studio</span>
               </Link>
             )}
@@ -205,7 +205,7 @@ export default function JobBoardPage() {
         </div>
 
         {/* Search & Filter Bar */}
-        <div className="card-quixel p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        <div className="card-quixel p-4 sm:p-5 lg:p-6 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
           {/* Search Input */}
           <div className="flex-1">
             <Input
@@ -213,13 +213,13 @@ export default function JobBoardPage() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by role title, company, or skill (e.g. TypeScript, React)..."
-              icon={<Search className="w-4 h-4 text-[#8E95A5]" />}
-              className="py-2.5 text-xs bg-[#F4F6FB] border-[#E8ECF2] text-[#181920] rounded-2xl"
+              icon={<Search className="w-4 h-4 sm:w-5 sm:h-5 text-[#8E95A5]" />}
+              className="py-3 sm:py-3.5 text-xs sm:text-sm bg-[#F4F6FB] border-[#E8ECF2] text-[#181920] rounded-2xl"
             />
           </div>
 
           {/* Type Filter Buttons */}
-          <div className="flex items-center gap-2 overflow-x-auto touch-scroll-x pb-1 md:pb-0 max-w-full">
+          <div className="flex items-center gap-2.5 overflow-x-auto touch-scroll-x pb-1 md:pb-0 max-w-full">
             {[
               { id: "all", label: "All Roles" },
               { id: "internship", label: "Internships" },
@@ -229,7 +229,7 @@ export default function JobBoardPage() {
               <button
                 key={t.id}
                 onClick={() => setSelectedType(t.id)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap cursor-pointer ${
                   selectedType === t.id
                     ? "bg-[#13141B] text-white shadow-sm"
                     : "bg-[#F4F6FB] text-[#767E94] border border-[#E8ECF2] hover:text-[#181920]"
@@ -241,13 +241,13 @@ export default function JobBoardPage() {
 
             <button
               onClick={() => setSortByMatch(!sortByMatch)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+              className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold border transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
                 sortByMatch
                   ? "bg-[#E0FAF6] text-[#00D2B4] border-[#00D2B4]/30 shadow-sm"
                   : "bg-[#F4F6FB] text-[#767E94] border-[#E8ECF2] hover:text-[#181920]"
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5 text-[#00D2B4]" />
+              <Sparkles className="w-4 h-4 text-[#00D2B4]" />
               <span>Sort: {sortByMatch ? "Match Score" : "Recent"}</span>
             </button>
           </div>
@@ -255,64 +255,64 @@ export default function JobBoardPage() {
 
         {/* Job Listings Grid */}
         {filteredJobs.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
             {filteredJobs.map((job) => (
               <div
                 key={job.id}
-                className="card-quixel card-quixel-interactive p-6 sm:p-8 flex flex-col justify-between space-y-4 group"
+                className="card-quixel card-quixel-interactive p-6 sm:p-8 flex flex-col justify-between space-y-4 sm:space-y-5 group"
               >
-                <div className="space-y-3">
+                <div className="space-y-3.5">
                   <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-[#EDE8FD] text-[#7B57FF] font-black text-lg flex items-center justify-center group-hover:bg-[#7B57FF] group-hover:text-white transition-colors shadow-inner">
+                    <div className="flex items-start gap-3.5">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#EDE8FD] text-[#7B57FF] font-black text-xl flex items-center justify-center group-hover:bg-[#7B57FF] group-hover:text-white transition-colors shadow-inner shrink-0">
                         {job.company.charAt(0)}
                       </div>
                       <div>
-                        <h3 className="font-black text-[#181920] text-lg line-clamp-1 group-hover:text-[#7B57FF] transition-colors">
+                        <h3 className="font-black text-[#181920] text-base sm:text-lg lg:text-xl line-clamp-1 group-hover:text-[#7B57FF] transition-colors">
                           {job.title}
                         </h3>
-                        <p className="text-xs text-[#767E94] font-bold">{job.company}</p>
+                        <p className="text-xs sm:text-sm text-[#767E94] font-bold">{job.company}</p>
                       </div>
                     </div>
 
                     {/* Match Score Badge */}
                     <div className="text-right shrink-0">
-                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black bg-[#E0FAF6] text-[#00D2B4] border border-[#00D2B4]/30">
-                        <Sparkles className="w-3 h-3 text-[#00D2B4]" />
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-[#E0FAF6] text-[#00D2B4] border border-[#00D2B4]/30">
+                        <Sparkles className="w-3.5 h-3.5 text-[#00D2B4]" />
                         <span>{job.matchScore}% Match</span>
                       </span>
                     </div>
                   </div>
 
-                  <p className="text-xs text-[#767E94] line-clamp-2 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-[#767E94] line-clamp-2 leading-relaxed">
                     {job.description}
                   </p>
 
                   {/* Tags */}
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase bg-[#13141B] text-[#D7FC51]">
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <span className="px-3 py-1 rounded-full text-xs font-black uppercase bg-[#13141B] text-[#D7FC51]">
                       {job.type}
                     </span>
                     {job.skillsRequired.slice(0, 4).map((skill, i) => (
                       <span
                         key={i}
-                        className="px-3 py-1 rounded-full bg-[#F4F6FB] border border-[#E8ECF2] text-[#767E94] text-[10px] font-mono font-bold"
+                        className="px-3 py-1 rounded-full bg-[#F4F6FB] border border-[#E8ECF2] text-[#767E94] text-xs font-mono font-bold"
                       >
                         {skill}
                       </span>
                     ))}
                     {job.skillsRequired.length > 4 && (
-                      <span className="px-2.5 py-1 rounded-full bg-[#F4F6FB] border border-[#E8ECF2] text-[#8E95A5] text-[10px]">
+                      <span className="px-2.5 py-1 rounded-full bg-[#F4F6FB] border border-[#E8ECF2] text-[#8E95A5] text-xs">
                         +{job.skillsRequired.length - 4}
                       </span>
                     )}
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-[#F0F2F6] flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-3 text-[#8E95A5] text-[11px]">
-                    <span className="flex items-center gap-1">
-                      <MapPin className="w-3.5 h-3.5" />
+                <div className="pt-4 border-t border-[#F0F2F6] flex items-center justify-between text-xs sm:text-sm">
+                  <div className="flex items-center gap-3 text-[#8E95A5] text-xs">
+                    <span className="flex items-center gap-1.5">
+                      <MapPin className="w-4 h-4" />
                       <span className="truncate max-w-[120px]">{job.location}</span>
                     </span>
                     {job.salaryRange && <span>&bull; {job.salaryRange}</span>}
@@ -320,20 +320,20 @@ export default function JobBoardPage() {
 
                   <Link
                     href={`/jobs/${job.id}`}
-                    className="px-4 py-2 rounded-2xl bg-[#13141B] hover:bg-[#252632] text-white font-bold text-xs shadow-sm flex items-center gap-1.5 transition-all"
+                    className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-2xl bg-[#13141B] hover:bg-[#252632] text-white font-bold text-xs sm:text-sm shadow-sm flex items-center gap-2 transition-all"
                   >
                     <span>View Role</span>
-                    <ArrowRight className="w-3.5 h-3.5 text-[#D7FC51]" />
+                    <ArrowRight className="w-4 h-4 text-[#D7FC51]" />
                   </Link>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="p-12 card-quixel text-center space-y-3">
-            <Briefcase className="w-10 h-10 text-[#8E95A5] mx-auto" />
-            <h3 className="text-lg font-black text-[#181920]">No matching opportunities found</h3>
-            <p className="text-xs text-[#767E94] max-w-sm mx-auto">
+          <div className="p-12 sm:p-16 card-quixel text-center space-y-4">
+            <Briefcase className="w-12 h-12 text-[#8E95A5] mx-auto" />
+            <h3 className="text-xl sm:text-2xl font-black text-[#181920]">No matching opportunities found</h3>
+            <p className="text-xs sm:text-sm text-[#767E94] max-w-sm mx-auto">
               Try adjusting your search keywords or filter settings to explore more roles.
             </p>
           </div>

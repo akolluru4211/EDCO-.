@@ -214,28 +214,28 @@ export default function CollegesPlacementHubPage() {
 
   return (
     <AuthGuard allowedRoles={["COLLEGE_ADMIN", "PLACEMENT_OFFICER", "ADMIN", "SUPER_ADMIN"]}>
-      <div className="min-h-screen bg-[#0E0F15] text-white p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1440px] mx-auto">
+      <div className="min-h-screen bg-[#0E0F15] text-white p-4 sm:p-6 lg:p-8 xl:px-10 space-y-8 max-w-[1536px] mx-auto">
       
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#13141B] p-6 rounded-3xl border border-white/10 shadow-xl">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/30">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-[#13141B] p-6 sm:p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2.5">
+            <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/30">
               College &amp; University Hub
             </span>
-            <span className="text-xs text-[#8E95A5]">🎓 Institutional Placement OS</span>
+            <span className="text-xs sm:text-sm text-[#8E95A5]">🎓 Institutional Placement OS</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white font-sans">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white font-sans">
             Colleges &amp; Placement Operations
           </h1>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 sm:gap-4">
           <button
             onClick={() => setShowDriveModal(true)}
-            className="px-4 py-2.5 rounded-2xl bg-[#D7FC51] hover:bg-[#E9FFA4] text-[#13141B] text-xs font-black transition-all flex items-center gap-1.5 shadow-md"
+            className="px-5 py-2.5 sm:py-3 rounded-2xl bg-[#D7FC51] hover:bg-[#E9FFA4] text-[#13141B] text-xs sm:text-sm font-black transition-all flex items-center gap-2 shadow-md cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
             <span>Schedule Campus Drive</span>
           </button>
         </div>
@@ -270,7 +270,7 @@ export default function CollegesPlacementHubPage() {
       )}
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-white/10 pb-2 overflow-x-auto">
+      <div className="flex items-center gap-2.5 border-b border-white/10 pb-3 overflow-x-auto">
         {[
           { id: "drives", label: "Campus Drives Scheduler", icon: Building2 },
           { id: "student_radar", label: "Student Placement Radar", icon: Users },
@@ -284,13 +284,13 @@ export default function CollegesPlacementHubPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap ${
+              className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
                 isActive
                   ? "bg-[#D7FC51] text-[#13141B] shadow-md font-black"
                   : "bg-[#1C1D26] text-[#8E95A5] hover:text-white hover:bg-[#252633]"
               }`}
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
               <span>{tab.label}</span>
             </button>
           );

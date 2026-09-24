@@ -168,41 +168,41 @@ export default function AdminControlPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#0E0F15] text-white p-4 sm:p-6 lg:p-8 space-y-8 max-w-[1440px] mx-auto">
+    <div className="min-h-screen bg-[#0E0F15] text-white p-4 sm:p-6 lg:p-8 xl:px-10 space-y-8 max-w-[1536px] mx-auto">
       
       {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#13141B] p-6 rounded-3xl border border-white/10 shadow-2xl">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#D7FC51]/10 text-[#D7FC51] border border-[#D7FC51]/30 flex items-center gap-1">
-              <Shield className="w-3 h-3 text-[#D7FC51]" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 bg-[#13141B] p-6 sm:p-8 lg:p-10 rounded-3xl border border-white/10 shadow-2xl">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2.5">
+            <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-[#D7FC51]/10 text-[#D7FC51] border border-[#D7FC51]/30 flex items-center gap-1.5">
+              <Shield className="w-3.5 h-3.5 text-[#D7FC51]" />
               Platform Command
             </span>
-            <span className="text-xs text-[#8E95A5]">Security Enforcement Level 3</span>
+            <span className="text-xs sm:text-sm text-[#8E95A5]">Security Enforcement Level 3</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Platform Admin &amp; RBAC Control</h1>
-          <p className="text-xs text-[#8E95A5]">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">Platform Admin &amp; RBAC Control</h1>
+          <p className="text-xs sm:text-sm text-[#8E95A5]">
             Manage user roles, inspect immutable audit trails, and govern workspace permissions.
           </p>
         </div>
 
-        <div className="flex items-center flex-wrap gap-2">
+        <div className="flex items-center flex-wrap gap-2.5 sm:gap-3">
           <Link
             href="/admin/ai-monitoring"
-            className="px-4 py-2.5 rounded-2xl bg-[#7B57FF]/20 hover:bg-[#7B57FF]/30 border border-[#7B57FF]/40 text-xs font-bold text-[#D7FC51] transition-all shadow-md flex items-center gap-1.5"
+            className="px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl bg-[#7B57FF]/20 hover:bg-[#7B57FF]/30 border border-[#7B57FF]/40 text-xs sm:text-sm font-bold text-[#D7FC51] transition-all shadow-md flex items-center gap-2"
           >
-            <Activity className="w-3.5 h-3.5 text-[#D7FC51]" />
+            <Activity className="w-4 h-4 text-[#D7FC51]" />
             <span>AI Telemetry</span>
           </Link>
           <Link
             href="/admin/audit-logs"
-            className="px-4 py-2.5 rounded-2xl bg-[#1C1D26] hover:bg-[#252633] border border-white/10 text-xs font-bold text-slate-200 transition-all shadow-md"
+            className="px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl bg-[#1C1D26] hover:bg-[#252633] border border-white/10 text-xs sm:text-sm font-bold text-slate-200 transition-all shadow-md"
           >
             Audit Logs
           </Link>
           <Link
             href="/admin/system-health"
-            className="px-4 py-2.5 rounded-2xl bg-[#D7FC51] hover:bg-[#E9FFA4] text-[#13141B] text-xs font-black uppercase tracking-wider transition-all shadow-md"
+            className="px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl bg-[#D7FC51] hover:bg-[#E9FFA4] text-[#13141B] text-xs sm:text-sm font-black uppercase tracking-wider transition-all shadow-md"
           >
             System Health
           </Link>
@@ -210,14 +210,14 @@ export default function AdminControlPage() {
       </div>
 
       {notification && (
-        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center gap-2 animate-in fade-in">
-          <Check className="w-4 h-4 text-emerald-400" />
+        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm font-bold flex items-center gap-2 animate-in fade-in">
+          <Check className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
           <span>{notification}</span>
         </div>
       )}
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+      <div className="flex items-center gap-2.5 overflow-x-auto pb-3 scrollbar-none border-b border-white/10">
         {[
           { id: "users_roles", label: `User Directory & RBAC Roles (${users.length})`, icon: Users },
           { id: "audit_logs", label: `Audit Trail Explorer (${auditLogs.length})`, icon: ShieldCheck },
@@ -230,13 +230,13 @@ export default function AdminControlPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap ${
+              className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
                 isActive
                   ? "bg-[#D7FC51] text-[#13141B] shadow-md font-black"
                   : "bg-[#1C1D26] text-[#8E95A5] hover:text-white hover:bg-[#252633]"
               }`}
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
               <span>{tab.label}</span>
             </button>
           );

@@ -261,26 +261,26 @@ export default function DashboardPage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-[calc(100vh-5rem)] bg-[#F4F6FB] text-[#181920] pb-16">
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6 animate-in fade-in duration-300">
+      <div className="min-h-[calc(100vh-5rem)] bg-[#F4F6FB] text-[#181920] pb-20">
+        <div className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 pt-6 sm:pt-8 space-y-8 animate-in fade-in duration-300">
           
           {/* Onboarding Incomplete Alert Banner (if applicable) */}
           {profile && profile.onboarding_completed === false && (
-            <div className="p-4 rounded-3xl bg-gradient-to-r from-[#EDE8FD] via-white to-[#E0FAF6] border border-[#7B57FF]/30 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-[#7B57FF] text-white flex items-center justify-center shrink-0 shadow-sm">
-                  <Sparkles className="w-5 h-5 text-[#D7FC51]" />
+            <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-[#EDE8FD] via-white to-[#E0FAF6] border border-[#7B57FF]/30 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-2xl bg-[#7B57FF] text-white flex items-center justify-center shrink-0 shadow-sm">
+                  <Sparkles className="w-6 h-6 text-[#D7FC51]" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-black text-[#13141B]">Complete Your Profile Setup</h4>
-                  <p className="text-xs text-[#5E6573]">
+                  <h4 className="text-sm sm:text-base font-black text-[#13141B]">Complete Your Profile Setup</h4>
+                  <p className="text-xs sm:text-sm text-[#5E6573]">
                     Set your target role and skills so EdWorld can calibrate your interview drills.
                   </p>
                 </div>
               </div>
               <Link
                 href="/onboarding"
-                className="px-5 py-2.5 rounded-xl bg-[#13141B] hover:bg-[#2A2C38] text-white text-xs font-bold transition-all shrink-0 flex items-center justify-center gap-1.5 shadow-sm"
+                className="px-5 py-3 rounded-xl bg-[#13141B] hover:bg-[#2A2C38] text-white text-xs sm:text-sm font-bold transition-all shrink-0 flex items-center justify-center gap-2 shadow-sm"
               >
                 <span>Complete Setup (1 min)</span>
                 <ArrowRight className="w-4 h-4" />
@@ -300,52 +300,52 @@ export default function DashboardPage() {
             />
 
             {/* Top 4 Metric Capsule Cards with Animated Counters */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="pill-stat card-lift-glow hover:border-[#FFB800]/40 transition-all">
-                <div className="w-10 h-10 rounded-2xl bg-[#FFF6DC] text-[#FFB800] flex items-center justify-center shadow-inner">
-                  <Sparkles className="w-5 h-5 fill-[#FFB800] animate-pulse" />
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 sm:gap-4">
+              <div className="pill-stat card-lift-glow hover:border-[#FFB800]/40 transition-all p-3.5 sm:p-4">
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#FFF6DC] text-[#FFB800] flex items-center justify-center shadow-inner shrink-0">
+                  <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 fill-[#FFB800] animate-pulse" />
                 </div>
                 <div>
-                  <div className="text-lg font-black text-[#181920] leading-none">
+                  <div className="text-lg sm:text-xl font-black text-[#181920] leading-tight">
                     <AnimatedCounter value={userStats.points} />
                   </div>
-                  <span className="text-[11px] font-bold text-[#8E95A5]">Points</span>
+                  <span className="text-xs sm:text-sm font-bold text-[#8E95A5]">Points</span>
                 </div>
               </div>
 
-              <div className="pill-stat card-lift-glow hover:border-[#7B57FF]/40 transition-all">
-                <div className="w-10 h-10 rounded-2xl bg-[#EDE8FD] text-[#7B57FF] flex items-center justify-center shadow-inner">
-                  <GraduationCap className="w-5 h-5" />
+              <div className="pill-stat card-lift-glow hover:border-[#7B57FF]/40 transition-all p-3.5 sm:p-4">
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#EDE8FD] text-[#7B57FF] flex items-center justify-center shadow-inner shrink-0">
+                  <GraduationCap className="w-5 h-5 sm:w-6 sm:h-6" />
                 </div>
                 <div>
-                  <div className="text-lg font-black text-[#181920] leading-none">
+                  <div className="text-lg sm:text-xl font-black text-[#181920] leading-tight">
                     <AnimatedCounter value={completedDrillsCount} />
                   </div>
-                  <span className="text-[11px] font-bold text-[#8E95A5]">Drills Completed</span>
+                  <span className="text-xs sm:text-sm font-bold text-[#8E95A5]">Drills Completed</span>
                 </div>
               </div>
 
-              <div className="pill-stat card-lift-glow hover:border-[#FF7A50]/40 transition-all">
-                <div className="w-10 h-10 rounded-2xl bg-[#FFEFEA] text-[#FF7A50] flex items-center justify-center shadow-inner">
-                  <Award className="w-5 h-5" />
+              <div className="pill-stat card-lift-glow hover:border-[#FF7A50]/40 transition-all p-3.5 sm:p-4">
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#FFEFEA] text-[#FF7A50] flex items-center justify-center shadow-inner shrink-0">
+                  <Award className="w-5 h-5 sm:w-6 sm:h-6" />
                 </div>
                 <div>
-                  <div className="text-lg font-black text-[#181920] leading-none">
+                  <div className="text-lg sm:text-xl font-black text-[#181920] leading-tight">
                     <AnimatedCounter value={earnedBadgesCount} />
                   </div>
-                  <span className="text-[11px] font-bold text-[#8E95A5]">Badges Earned</span>
+                  <span className="text-xs sm:text-sm font-bold text-[#8E95A5]">Badges Earned</span>
                 </div>
               </div>
 
-              <div className="pill-stat card-lift-glow hover:border-[#00D2B4]/40 transition-all">
-                <div className="w-10 h-10 rounded-2xl bg-[#E0FAF6] text-[#00D2B4] flex items-center justify-center shadow-inner">
-                  <Flame className={`w-5 h-5 ${userStats.current_streak > 0 ? "fill-[#00D2B4] animate-bounce" : ""}`} />
+              <div className="pill-stat card-lift-glow hover:border-[#00D2B4]/40 transition-all p-3.5 sm:p-4">
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#E0FAF6] text-[#00D2B4] flex items-center justify-center shadow-inner shrink-0">
+                  <Flame className={`w-5 h-5 sm:w-6 sm:h-6 ${userStats.current_streak > 0 ? "fill-[#00D2B4] animate-bounce" : ""}`} />
                 </div>
                 <div>
-                  <div className="text-lg font-black text-[#181920] leading-none">
+                  <div className="text-lg sm:text-xl font-black text-[#181920] leading-tight">
                     <AnimatedCounter value={userStats.current_streak} suffix="d" />
                   </div>
-                  <span className="text-[11px] font-bold text-[#8E95A5]">Active Streak</span>
+                  <span className="text-xs sm:text-sm font-bold text-[#8E95A5]">Active Streak</span>
                 </div>
               </div>
             </div>

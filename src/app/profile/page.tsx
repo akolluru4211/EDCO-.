@@ -365,157 +365,157 @@ export default function ProfilePage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-[#0E0F15] text-white p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1280px] mx-auto">
+      <div className="min-h-screen bg-[#0E0F15] text-white p-4 sm:p-6 lg:p-8 xl:p-10 space-y-8 max-w-[1536px] mx-auto">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#13141B] p-6 rounded-3xl border border-white/10 shadow-xl">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#D7FC51]/10 text-[#D7FC51] border border-[#D7FC51]/30">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 bg-[#13141B] p-6 sm:p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl">
+        <div className="space-y-2.5">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-[#D7FC51]/10 text-[#D7FC51] border border-[#D7FC51]/30">
               {role || "STAFF"}
             </span>
-            <span className="text-xs text-[#8E95A5]">🏢 EdWorld Verified Member</span>
+            <span className="text-xs sm:text-sm text-[#8E95A5]">🏢 EdWorld Verified Member</span>
           </div>
-          <h1 className="text-2xl font-black text-white">Profile &amp; Security Settings</h1>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white">Profile &amp; Security Settings</h1>
         </div>
 
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
           <EdIdBadge userId={user?.uid} size="md" variant="dark" />
-          <span className="text-xs font-mono text-[#8E95A5] bg-[#1C1D26] px-3 py-1.5 rounded-xl border border-white/5">
+          <span className="text-xs sm:text-sm font-mono text-[#8E95A5] bg-[#1C1D26] px-3.5 py-2 rounded-xl border border-white/5">
             {user?.email || "staff@edworld.co.in"}
           </span>
           <Link
             href={`/u/${profile?.username || user?.uid}`}
-            className="px-3 py-1.5 rounded-xl bg-[#D7FC51] hover:bg-[#E9FFA4] text-[#13141B] font-black text-xs transition-all shadow-md flex items-center gap-1"
+            className="px-4 py-2 sm:py-2.5 rounded-xl bg-[#D7FC51] hover:bg-[#E9FFA4] text-[#13141B] font-black text-xs sm:text-sm transition-all shadow-md flex items-center gap-1.5"
           >
-            <ExternalLink className="w-3.5 h-3.5" />
+            <ExternalLink className="w-4 h-4" />
             <span>Public Profile</span>
           </Link>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
         
         {/* Left 2 Cols: Profile Form */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-6 lg:space-y-8">
           
-          <div className="bg-[#13141B] p-6 rounded-3xl border border-white/10 space-y-6 shadow-xl">
+          <div className="bg-[#13141B] p-6 sm:p-8 rounded-3xl border border-white/10 space-y-6 shadow-xl">
             <div>
-              <h2 className="text-base font-black text-white flex items-center gap-2">
-                <User className="w-5 h-5 text-[#D7FC51]" />
+              <h2 className="text-base sm:text-lg lg:text-xl font-black text-white flex items-center gap-2.5">
+                <User className="w-5 h-5 sm:w-6 sm:h-6 text-[#D7FC51]" />
                 <span>Professional Identity</span>
               </h2>
-              <p className="text-xs text-[#8E95A5] mt-0.5">
+              <p className="text-xs sm:text-sm text-[#8E95A5] mt-1">
                 Information visible to colleagues in the internal team directory.
               </p>
             </div>
 
             {saveStatus && (
-              <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-bold flex items-center gap-2 animate-in fade-in">
-                <Check className="w-4 h-4 text-emerald-400" />
+              <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs sm:text-sm font-bold flex items-center gap-2 animate-in fade-in">
+                <Check className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
                 <span>{saveStatus}</span>
               </div>
             )}
 
-            <form onSubmit={handleSave} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-[#8E95A5] uppercase">Full Name</label>
+            <form onSubmit={handleSave} className="space-y-4 sm:space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-[#8E95A5] uppercase">Full Name</label>
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full p-3 rounded-xl bg-[#1C1D26] border border-white/10 text-xs text-white focus:outline-none focus:border-[#D7FC51]"
+                    className="w-full p-3 sm:p-3.5 rounded-xl bg-[#1C1D26] border border-white/10 text-xs sm:text-sm text-white focus:outline-none focus:border-[#D7FC51]"
                   />
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-[#8E95A5] uppercase">Contact Phone</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-[#8E95A5] uppercase">Contact Phone</label>
                   <input
                     type="text"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="+91 98765 00000"
-                    className="w-full p-3 rounded-xl bg-[#1C1D26] border border-white/10 text-xs text-white focus:outline-none focus:border-[#D7FC51]"
+                    className="w-full p-3 sm:p-3.5 rounded-xl bg-[#1C1D26] border border-white/10 text-xs sm:text-sm text-white focus:outline-none focus:border-[#D7FC51]"
                   />
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-[#8E95A5] uppercase">Headline / Role Description</label>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[#8E95A5] uppercase">Headline / Role Description</label>
                 <input
                   type="text"
                   value={headline}
                   onChange={(e) => setHeadline(e.target.value)}
-                  className="w-full p-3 rounded-xl bg-[#1C1D26] border border-white/10 text-xs text-white focus:outline-none focus:border-[#D7FC51]"
+                  className="w-full p-3 sm:p-3.5 rounded-xl bg-[#1C1D26] border border-white/10 text-xs sm:text-sm text-white focus:outline-none focus:border-[#D7FC51]"
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-[#8E95A5] uppercase">Bio / Summary</label>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[#8E95A5] uppercase">Bio / Summary</label>
                 <textarea
                   rows={3}
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
-                  className="w-full p-3 rounded-xl bg-[#1C1D26] border border-white/10 text-xs text-white focus:outline-none focus:border-[#D7FC51]"
+                  className="w-full p-3 sm:p-3.5 rounded-xl bg-[#1C1D26] border border-white/10 text-xs sm:text-sm text-white focus:outline-none focus:border-[#D7FC51]"
                 />
               </div>
 
               <button
                 type="submit"
-                className="px-6 py-2.5 rounded-xl bg-[#D7FC51] hover:bg-[#E9FFA4] text-[#13141B] font-black text-xs transition-all shadow-md flex items-center gap-1.5"
+                className="px-6 sm:px-7 py-2.5 sm:py-3 rounded-xl bg-[#D7FC51] hover:bg-[#E9FFA4] text-[#13141B] font-black text-xs sm:text-sm transition-all shadow-md flex items-center gap-2 cursor-pointer"
               >
-                <Save className="w-4 h-4" />
+                <Save className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Save Profile Changes</span>
               </button>
             </form>
           </div>
 
           {/* CAREER LEARNING OS CONFIGURATION CARD */}
-          <div className="bg-[#13141B] p-6 rounded-3xl border border-white/10 space-y-6 shadow-xl">
+          <div className="bg-[#13141B] p-6 sm:p-8 rounded-3xl border border-white/10 space-y-6 shadow-xl">
             <div className="flex items-center justify-between border-b border-white/10 pb-4">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#7B57FF]/20 text-[#7B57FF] border border-[#7B57FF]/30">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2.5">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider bg-[#7B57FF]/20 text-[#7B57FF] border border-[#7B57FF]/30">
                     AI CURRICULUM
                   </span>
-                  <h2 className="text-base font-black text-white flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-[#D7FC51]" />
+                  <h2 className="text-base sm:text-lg lg:text-xl font-black text-white flex items-center gap-2.5">
+                    <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-[#D7FC51]" />
                     <span>Career Learning OS &amp; Domain Focus</span>
                   </h2>
                 </div>
-                <p className="text-xs text-[#8E95A5]">
+                <p className="text-xs sm:text-sm text-[#8E95A5]">
                   Manage your selected domains, target role, priorities, and study hours.
                 </p>
               </div>
             </div>
 
             {careerOSStatus && (
-              <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-bold flex items-center gap-2 animate-in fade-in">
-                <Check className="w-4 h-4 text-emerald-400" />
+              <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs sm:text-sm font-bold flex items-center gap-2 animate-in fade-in">
+                <Check className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
                 <span>{careerOSStatus}</span>
               </div>
             )}
 
-            <form onSubmit={handleUpdateCareerOS} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-[#8E95A5] uppercase">Target Career Role</label>
+            <form onSubmit={handleUpdateCareerOS} className="space-y-4 sm:space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-[#8E95A5] uppercase">Target Career Role</label>
                   <input
                     type="text"
                     value={careerTargetRole}
                     onChange={(e) => setCareerTargetRole(e.target.value)}
                     placeholder="e.g. Full Stack Software Engineer"
-                    className="w-full p-3 rounded-xl bg-[#1C1D26] border border-white/10 text-xs text-white focus:outline-none focus:border-[#D7FC51]"
+                    className="w-full p-3 sm:p-3.5 rounded-xl bg-[#1C1D26] border border-white/10 text-xs sm:text-sm text-white focus:outline-none focus:border-[#D7FC51]"
                   />
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-[#8E95A5] uppercase">Target Timeframe</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-[#8E95A5] uppercase">Target Timeframe</label>
                   <select
                     value={careerTimeframe}
                     onChange={(e) => setCareerTimeframe(Number(e.target.value))}
-                    className="w-full p-3 rounded-xl bg-[#1C1D26] border border-white/10 text-xs text-white focus:outline-none focus:border-[#D7FC51]"
+                    className="w-full p-3 sm:p-3.5 rounded-xl bg-[#1C1D26] border border-white/10 text-xs sm:text-sm text-white focus:outline-none focus:border-[#D7FC51]"
                   >
                     <option value={3}>3 Months (Fast-Track)</option>
                     <option value={6}>6 Months (Standard)</option>
@@ -523,12 +523,12 @@ export default function ProfilePage() {
                   </select>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-[#8E95A5] uppercase">Daily Available Hours</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-[#8E95A5] uppercase">Daily Available Hours</label>
                   <select
                     value={careerDailyHours}
                     onChange={(e) => setCareerDailyHours(Number(e.target.value))}
-                    className="w-full p-3 rounded-xl bg-[#1C1D26] border border-white/10 text-xs text-white focus:outline-none focus:border-[#D7FC51]"
+                    className="w-full p-3 sm:p-3.5 rounded-xl bg-[#1C1D26] border border-white/10 text-xs sm:text-sm text-white focus:outline-none focus:border-[#D7FC51]"
                   >
                     <option value={1}>1 Hour / day</option>
                     <option value={2}>2 Hours / day</option>
@@ -539,12 +539,12 @@ export default function ProfilePage() {
               </div>
 
               {/* Multi-Domain Selector */}
-              <div className="space-y-2 pt-2">
-                <label className="text-[10px] font-bold text-[#8E95A5] uppercase block">
+              <div className="space-y-2.5 pt-2">
+                <label className="text-xs font-bold text-[#8E95A5] uppercase block">
                   Active Domains &amp; Priority Tiers ({careerDomains.length} Selected)
                 </label>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {DOMAIN_CATALOG.map((cat) => {
                     const isSelected = careerDomains.some(d => d.domain_id === cat.id);
                     const domainObj = careerDomains.find(d => d.domain_id === cat.id);
@@ -552,7 +552,7 @@ export default function ProfilePage() {
                     return (
                       <div
                         key={cat.id}
-                        className={`p-3.5 rounded-2xl border transition-all flex flex-col justify-between gap-2 ${
+                        className={`p-4 rounded-2xl border transition-all flex flex-col justify-between gap-2.5 ${
                           isSelected
                             ? "bg-[#1C1D26] border-[#7B57FF]/40 text-white"
                             : "bg-[#181920]/60 border-white/5 text-[#8E95A5] hover:border-white/20"
@@ -562,24 +562,24 @@ export default function ProfilePage() {
                           className="flex items-center justify-between cursor-pointer"
                           onClick={() => handleToggleProfileDomain(cat.id, cat.name)}
                         >
-                          <span className="text-xs font-bold text-white">{cat.name}</span>
-                          <div className={`w-4 h-4 rounded flex items-center justify-center text-[10px] font-black ${
+                          <span className="text-xs sm:text-sm font-bold text-white">{cat.name}</span>
+                          <div className={`w-5 h-5 rounded flex items-center justify-center text-xs font-black ${
                             isSelected ? "bg-[#D7FC51] text-[#13141B]" : "border border-white/20"
                           }`}>
-                            {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                            {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                           </div>
                         </div>
 
                         {isSelected && domainObj && (
-                          <div className="flex items-center justify-between pt-1 border-t border-white/10 text-[10px]">
+                          <div className="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
                             <span className="text-slate-400">Priority:</span>
-                            <div className="flex gap-1">
+                            <div className="flex gap-1.5">
                               {(["primary", "secondary", "supporting"] as const).map((p) => (
                                 <button
                                   key={p}
                                   type="button"
                                   onClick={() => handleChangeDomainPriority(cat.id, p)}
-                                  className={`px-2 py-0.5 rounded capitalize font-bold ${
+                                  className={`px-2.5 py-1 rounded capitalize font-bold text-xs ${
                                     domainObj.priority === p 
                                       ? "bg-[#7B57FF] text-white" 
                                       : "bg-white/5 text-slate-400 hover:bg-white/10"
@@ -601,155 +601,152 @@ export default function ProfilePage() {
                 <button
                   type="submit"
                   disabled={loadingCareerOS}
-                  className="px-5 py-2.5 rounded-xl bg-[#D7FC51] hover:bg-[#E9FFA4] text-[#13141B] font-black text-xs transition-all shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  className="px-6 py-2.5 sm:py-3 rounded-xl bg-[#D7FC51] hover:bg-[#E9FFA4] text-[#13141B] font-black text-xs sm:text-sm transition-all shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
                 >
-                  <Sparkles className="w-4 h-4 text-[#13141B]" />
+                  <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-[#13141B]" />
                   <span>{loadingCareerOS ? "Recalculating..." : "Save & Recalculate Roadmap"}</span>
                 </button>
               </div>
             </form>
           </div>
 
-
-          {/* Connected Developer Accounts */}
-          
-            {/* Professional Certifications Management */}
-            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
-                    <Award className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-base text-slate-900">Career Certifications &amp; Licenses</h3>
-                    <p className="text-xs text-slate-500">Verified credentials showcaseable on your resume and portfolio</p>
-                  </div>
+          {/* Professional Certifications Management */}
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+                  <Award className="w-5 h-5" />
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowAddCert(!showAddCert)}
-                  className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1 transition-all"
-                >
-                  <Plus className="w-3.5 h-3.5 text-[#D7FC51]" />
-                  <span>Add Certificate</span>
-                </button>
+                <div>
+                  <h3 className="font-bold text-base sm:text-lg text-slate-900">Career Certifications &amp; Licenses</h3>
+                  <p className="text-xs sm:text-sm text-slate-500">Verified credentials showcaseable on your resume and portfolio</p>
+                </div>
               </div>
-
-              {showAddCert && (
-                <form onSubmit={handleAddCert} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">Certificate Title *</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="e.g. AWS Certified Solutions Architect"
-                        value={newCertName}
-                        onChange={(e) => setNewCertName(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-slate-900"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">Issuing Organization *</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="e.g. Amazon Web Services / Meta"
-                        value={newCertIssuer}
-                        onChange={(e) => setNewCertIssuer(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-slate-900"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">Issue Date</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. May 2026"
-                        value={newCertDate}
-                        onChange={(e) => setNewCertDate(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-slate-900"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">Verification URL</label>
-                      <input
-                        type="url"
-                        placeholder="https://credly.com/..."
-                        value={newCertUrl}
-                        onChange={(e) => setNewCertUrl(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-slate-900"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-2 pt-2">
-                    <button type="button" onClick={() => setShowAddCert(false)} className="px-3 py-1.5 rounded-xl bg-slate-200 text-xs font-bold">Cancel</button>
-                    <button type="submit" className="px-4 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold">Save Credential</button>
-                  </div>
-                </form>
-              )}
-
-              {certs.length === 0 ? (
-                <p className="text-xs text-slate-500 italic">No certifications added yet. Click &quot;Add Certificate&quot; to list your industry credentials.</p>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {certs.map((c) => (
-                    <div key={c.id} className="p-3.5 rounded-2xl border border-slate-200 bg-white flex items-center justify-between gap-3">
-                      <div>
-                        <h4 className="font-bold text-xs text-slate-900">{c.name}</h4>
-                        <p className="text-[10px] text-slate-500">{c.issuer} &bull; {c.issueDate}</p>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        {c.url && (
-                          <a href={c.url} target="_blank" rel="noreferrer" className="p-1.5 text-slate-400 hover:text-slate-700">
-                            <ExternalLink className="w-3.5 h-3.5" />
-                          </a>
-                        )}
-                        <button type="button" onClick={() => handleDeleteCert(c.id)} className="p-1.5 text-rose-400 hover:text-rose-600">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <button
+                type="button"
+                onClick={() => setShowAddCert(!showAddCert)}
+                className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 transition-all"
+              >
+                <Plus className="w-4 h-4 text-[#D7FC51]" />
+                <span>Add Certificate</span>
+              </button>
             </div>
 
-            <SyncedAccountsCard
+            {showAddCert && (
+              <form onSubmit={handleAddCert} className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Certificate Title *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. AWS Certified Solutions Architect"
+                      value={newCertName}
+                      onChange={(e) => setNewCertName(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-slate-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Issuing Organization *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Amazon Web Services / Meta"
+                      value={newCertIssuer}
+                      onChange={(e) => setNewCertIssuer(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-slate-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Issue Date</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. May 2026"
+                      value={newCertDate}
+                      onChange={(e) => setNewCertDate(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-slate-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Verification URL</label>
+                    <input
+                      type="url"
+                      placeholder="https://credly.com/..."
+                      value={newCertUrl}
+                      onChange={(e) => setNewCertUrl(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-slate-900"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 pt-2">
+                  <button type="button" onClick={() => setShowAddCert(false)} className="px-4 py-2 rounded-xl bg-slate-200 text-xs sm:text-sm font-bold">Cancel</button>
+                  <button type="submit" className="px-5 py-2 rounded-xl bg-slate-900 text-white text-xs sm:text-sm font-bold">Save Credential</button>
+                </div>
+              </form>
+            )}
+
+            {certs.length === 0 ? (
+              <p className="text-xs sm:text-sm text-slate-500 italic">No certifications added yet. Click &quot;Add Certificate&quot; to list your industry credentials.</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                {certs.map((c) => (
+                  <div key={c.id} className="p-4 rounded-2xl border border-slate-200 bg-white flex items-center justify-between gap-3">
+                    <div>
+                      <h4 className="font-bold text-xs sm:text-sm text-slate-900">{c.name}</h4>
+                      <p className="text-xs text-slate-500">{c.issuer} &bull; {c.issueDate}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {c.url && (
+                        <a href={c.url} target="_blank" rel="noreferrer" className="p-2 text-slate-400 hover:text-slate-700">
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      )}
+                      <button type="button" onClick={() => handleDeleteCert(c.id)} className="p-2 text-rose-400 hover:text-rose-600">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <SyncedAccountsCard
             syncedAccounts={syncedAccounts}
             onUpdateAccounts={handleUpdateAccounts}
             userId={user?.uid}
           />
 
           {/* Change Password Card */}
-          <div className="bg-[#13141B] p-6 rounded-3xl border border-white/10 space-y-6 shadow-xl">
+          <div className="bg-[#13141B] p-6 sm:p-8 rounded-3xl border border-white/10 space-y-6 shadow-xl">
             <div>
-              <h2 className="text-base font-black text-white flex items-center gap-2">
-                <KeyRound className="w-5 h-5 text-purple-400" />
+              <h2 className="text-base sm:text-lg lg:text-xl font-black text-white flex items-center gap-2.5">
+                <KeyRound className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400" />
                 <span>Update Security Password</span>
               </h2>
-              <p className="text-xs text-[#8E95A5] mt-0.5">
+              <p className="text-xs sm:text-sm text-[#8E95A5] mt-1">
                 Replace temporary credentials with a private high-entropy password.
               </p>
             </div>
 
             {passwordStatus && (
-              <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-bold flex items-center gap-2 animate-in fade-in">
-                <Check className="w-4 h-4 text-emerald-400" />
+              <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs sm:text-sm font-bold flex items-center gap-2 animate-in fade-in">
+                <Check className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
                 <span>{passwordStatus}</span>
               </div>
             )}
 
             {passwordError && (
-              <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2 animate-in fade-in">
-                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+              <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs sm:text-sm flex items-center gap-2 animate-in fade-in">
+                <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-rose-400 shrink-0" />
                 <span>{passwordError}</span>
               </div>
             )}
 
-            <form onSubmit={handleChangePassword} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-[#8E95A5] uppercase">New Password</label>
+            <form onSubmit={handleChangePassword} className="space-y-4 sm:space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-[#8E95A5] uppercase">New Password</label>
                   <div className="relative">
                     <input
                       type={showNewPass ? "text" : "password"}
@@ -757,7 +754,7 @@ export default function ProfilePage() {
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full p-3 pr-10 rounded-xl bg-[#1C1D26] border border-white/10 text-xs text-white focus:outline-none focus:border-[#D7FC51]"
+                      className="w-full p-3 sm:p-3.5 pr-10 rounded-xl bg-[#1C1D26] border border-white/10 text-xs sm:text-sm text-white focus:outline-none focus:border-[#D7FC51]"
                     />
                     <button
                       type="button"
@@ -769,15 +766,15 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-[#8E95A5] uppercase">Confirm New Password</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-[#8E95A5] uppercase">Confirm New Password</label>
                   <input
                     type="password"
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full p-3 rounded-xl bg-[#1C1D26] border border-white/10 text-xs text-white focus:outline-none focus:border-[#D7FC51]"
+                    className="w-full p-3 sm:p-3.5 rounded-xl bg-[#1C1D26] border border-white/10 text-xs sm:text-sm text-white focus:outline-none focus:border-[#D7FC51]"
                   />
                 </div>
               </div>
@@ -785,9 +782,9 @@ export default function ProfilePage() {
               <button
                 type="submit"
                 disabled={isChangingPass}
-                className="px-6 py-2.5 rounded-xl bg-purple-500 hover:bg-purple-400 text-white font-black text-xs transition-all shadow-md flex items-center gap-1.5"
+                className="px-6 sm:px-7 py-2.5 sm:py-3 rounded-xl bg-purple-500 hover:bg-purple-400 text-white font-black text-xs sm:text-sm transition-all shadow-md flex items-center gap-2"
               >
-                <Lock className="w-4 h-4" />
+                <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>{isChangingPass ? "Updating Password..." : "Update Password"}</span>
               </button>
             </form>
@@ -796,16 +793,16 @@ export default function ProfilePage() {
         </div>
 
         {/* Right 1 Col: Notification Preferences & Identity Summary */}
-        <div className="space-y-6">
+        <div className="space-y-6 lg:space-y-8">
           
-          <div className="bg-[#13141B] p-6 rounded-3xl border border-white/10 space-y-4 shadow-xl">
-            <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
-              <Bell className="w-4 h-4 text-[#D7FC51]" />
+          <div className="bg-[#13141B] p-6 sm:p-8 rounded-3xl border border-white/10 space-y-4 shadow-xl">
+            <h3 className="text-xs sm:text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+              <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-[#D7FC51]" />
               <span>Workspace Notifications</span>
             </h3>
 
             <div className="space-y-3">
-              <label className="flex items-center justify-between p-3 rounded-xl bg-[#1C1D26] border border-white/5 cursor-pointer text-xs">
+              <label className="flex items-center justify-between p-3.5 rounded-xl bg-[#1C1D26] border border-white/5 cursor-pointer text-xs sm:text-sm">
                 <span>Task &amp; OKR Mentions</span>
                 <input
                   type="checkbox"
@@ -815,7 +812,7 @@ export default function ProfilePage() {
                 />
               </label>
 
-              <label className="flex items-center justify-between p-3 rounded-xl bg-[#1C1D26] border border-white/5 cursor-pointer text-xs">
+              <label className="flex items-center justify-between p-3.5 rounded-xl bg-[#1C1D26] border border-white/5 cursor-pointer text-xs sm:text-sm">
                 <span>Leave Approval Alerts</span>
                 <input
                   type="checkbox"
@@ -825,7 +822,7 @@ export default function ProfilePage() {
                 />
               </label>
 
-              <label className="flex items-center justify-between p-3 rounded-xl bg-[#1C1D26] border border-white/5 cursor-pointer text-xs">
+              <label className="flex items-center justify-between p-3.5 rounded-xl bg-[#1C1D26] border border-white/5 cursor-pointer text-xs sm:text-sm">
                 <span>Payroll Disbursal Notices</span>
                 <input
                   type="checkbox"
@@ -837,9 +834,9 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div className="bg-[#13141B] p-6 rounded-3xl border border-white/10 space-y-3 shadow-xl">
-            <h3 className="text-xs font-black text-white uppercase tracking-wider">Account Metadata</h3>
-            <div className="space-y-1.5 text-xs text-[#8E95A5] font-mono">
+          <div className="bg-[#13141B] p-6 sm:p-8 rounded-3xl border border-white/10 space-y-3.5 shadow-xl">
+            <h3 className="text-xs sm:text-sm font-black text-white uppercase tracking-wider">Account Metadata</h3>
+            <div className="space-y-2 text-xs sm:text-sm text-[#8E95A5] font-mono">
               <div><strong>Role:</strong> {role || "EMPLOYEE"}</div>
               <div><strong>Status:</strong> ACTIVE</div>
               <div><strong>Corporate Domain:</strong> edworld.co.in</div>

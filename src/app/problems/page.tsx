@@ -114,34 +114,34 @@ export default function ProblemBoardPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-paper py-8 px-4 sm:px-6 lg:px-8 text-ink">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <div className="min-h-[calc(100vh-4rem)] bg-paper py-8 sm:py-10 px-4 sm:px-6 lg:px-8 xl:px-10 text-ink">
+      <div className="max-w-[1536px] mx-auto space-y-8">
         
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-paper-raised p-6 sm:p-8 rounded-3xl border border-line shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-paper-raised p-6 sm:p-8 lg:p-10 rounded-3xl border border-line shadow-sm">
           <div>
             <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-gold/15 text-gold-dark border border-gold/30 flex items-center gap-1.5">
-                <Lightbulb className="w-3.5 h-3.5 text-gold" />
+              <span className="px-3.5 py-1 rounded-full text-xs sm:text-sm font-extrabold uppercase tracking-wider bg-gold/15 text-gold-dark border border-gold/30 flex items-center gap-1.5">
+                <Lightbulb className="w-4 h-4 text-gold" />
                 <span>Problem &rarr; Solution Board</span>
               </span>
-              <span className="text-xs text-ink-muted">&bull; Curated Real-World Challenges</span>
+              <span className="text-xs sm:text-sm text-ink-muted">&bull; Curated Real-World Challenges</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold font-display text-ink tracking-tight mt-2">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-display text-ink tracking-tight mt-3">
               Real-World Problem Board
             </h1>
           </div>
 
           {successMessage && (
-            <div className="px-4 py-2.5 rounded-xl bg-forest/10 text-forest border border-forest/20 text-xs font-bold flex items-center gap-2 animate-in fade-in shadow-sm">
-              <CheckCircle2 className="w-4 h-4 text-forest" />
+            <div className="px-4 py-3 rounded-2xl bg-forest/10 text-forest border border-forest/20 text-xs sm:text-sm font-bold flex items-center gap-2 animate-in fade-in shadow-sm">
+              <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-forest shrink-0" />
               <span>{successMessage}</span>
             </div>
           )}
         </div>
 
         {/* Category Filters */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2">
+        <div className="flex items-center gap-2.5 overflow-x-auto pb-2">
           {[
             { id: "all", label: "All Challenges" },
             { id: "ai", label: "AI & PyTorch (TorchLeet)" },
@@ -154,7 +154,7 @@ export default function ProblemBoardPage() {
             <button
               key={cat.id}
               onClick={() => setCategoryFilter(cat.id)}
-              className={`px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+              className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
                 categoryFilter === cat.id
                   ? "bg-forest text-white shadow-sm"
                   : "bg-paper-raised text-ink border border-line hover:bg-paper-soft"
@@ -166,7 +166,7 @@ export default function ProblemBoardPage() {
         </div>
 
         {/* Problems Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {problems.map((prob) => {
             const hasDraft = solutions.find((s) => s.problem_id === prob.id && s.status === "in_progress");
             const isSubmitted = solutions.find((s) => s.problem_id === prob.id && s.status === "submitted");
@@ -176,50 +176,50 @@ export default function ProblemBoardPage() {
                 key={prob.id}
                 className="bg-paper-raised p-6 sm:p-8 rounded-3xl border border-line shadow-sm hover:shadow-md hover:border-forest/30 transition-all space-y-4 flex flex-col justify-between group"
               >
-                <div className="space-y-3">
+                <div className="space-y-3.5">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5">
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-forest/10 text-forest border border-forest/20">
+                      <span className="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-forest/10 text-forest border border-forest/20">
                         {prob.category}
                       </span>
                       {prob.source?.includes("TorchLeet") && (
-                        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20 font-mono">
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20 font-mono">
                           TorchLeet PyTorch
                         </span>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
                       {prob.needs_review && (
-                        <span className="px-2.5 py-0.5 rounded text-[10px] font-bold bg-gold/15 text-gold-dark border border-gold/30 flex items-center gap-1">
-                          <AlertTriangle className="w-3 h-3 text-gold" />
+                        <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-gold/15 text-gold-dark border border-gold/30 flex items-center gap-1">
+                          <AlertTriangle className="w-3.5 h-3.5 text-gold" />
                           <span>Review Scheduled</span>
                         </span>
                       )}
-                      <span className="text-[10px] font-bold text-ink-muted">
+                      <span className="text-xs font-bold text-ink-muted">
                         Level {prob.difficulty_level}
                       </span>
                     </div>
                   </div>
 
-                  <h3 className="font-bold font-display text-ink text-xl leading-snug group-hover:text-forest transition-colors">
+                  <h3 className="font-bold font-display text-ink text-xl sm:text-2xl leading-snug group-hover:text-forest transition-colors">
                     {prob.title}
                   </h3>
 
-                  <p className="text-xs text-ink-soft leading-relaxed">
+                  <p className="text-xs sm:text-sm text-ink-soft leading-relaxed">
                     {prob.description}
                   </p>
 
                   {prob.companies && prob.companies.length > 0 && (
-                    <div className="flex items-center gap-1 text-[11px] text-ink-muted">
+                    <div className="flex items-center gap-1.5 text-xs text-ink-muted">
                       <span className="font-semibold text-ink-soft">Companies:</span>
-                      <span className="text-[10px] font-mono">{prob.companies.join(", ")}</span>
+                      <span className="text-xs font-mono">{prob.companies.join(", ")}</span>
                     </div>
                   )}
 
                   {prob.interest_tags && prob.interest_tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 pt-1">
+                    <div className="flex flex-wrap gap-1.5 pt-1.5">
                       {prob.interest_tags.map((tag: string) => (
-                        <span key={tag} className="text-[10px] bg-paper border border-line text-ink-soft px-2.5 py-0.5 rounded-lg font-mono">
+                        <span key={tag} className="text-xs bg-paper border border-line text-ink-soft px-3 py-1 rounded-xl font-mono">
                           #{tag}
                         </span>
                       ))}
