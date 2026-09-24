@@ -37,8 +37,12 @@ const PUBLIC_PAGE_PREFIXES = [
 
 // Public API endpoints accessible without authentication
 const PUBLIC_API_PREFIXES = [
+  "/api/auth/login",
+  "/api/auth/signup",
   "/api/auth/otp/send",
   "/api/auth/otp/verify",
+  "/api/auth/forgot-password",
+  "/api/auth/reset-password",
   "/api/auth/logout",
   "/api/auth/session",
   "/api/health",

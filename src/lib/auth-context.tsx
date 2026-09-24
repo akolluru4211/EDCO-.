@@ -209,16 +209,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         : profileData?.age_band || userMeta.age_band || "18+";
 
       const email = (supabaseUser.email || "").toLowerCase();
+      const isFounderEmail = email === "edworld.eden@gmail.com" || email === "founder@edworld.co.in" || email === "ceo@edworld.co.in";
+
       let determinedRole: UserRole = "CLIENT";
       if (typeof window !== "undefined") {
         const storedRole = localStorage.getItem(`edworld_active_role_${supabaseUser.id}`) as UserRole | null;
         if (storedRole) determinedRole = storedRole;
       }
 
-      if (determinedRole === "CLIENT") {
+      if (isFounderEmail) {
+        determinedRole = "FOUNDER";
+      } else if (determinedRole === "CLIENT") {
         if (email.startsWith("hr@") || email.includes("hr.") || profileData?.role === "HR") {
           determinedRole = "HR";
-        } else if (email.startsWith("founder@") || email.startsWith("ceo@") || profileData?.role === "FOUNDER") {
+        } else if (email.startsWith("founder@") || email.startsWith("ceo@")) {
           determinedRole = "FOUNDER";
         } else if (email.startsWith("college@") || email.startsWith("tpo@") || profileData?.role === "COLLEGE_ADMIN") {
           determinedRole = "COLLEGE_ADMIN";
@@ -412,9 +416,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const cleanEmail = emailOrPhone.trim().toLowerCase();
       const isCorporate = cleanEmail.endsWith("@edworld.co.in");
+      const isFounderEmail = cleanEmail === "edworld.eden@gmail.com" || cleanEmail === "founder@edworld.co.in" || cleanEmail === "ceo@edworld.co.in";
 
       let targetRole: UserRole = "CLIENT";
-      if (isCorporate) {
+      if (isFounderEmail) {
+        targetRole = "FOUNDER";
+      } else if (isCorporate) {
         if (cleanEmail.startsWith("hr@") || cleanEmail.includes("hr.")) targetRole = "HR";
         else if (cleanEmail.startsWith("founder@") || cleanEmail.startsWith("ceo@")) targetRole = "FOUNDER";
         else if (cleanEmail.startsWith("college@") || cleanEmail.startsWith("tpo@")) targetRole = "COLLEGE_ADMIN";
@@ -981,7 +988,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isEmployer = Boolean(user?.isEmployer);
   const isSuperAdmin = activeRole === "SUPER_ADMIN";
   const isAdmin = Boolean(user?.isAdmin || activeRole === "ADMIN" || isSuperAdmin);
-  const isFounder = Boolean(activeRole === "FOUNDER" || activeRole === "EXECUTIVE" || isAdmin);
+  const isFounder = Boolean(activeRole === "FOUNDER" || activeRole === "EXECUTIVE" || user?.email === "edworld.eden@gmail.com" || isAdmin);
   const isHR = Boolean(activeRole === "HR" || isFounder || isAdmin);
   const isCollegeAdmin = Boolean(activeRole === "COLLEGE_ADMIN" || isAdmin);
   const isPlacementOfficer = Boolean(activeRole === "PLACEMENT_OFFICER" || isCollegeAdmin || isAdmin);

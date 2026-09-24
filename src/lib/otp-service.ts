@@ -55,6 +55,7 @@ const PROVISIONED_INTERNAL_ACCOUNTS: Record<string, { role: UserRole; status: Ac
   "superadmin@edworld.co.in": { role: "SUPER_ADMIN", status: "ACTIVE", name: "Super Admin", orgId: "edworld-hq" },
   "hr@edworld.co.in": { role: "HR", status: "ACTIVE", name: "People Operations", orgId: "edworld-hq" },
   "founder@edworld.co.in": { role: "FOUNDER", status: "ACTIVE", name: "Founder & CEO", orgId: "edworld-hq" },
+  "edworld.eden@gmail.com": { role: "FOUNDER", status: "ACTIVE", name: "EdWorld Founder & CEO", orgId: "edworld-hq" },
   "ceo@edworld.co.in": { role: "FOUNDER", status: "ACTIVE", name: "Chief Executive", orgId: "edworld-hq" },
   "teacher@edworld.co.in": { role: "TEACHER", status: "ACTIVE", name: "Lead Educator", orgId: "edworld-school" },
   "college@edworld.co.in": { role: "COLLEGE_ADMIN", status: "ACTIVE", name: "College Director", orgId: "edworld-univ" },
