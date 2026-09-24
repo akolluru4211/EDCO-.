@@ -49,6 +49,7 @@ import BorderBeam from "@/components/ui/BorderBeam";
 import StreakFlame from "@/components/ui/StreakFlame";
 import ShimmerBadge from "@/components/ui/ShimmerBadge";
 import PerformanceIntelligenceWidget from "@/components/dashboard/PerformanceIntelligenceWidget";
+import MyCareerPlanWidget from "@/components/dashboard/MyCareerPlanWidget";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -399,6 +400,12 @@ export default function DashboardPage() {
             {/* LEFT COLUMN (8 Cols) */}
             <div className="lg:col-span-7 xl:col-span-8 space-y-6 sm:space-y-8">
               
+              {/* CAREER LEARNING OS: Integrated My Career Plan & Daily Timetable */}
+              <MyCareerPlanWidget
+                userId={user?.uid}
+                userName={user?.name || profile?.name || "Learner"}
+              />
+
               {/* 1. Continue Learning Hero Card */}
               <div className="space-y-3">
                 <h2 className="text-lg font-black text-[#181920]">Continue learning</h2>

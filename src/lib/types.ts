@@ -1498,3 +1498,150 @@ export interface ReferralRequestItem {
   created_at?: string;
 }
 
+// --- CAREER LEARNING OS TYPES ---
+export type UserDomainPriority = "primary" | "secondary" | "supporting";
+
+export interface UserDomainItem {
+  id: string;
+  user_id: string;
+  domain_id: string;
+  domain_name: string;
+  priority: UserDomainPriority;
+  self_level: SkillLevel;
+  effective_level: SkillLevel;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface UserCareerGoal {
+  id?: string;
+  user_id: string;
+  target_role: string;
+  target_industry?: string;
+  target_timeframe_months: number;
+  available_hours_per_day: number;
+  weekly_target_hours: number;
+  preferred_schedule_blocks: Array<"morning" | "afternoon" | "evening" | "night" | "flexible">;
+  current_experience_level?: string;
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export type RoadmapTaskType = 
+  | "concept" 
+  | "practice" 
+  | "project" 
+  | "interview_drill" 
+  | "aptitude" 
+  | "resume_tuning" 
+  | "review";
+
+export type RoadmapTaskStatus = "pending" | "in_progress" | "completed" | "skipped";
+
+export interface RoadmapMilestone {
+  id: string;
+  title: string;
+  description: string;
+  estimated_hours: number;
+  domain_id: string;
+  skill_id: string;
+  task_type: RoadmapTaskType;
+  practice_url?: string;
+  resource_url?: string;
+  project_id?: string;
+  completed: boolean;
+  completed_at?: string;
+}
+
+export interface RoadmapPhase {
+  id: string;
+  phase_index: number;
+  title: string;
+  subtitle: string;
+  objective: string;
+  estimated_weeks: number;
+  milestones: RoadmapMilestone[];
+  is_active: boolean;
+  is_completed: boolean;
+  progress_percent: number;
+}
+
+export interface LearningRoadmap {
+  id: string;
+  user_id: string;
+  title: string;
+  target_role: string;
+  total_phases: number;
+  current_phase_index: number;
+  progress_percent: number;
+  status: "active" | "completed" | "paused" | "adapting";
+  phases: RoadmapPhase[];
+  version: number;
+  last_adapted_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DailyPlanTask {
+  id: string;
+  user_id: string;
+  plan_date: string;
+  title: string;
+  time_block: "morning" | "afternoon" | "evening" | "night" | "flexible";
+  estimated_minutes: number;
+  task_type: RoadmapTaskType;
+  status: RoadmapTaskStatus;
+  domain_id?: string;
+  skill_id?: string;
+  resource_url?: string;
+  practice_url?: string;
+  project_id?: string;
+  completed_at?: string;
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface LearningResourceItem {
+  id: string;
+  title: string;
+  url: string;
+  provider: string;
+  resource_type: "video" | "interactive_tutorial" | "documentation" | "repo" | "drill" | "course" | "challenge";
+  domain_id: string;
+  skill_id: string;
+  difficulty: "Beginner" | "Intermediate" | "Advanced";
+  duration_minutes: number;
+  is_verified: boolean;
+  is_active: boolean;
+  created_at?: string;
+}
+
+export interface CurriculumAdaptationProposal {
+  id?: string;
+  user_id: string;
+  previous_phase_index: number;
+  new_phase_index: number;
+  change_reason: string;
+  triggered_by: "user" | "ai_evaluator" | "interview_feedback" | "code_assessment" | "progress_acceleration";
+  proposed_changes: any;
+  accepted_by_user: boolean;
+  created_at?: string;
+}
+
+export interface CareerPlanOverview {
+  domains: UserDomainItem[];
+  goal: UserCareerGoal | null;
+  roadmap: LearningRoadmap | null;
+  todayTasks: DailyPlanTask[];
+  adaptationProposals: CurriculumAdaptationProposal[];
+  effectiveLevels: Record<string, {
+    selfLevel: SkillLevel;
+    effectiveLevel: SkillLevel;
+    evidenceCount: number;
+    label: string;
+  }>;
+}
+
+

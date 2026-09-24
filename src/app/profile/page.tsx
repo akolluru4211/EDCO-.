@@ -30,10 +30,97 @@ import { recordAuditLog } from "@/lib/audit-logger";
 import AuthGuard from "@/components/auth/AuthGuard";
 import SyncedAccountsCard from "@/components/dashboard/SyncedAccountsCard";
 import EdIdBadge from "@/components/ui/EdIdBadge";
-import { SyncedAccounts } from "@/lib/types";
+import { SyncedAccounts, UserDomainItem, UserDomainPriority, SkillLevel } from "@/lib/types";
+import { DOMAIN_CATALOG } from "@/lib/services/career-learning-os";
 
 export default function ProfilePage() {
   const { user, profile, role, updateUserProfile } = useAuth();
+
+  // Career Learning OS State
+  const [careerDomains, setCareerDomains] = useState<UserDomainItem[]>([]);
+  const [careerTargetRole, setCareerTargetRole] = useState(profile?.targetRole || "Full Stack Software Engineer");
+  const [careerDailyHours, setCareerDailyHours] = useState<number>(2);
+  const [careerTimeframe, setCareerTimeframe] = useState<number>(6);
+  const [loadingCareerOS, setLoadingCareerOS] = useState(false);
+  const [careerOSStatus, setCareerOSStatus] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    const fetchCareerOSData = async () => {
+      try {
+        const res = await fetch(`/api/career-os?userId=${user.uid}`);
+        const data = await res.json();
+        if (data.success && data.plan) {
+          if (data.plan.domains) setCareerDomains(data.plan.domains);
+          if (data.plan.goal) {
+            setCareerTargetRole(data.plan.goal.target_role || "Full Stack Software Engineer");
+            setCareerDailyHours(data.plan.goal.available_hours_per_day || 2);
+            setCareerTimeframe(data.plan.goal.target_timeframe_months || 6);
+          }
+        }
+      } catch (err) {
+        console.warn("Career OS Profile fetch note:", err);
+      }
+    };
+    fetchCareerOSData();
+  }, [user]);
+
+  const handleUpdateCareerOS = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user?.uid) return;
+    setLoadingCareerOS(true);
+    setCareerOSStatus(null);
+    try {
+      const res = await fetch("/api/career-os", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.uid,
+          targetRole: careerTargetRole,
+          timeframeMonths: careerTimeframe,
+          availableHoursPerDay: careerDailyHours,
+          domains: careerDomains,
+          regenerateRoadmap: true
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCareerOSStatus("Career Learning OS synchronized & roadmap updated!");
+        setTimeout(() => setCareerOSStatus(null), 4000);
+      }
+    } catch (err: any) {
+      setCareerOSStatus("Failed to update career plan: " + err.message);
+    } finally {
+      setLoadingCareerOS(false);
+    }
+  };
+
+  const handleToggleProfileDomain = (domainId: string, domainName: string) => {
+    setCareerDomains(prev => {
+      const exists = prev.find(d => d.domain_id === domainId);
+      if (exists) {
+        if (prev.length <= 1) return prev;
+        return prev.filter(d => d.domain_id !== domainId);
+      } else {
+        const count = prev.length;
+        const priority: UserDomainPriority = count === 0 ? "primary" : count === 1 ? "secondary" : "supporting";
+        const newDomain: UserDomainItem = {
+          id: `dom-${Date.now()}`,
+          user_id: user?.uid || "",
+          domain_id: domainId,
+          domain_name: domainName,
+          priority,
+          self_level: 1,
+          effective_level: 1
+        };
+        return [...prev, newDomain];
+      }
+    });
+  };
+
+  const handleChangeDomainPriority = (domainId: string, priority: UserDomainPriority) => {
+    setCareerDomains(prev => prev.map(d => d.domain_id === domainId ? { ...d, priority } : d));
+  };
 
   const [name, setName] = useState(profile?.name || user?.name || "");
   const [phone, setPhone] = useState(profile?.phone || user?.phone || "");
@@ -383,6 +470,146 @@ export default function ProfilePage() {
               </button>
             </form>
           </div>
+
+          {/* CAREER LEARNING OS CONFIGURATION CARD */}
+          <div className="bg-[#13141B] p-6 rounded-3xl border border-white/10 space-y-6 shadow-xl">
+            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#7B57FF]/20 text-[#7B57FF] border border-[#7B57FF]/30">
+                    AI CURRICULUM
+                  </span>
+                  <h2 className="text-base font-black text-white flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-[#D7FC51]" />
+                    <span>Career Learning OS &amp; Domain Focus</span>
+                  </h2>
+                </div>
+                <p className="text-xs text-[#8E95A5]">
+                  Manage your selected domains, target role, priorities, and study hours.
+                </p>
+              </div>
+            </div>
+
+            {careerOSStatus && (
+              <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-bold flex items-center gap-2 animate-in fade-in">
+                <Check className="w-4 h-4 text-emerald-400" />
+                <span>{careerOSStatus}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleUpdateCareerOS} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-[#8E95A5] uppercase">Target Career Role</label>
+                  <input
+                    type="text"
+                    value={careerTargetRole}
+                    onChange={(e) => setCareerTargetRole(e.target.value)}
+                    placeholder="e.g. Full Stack Software Engineer"
+                    className="w-full p-3 rounded-xl bg-[#1C1D26] border border-white/10 text-xs text-white focus:outline-none focus:border-[#D7FC51]"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-[#8E95A5] uppercase">Target Timeframe</label>
+                  <select
+                    value={careerTimeframe}
+                    onChange={(e) => setCareerTimeframe(Number(e.target.value))}
+                    className="w-full p-3 rounded-xl bg-[#1C1D26] border border-white/10 text-xs text-white focus:outline-none focus:border-[#D7FC51]"
+                  >
+                    <option value={3}>3 Months (Fast-Track)</option>
+                    <option value={6}>6 Months (Standard)</option>
+                    <option value={12}>12 Months (Comprehensive)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-[#8E95A5] uppercase">Daily Available Hours</label>
+                  <select
+                    value={careerDailyHours}
+                    onChange={(e) => setCareerDailyHours(Number(e.target.value))}
+                    className="w-full p-3 rounded-xl bg-[#1C1D26] border border-white/10 text-xs text-white focus:outline-none focus:border-[#D7FC51]"
+                  >
+                    <option value={1}>1 Hour / day</option>
+                    <option value={2}>2 Hours / day</option>
+                    <option value={3}>3 Hours / day</option>
+                    <option value={4}>4+ Hours / day</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Multi-Domain Selector */}
+              <div className="space-y-2 pt-2">
+                <label className="text-[10px] font-bold text-[#8E95A5] uppercase block">
+                  Active Domains &amp; Priority Tiers ({careerDomains.length} Selected)
+                </label>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {DOMAIN_CATALOG.map((cat) => {
+                    const isSelected = careerDomains.some(d => d.domain_id === cat.id);
+                    const domainObj = careerDomains.find(d => d.domain_id === cat.id);
+
+                    return (
+                      <div
+                        key={cat.id}
+                        className={`p-3.5 rounded-2xl border transition-all flex flex-col justify-between gap-2 ${
+                          isSelected
+                            ? "bg-[#1C1D26] border-[#7B57FF]/40 text-white"
+                            : "bg-[#181920]/60 border-white/5 text-[#8E95A5] hover:border-white/20"
+                        }`}
+                      >
+                        <div 
+                          className="flex items-center justify-between cursor-pointer"
+                          onClick={() => handleToggleProfileDomain(cat.id, cat.name)}
+                        >
+                          <span className="text-xs font-bold text-white">{cat.name}</span>
+                          <div className={`w-4 h-4 rounded flex items-center justify-center text-[10px] font-black ${
+                            isSelected ? "bg-[#D7FC51] text-[#13141B]" : "border border-white/20"
+                          }`}>
+                            {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                          </div>
+                        </div>
+
+                        {isSelected && domainObj && (
+                          <div className="flex items-center justify-between pt-1 border-t border-white/10 text-[10px]">
+                            <span className="text-slate-400">Priority:</span>
+                            <div className="flex gap-1">
+                              {(["primary", "secondary", "supporting"] as const).map((p) => (
+                                <button
+                                  key={p}
+                                  type="button"
+                                  onClick={() => handleChangeDomainPriority(cat.id, p)}
+                                  className={`px-2 py-0.5 rounded capitalize font-bold ${
+                                    domainObj.priority === p 
+                                      ? "bg-[#7B57FF] text-white" 
+                                      : "bg-white/5 text-slate-400 hover:bg-white/10"
+                                  }`}
+                                >
+                                  {p}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <button
+                  type="submit"
+                  disabled={loadingCareerOS}
+                  className="px-5 py-2.5 rounded-xl bg-[#D7FC51] hover:bg-[#E9FFA4] text-[#13141B] font-black text-xs transition-all shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  <Sparkles className="w-4 h-4 text-[#13141B]" />
+                  <span>{loadingCareerOS ? "Recalculating..." : "Save & Recalculate Roadmap"}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
 
           {/* Connected Developer Accounts */}
           

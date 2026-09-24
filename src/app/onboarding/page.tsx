@@ -4,8 +4,8 @@ import React, { useState, useEffect } from "react";
 import Link from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { AVAILABLE_CATEGORIES } from "@/lib/mock-data";
-import { SkillLevel, UserInterest, CareerStage } from "@/lib/types";
+import { SkillLevel, UserInterest, CareerStage, UserDomainPriority } from "@/lib/types";
+import { DOMAIN_CATALOG } from "@/lib/services/career-learning-os";
 import { 
   Check, 
   ArrowRight, 
@@ -24,10 +24,20 @@ import {
   Globe, 
   Building2, 
   Award, 
-  CheckCircle2 
+  CheckCircle2,
+  Clock,
+  Layers,
+  Star
 } from "lucide-react";
 import EdworldLogo from "@/components/ui/EdworldLogo";
 import { supabase } from "@/lib/supabase";
+
+interface DomainSelectionState {
+  domainId: string;
+  domainName: string;
+  priority: UserDomainPriority;
+  selfLevel: SkillLevel;
+}
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -57,11 +67,15 @@ export default function OnboardingPage() {
   const [experienceLevel, setExperienceLevel] = useState(profile?.experience_level || "0–2 Years (Early Career)");
   const [targetRole, setTargetRole] = useState(profile?.targetRole || "Full Stack Developer");
 
-  // Step 3: Skills & Focus
-  const [selectedDomains, setSelectedDomains] = useState<Record<string, SkillLevel>>({
-    swe: 1,
-    behavioral: 0,
+  // Step 3: Multi-Domain Selection with Priorities & Time Allocation
+  const [selectedDomains, setSelectedDomains] = useState<Record<string, DomainSelectionState>>({
+    swe: { domainId: "swe", domainName: "Software Engineering & Full Stack", priority: "primary", selfLevel: 1 },
+    ai_ml: { domainId: "ai_ml", domainName: "Artificial Intelligence & Machine Learning", priority: "secondary", selfLevel: 1 },
+    behavioral: { domainId: "behavioral", domainName: "Leadership & Behavioral Mastery", priority: "supporting", selfLevel: 0 },
   });
+
+  const [targetTimeframe, setTargetTimeframe] = useState<number>(6);
+  const [dailyHours, setDailyHours] = useState<number>(2);
 
   // Step 4: Goals & Links
   const [primaryGoal, setPrimaryGoal] = useState(
@@ -87,31 +101,48 @@ export default function OnboardingPage() {
     if (user?.phone && !phone) {
       setPhone(user.phone);
     }
-    if (profile?.interests && profile.interests.length > 0) {
-      const mapped: Record<string, SkillLevel> = {};
-      profile.interests.forEach((item) => {
-        mapped[item.id] = (item.effectiveLevel || item.selfLevel || 0) as SkillLevel;
-      });
-      setSelectedDomains(mapped);
-    }
   }, [user, profile]);
 
-  const toggleDomain = (id: string) => {
+  const toggleDomain = (domainId: string, domainName: string) => {
     setSelectedDomains((prev) => {
       const next = { ...prev };
-      if (next[id] !== undefined) {
+      if (next[domainId]) {
+        // Prevent deleting if it's the only one left
         if (Object.keys(next).length > 1) {
-          delete next[id];
+          delete next[domainId];
         }
       } else {
-        next[id] = 1; // Default intermediate
+        const count = Object.keys(next).length;
+        const priority: UserDomainPriority = count === 0 ? "primary" : count === 1 ? "secondary" : "supporting";
+        next[domainId] = {
+          domainId,
+          domainName,
+          priority,
+          selfLevel: 1
+        };
       }
       return next;
     });
   };
 
-  const setDomainLevel = (id: string, lvl: SkillLevel) => {
-    setSelectedDomains((prev) => ({ ...prev, [id]: lvl }));
+  const setDomainPriority = (domainId: string, priority: UserDomainPriority) => {
+    setSelectedDomains((prev) => {
+      if (!prev[domainId]) return prev;
+      return {
+        ...prev,
+        [domainId]: { ...prev[domainId], priority }
+      };
+    });
+  };
+
+  const setDomainLevel = (domainId: string, selfLevel: SkillLevel) => {
+    setSelectedDomains((prev) => {
+      if (!prev[domainId]) return prev;
+      return {
+        ...prev,
+        [domainId]: { ...prev[domainId], selfLevel }
+      };
+    });
   };
 
   const handleNext = () => {
@@ -135,6 +166,16 @@ export default function OnboardingPage() {
         setError("Please select at least one core domain to practice.");
         return;
       }
+      // Ensure there is at least one primary domain
+      const hasPrimary = Object.values(selectedDomains).some(d => d.priority === "primary");
+      if (!hasPrimary) {
+        // Auto-assign first as primary
+        const firstKey = Object.keys(selectedDomains)[0];
+        setSelectedDomains(prev => ({
+          ...prev,
+          [firstKey]: { ...prev[firstKey], priority: "primary" }
+        }));
+      }
     }
     
     if (currentStep < totalSteps) {
@@ -157,16 +198,13 @@ export default function OnboardingPage() {
     try {
       const careerStage: CareerStage = trackType === "student" ? "STUDENT" : "PROFESSIONAL";
 
-      const interestsArray: UserInterest[] = Object.entries(selectedDomains).map(([id, lvl]) => {
-        const cat = AVAILABLE_CATEGORIES.find((c) => c.id === id);
-        return {
-          id,
-          name: cat ? cat.name : id,
-          category: cat ? cat.name : "General",
-          selfLevel: lvl,
-          effectiveLevel: lvl,
-        };
-      });
+      const interestsArray: UserInterest[] = Object.values(selectedDomains).map((d) => ({
+        id: d.domainId,
+        name: d.domainName,
+        category: d.domainName,
+        selfLevel: d.selfLevel,
+        effectiveLevel: d.selfLevel,
+      }));
 
       const profilePayload = {
         name: displayName.trim(),
@@ -181,7 +219,7 @@ export default function OnboardingPage() {
         graduation_year: trackType === "student" ? graduationYear : undefined,
         current_company: trackType === "professional" ? currentCompany.trim() : undefined,
         experience_level: trackType === "professional" ? experienceLevel : undefined,
-        targetRole: targetRole.trim() || undefined,
+        targetRole: targetRole.trim() || "Full Stack Software Engineer",
         primaryGoal: primaryGoal.trim(),
         interests: interestsArray,
         onboarding_completed: true,
@@ -189,8 +227,32 @@ export default function OnboardingPage() {
 
       await updateUserProfile(profilePayload);
 
-      // Explicit database guarantee update
+      // Save to Career Learning OS API to build unified roadmap & daily timetable
       if (user?.uid) {
+        const domainItems = Object.values(selectedDomains).map(d => ({
+          domain_id: d.domainId,
+          domain_name: d.domainName,
+          priority: d.priority,
+          self_level: d.selfLevel,
+          effective_level: d.selfLevel
+        }));
+
+        await fetch("/api/career-os", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: user.uid,
+            targetRole: targetRole.trim() || "Full Stack Software Engineer",
+            targetIndustry: "Technology & High Growth Startups",
+            timeframeMonths: targetTimeframe,
+            availableHoursPerDay: dailyHours,
+            preferredScheduleBlocks: ["morning", "evening"],
+            domains: domainItems,
+            regenerateRoadmap: true
+          })
+        });
+
+        // Also update profiles table explicitly
         await supabase.from("profiles").update({
           name: displayName.trim(),
           display_name: displayName.trim(),
@@ -239,7 +301,7 @@ export default function OnboardingPage() {
             Welcome to EdWorld Setup
           </h1>
           <p className="text-xs sm:text-sm text-[#5E6573]">
-            Customize your learning and career workspace in 4 quick steps.
+            Configure your personalized Career Learning OS in 4 quick steps.
           </p>
         </div>
 
@@ -248,52 +310,58 @@ export default function OnboardingPage() {
           <div className="flex items-center justify-between text-xs font-mono font-bold text-[#8E95A5]">
             <span className="text-[#13141B] font-sans font-bold">
               {currentStep === 1 && "Step 1: Basic Profile"}
-              {currentStep === 2 && "Step 2: Education & Career Stage"}
-              {currentStep === 3 && "Step 3: Skills & Focus Areas"}
-              {currentStep === 4 && "Step 4: Goals & Portfolio Links"}
+              {currentStep === 2 && "Step 2: Education & Experience"}
+              {currentStep === 3 && "Step 3: Multi-Domain Career Track"}
+              {currentStep === 4 && "Step 4: Goals & Verified Evidence"}
             </span>
-            <span className="bg-[#EDE8FD] text-[#7B57FF] px-2.5 py-0.5 rounded-full">
-              {progressPercentage}% Complete
-            </span>
+            <span>{currentStep} of {totalSteps} ({progressPercentage}%)</span>
           </div>
-          <div className="w-full bg-[#F4F6FB] h-2.5 rounded-full overflow-hidden border border-[#E8ECF2]">
-            <div
-              className="bg-gradient-to-r from-[#7B57FF] to-[#00D2B4] h-full transition-all duration-500 rounded-full"
+          <div className="w-full bg-[#F0F2F6] h-2.5 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-[#D7FC51] via-[#7B57FF] to-[#00D2B4] rounded-full transition-all duration-500 ease-out" 
               style={{ width: `${progressPercentage}%` }}
             />
           </div>
         </div>
 
-        {error && (
-          <div className="p-4 rounded-2xl bg-[#FFEFEA] border border-[#FF7A50]/30 text-[#FF7A50] text-xs flex items-start gap-3 animate-in fade-in">
-            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-            <span>{error}</span>
-          </div>
-        )}
-
+        {/* Completed Splash Card */}
         {isCompleted ? (
-          <div className="card-quixel rounded-3xl p-8 bg-white border border-[#E8ECF2] shadow-xl text-center space-y-4 animate-in zoom-in-95">
-            <div className="w-16 h-16 rounded-3xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-200 shadow-sm">
+          <div className="card-quixel rounded-3xl p-8 bg-white border border-[#E8ECF2] shadow-xl text-center space-y-5 animate-in fade-in zoom-in-95">
+            <div className="w-16 h-16 rounded-full bg-[#E0FAF6] text-[#00D2B4] mx-auto flex items-center justify-center shadow-lg animate-bounce">
               <CheckCircle2 className="w-8 h-8" />
             </div>
-            <h2 className="text-2xl font-black text-[#13141B]">Profile Configured Successfully!</h2>
-            <p className="text-xs sm:text-sm text-[#5E6573]">
-              Your personalized interview drills, ATS resume tools, and career dashboard are ready. Redirecting you to your dashboard...
-            </p>
+            <div className="space-y-2">
+              <h2 className="text-2xl font-black text-[#13141B]">Career Learning OS Ready!</h2>
+              <p className="text-xs text-[#5E6573] max-w-md mx-auto">
+                We've synthesized your multi-domain learning track, generated your personalized roadmap, and scheduled today's timetable.
+              </p>
+            </div>
+            <div className="flex items-center justify-center gap-2 text-xs font-bold text-[#7B57FF] pt-2">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Redirecting to your dashboard...</span>
+            </div>
           </div>
         ) : (
-          <div className="card-quixel rounded-3xl p-6 sm:p-8 bg-white border border-[#E8ECF2] shadow-xl space-y-6">
+          /* Form Step Container */
+          <div className="card-quixel rounded-3xl p-6 sm:p-8 bg-white border border-[#E8ECF2] shadow-lg space-y-6">
             
+            {error && (
+              <div className="p-4 rounded-2xl bg-red-50 border border-red-200 flex items-start gap-3 text-xs font-bold text-red-700 animate-in fade-in">
+                <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                <span>{error}</span>
+              </div>
+            )}
+
             {/* ================= STEP 1: BASIC PROFILE ================= */}
             {currentStep === 1 && (
               <div className="space-y-4 animate-in fade-in">
                 <div className="space-y-1">
                   <h2 className="text-lg font-black text-[#13141B] flex items-center gap-2">
                     <User className="w-5 h-5 text-[#7B57FF]" />
-                    <span>Basic Profile Information</span>
+                    <span>Personal Profile Details</span>
                   </h2>
                   <p className="text-xs text-[#5E6573]">
-                    Let us know your canonical name and how you want to appear across EdWorld.
+                    Your display identity on the EdWorld student networking feed and career leaderboards.
                   </p>
                 </div>
 
@@ -306,107 +374,102 @@ export default function OnboardingPage() {
                       type="text"
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
-                      required
-                      placeholder="e.g. Adarsh Patel"
+                      placeholder="e.g. Adarsh Sharma"
                       className="w-full px-4 py-3 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] text-xs text-[#13141B] focus:outline-none focus:border-[#13141B]"
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-bold text-[#13141B] uppercase tracking-wider mb-1.5">
-                        Username (Handle)
-                      </label>
-                      <input
-                        type="text"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        placeholder="e.g. adarsh_patel"
-                        className="w-full px-4 py-3 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] text-xs text-[#13141B] focus:outline-none focus:border-[#13141B]"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-[#13141B] uppercase tracking-wider mb-1.5">
-                        Phone Number (Optional)
-                      </label>
-                      <input
-                        type="tel"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="+91 98765 43210"
-                        className="w-full px-4 py-3 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] text-xs text-[#13141B] focus:outline-none focus:border-[#13141B]"
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-xs font-bold text-[#13141B] uppercase tracking-wider mb-1.5">
+                      Phone Number (Optional)
+                    </label>
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="+91 9876543210"
+                      className="w-full px-4 py-3 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] text-xs text-[#13141B] focus:outline-none focus:border-[#13141B]"
+                    />
                   </div>
 
                   <div>
                     <label className="block text-xs font-bold text-[#13141B] uppercase tracking-wider mb-1.5">
-                      Professional Headline / Title
+                      Headline
                     </label>
                     <input
                       type="text"
                       value={headline}
                       onChange={(e) => setHeadline(e.target.value)}
-                      placeholder="e.g. CS Student | Aspiring Full Stack Engineer"
+                      placeholder="e.g. Aspiring Full Stack Developer | Class of 2026"
                       className="w-full px-4 py-3 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] text-xs text-[#13141B] focus:outline-none focus:border-[#13141B]"
                     />
                   </div>
 
                   <div>
                     <label className="block text-xs font-bold text-[#13141B] uppercase tracking-wider mb-1.5">
-                      Short Bio (Optional)
+                      Brief Bio
                     </label>
                     <textarea
-                      rows={2}
+                      rows={3}
                       value={bio}
                       onChange={(e) => setBio(e.target.value)}
-                      placeholder="A short sentence about your technical focus or interests..."
-                      className="w-full px-4 py-2.5 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] text-xs text-[#13141B] focus:outline-none focus:border-[#13141B]"
+                      placeholder="Share a short summary of your background, passions, and career interests..."
+                      className="w-full px-4 py-3 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] text-xs text-[#13141B] focus:outline-none focus:border-[#13141B]"
                     />
                   </div>
                 </div>
               </div>
             )}
 
-            {/* ================= STEP 2: EDUCATION & CAREER ================= */}
+            {/* ================= STEP 2: EDUCATION & EXPERIENCE ================= */}
             {currentStep === 2 && (
               <div className="space-y-4 animate-in fade-in">
                 <div className="space-y-1">
                   <h2 className="text-lg font-black text-[#13141B] flex items-center gap-2">
                     <GraduationCap className="w-5 h-5 text-[#7B57FF]" />
-                    <span>Education &amp; Career Track</span>
+                    <span>Education &amp; Experience Stage</span>
                   </h2>
                   <p className="text-xs text-[#5E6573]">
-                    Choose your current track to get the most relevant interview drills and career recommendations.
+                    Select your primary track mode to tailor campus placement prep or industry career acceleration.
                   </p>
                 </div>
 
-                {/* Track Selector */}
-                <div className="grid grid-cols-2 gap-2 p-1.5 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2]">
+                {/* Track Switcher Segment */}
+                <div className="grid grid-cols-2 gap-3 pt-2">
                   <button
                     type="button"
                     onClick={() => setTrackType("student")}
-                    className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${
+                    className={`p-4 rounded-2xl border text-left transition-all flex flex-col justify-between gap-2 ${
                       trackType === "student"
-                        ? "bg-[#13141B] text-white shadow-sm"
-                        : "text-[#5E6573] hover:text-[#13141B]"
+                        ? "bg-[#13141B] text-white border-[#13141B] shadow-md"
+                        : "bg-[#F4F6FB] border-[#E8ECF2] text-[#13141B] hover:bg-slate-100"
                     }`}
                   >
-                    <GraduationCap className="w-4 h-4" />
-                    <span>College &amp; Student</span>
+                    <GraduationCap className={`w-6 h-6 ${trackType === "student" ? "text-[#D7FC51]" : "text-[#767E94]"}`} />
+                    <div>
+                      <p className="font-bold text-xs">College Student</p>
+                      <p className={`text-[11px] ${trackType === "student" ? "text-slate-300" : "text-[#5E6573]"}`}>
+                        Campus prep, aptitude drills &amp; starter projects
+                      </p>
+                    </div>
                   </button>
+
                   <button
                     type="button"
                     onClick={() => setTrackType("professional")}
-                    className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${
+                    className={`p-4 rounded-2xl border text-left transition-all flex flex-col justify-between gap-2 ${
                       trackType === "professional"
-                        ? "bg-[#13141B] text-white shadow-sm"
-                        : "text-[#5E6573] hover:text-[#13141B]"
+                        ? "bg-[#13141B] text-white border-[#13141B] shadow-md"
+                        : "bg-[#F4F6FB] border-[#E8ECF2] text-[#13141B] hover:bg-slate-100"
                     }`}
                   >
-                    <Briefcase className="w-4 h-4" />
-                    <span>Working Professional</span>
+                    <Briefcase className={`w-6 h-6 ${trackType === "professional" ? "text-[#D7FC51]" : "text-[#767E94]"}`} />
+                    <div>
+                      <p className="font-bold text-xs">Working Professional</p>
+                      <p className={`text-[11px] ${trackType === "professional" ? "text-slate-300" : "text-[#5E6573]"}`}>
+                        Role transition, system design &amp; ATS tuning
+                      </p>
+                    </div>
                   </button>
                 </div>
 
@@ -420,8 +483,7 @@ export default function OnboardingPage() {
                         type="text"
                         value={institution}
                         onChange={(e) => setInstitution(e.target.value)}
-                        required
-                        placeholder="e.g. IIT Delhi, BITS Pilani, Stanford University"
+                        placeholder="e.g. National Institute of Technology"
                         className="w-full px-4 py-3 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] text-xs text-[#13141B] focus:outline-none focus:border-[#13141B]"
                       />
                     </div>
@@ -437,12 +499,12 @@ export default function OnboardingPage() {
                           className="w-full px-4 py-3 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] text-xs text-[#13141B] focus:outline-none focus:border-[#13141B]"
                         >
                           <option value="B.Tech / B.E.">B.Tech / B.E.</option>
-                          <option value="BCA">BCA</option>
-                          <option value="B.Sc Computer Science">B.Sc Computer Science</option>
+                          <option value="B.Sc / BCA">B.Sc / BCA</option>
                           <option value="M.Tech / M.E.">M.Tech / M.E.</option>
-                          <option value="MCA">MCA</option>
-                          <option value="MBA">MBA</option>
-                          <option value="Other Degree">Other Degree</option>
+                          <option value="MCA / M.Sc">MCA / M.Sc</option>
+                          <option value="MBA / Business">MBA / Business</option>
+                          <option value="High School (11th/12th)">High School (11th/12th)</option>
+                          <option value="Other">Other Degree</option>
                         </select>
                       </div>
 
@@ -542,79 +604,137 @@ export default function OnboardingPage() {
               </div>
             )}
 
-            {/* ================= STEP 3: SKILLS & FOCUS ================= */}
+            {/* ================= STEP 3: MULTI-DOMAIN CAREER TRACK ================= */}
             {currentStep === 3 && (
               <div className="space-y-4 animate-in fade-in">
                 <div className="space-y-1">
                   <h2 className="text-lg font-black text-[#13141B] flex items-center gap-2">
                     <Code2 className="w-5 h-5 text-[#00D2B4]" />
-                    <span>Skills &amp; Practice Focus Areas</span>
+                    <span>Multi-Domain Career Path &amp; Priorities</span>
                   </h2>
                   <p className="text-xs text-[#5E6573]">
-                    Select the technical domains and topics you want EdWorld to calibrate your drills for.
+                    Select multiple domains (e.g. Software Dev + AI/ML + Security) to generate your unified, de-duplicated roadmap.
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                  {AVAILABLE_CATEGORIES.map((cat) => {
-                    const isSelected = selectedDomains[cat.id] !== undefined;
+                  {DOMAIN_CATALOG.map((cat) => {
+                    const isSelected = !!selectedDomains[cat.id];
+                    const selectedMeta = selectedDomains[cat.id];
+
                     return (
-                      <button
+                      <div
                         key={cat.id}
-                        type="button"
-                        onClick={() => toggleDomain(cat.id)}
-                        className={`p-4 rounded-2xl border text-left transition-all flex items-start justify-between ${
+                        className={`p-4 rounded-2xl border text-left transition-all flex flex-col justify-between gap-2.5 ${
                           isSelected
-                            ? "bg-[#13141B] text-white border-[#13141B] shadow-md scale-[1.01]"
+                            ? "bg-[#13141B] text-white border-[#13141B] shadow-md"
                             : "bg-[#F4F6FB] border-[#E8ECF2] text-[#13141B] hover:bg-slate-100"
                         }`}
                       >
-                        <div className="space-y-1">
-                          <p className="font-bold text-xs">{cat.name}</p>
-                          <p className={`text-[11px] line-clamp-2 ${isSelected ? "text-slate-300" : "text-[#5E6573]"}`}>
-                            {cat.desc}
-                          </p>
+                        <div 
+                          className="flex items-start justify-between cursor-pointer"
+                          onClick={() => toggleDomain(cat.id, cat.name)}
+                        >
+                          <div className="space-y-1">
+                            <p className="font-bold text-xs">{cat.name}</p>
+                            <p className={`text-[11px] line-clamp-2 ${isSelected ? "text-slate-300" : "text-[#5E6573]"}`}>
+                              {cat.description}
+                            </p>
+                          </div>
+                          <div className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 ml-2 ${
+                            isSelected ? "bg-[#D7FC51] text-[#13141B]" : "border border-[#D1D5DB]"
+                          }`}>
+                            {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                          </div>
                         </div>
-                        {isSelected && <Check className="w-4 h-4 text-[#D7FC51] shrink-0 mt-0.5 ml-2" />}
-                      </button>
+
+                        {/* Priority & Level Controls if selected */}
+                        {isSelected && (
+                          <div className="pt-2 border-t border-white/10 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] uppercase font-bold text-slate-400">Priority:</span>
+                              <div className="flex gap-1">
+                                {(["primary", "secondary", "supporting"] as const).map((p) => (
+                                  <button
+                                    key={p}
+                                    type="button"
+                                    onClick={() => setDomainPriority(cat.id, p)}
+                                    className={`px-2 py-0.5 rounded text-[10px] font-bold capitalize transition-all ${
+                                      selectedMeta?.priority === p
+                                        ? "bg-[#D7FC51] text-[#13141B]"
+                                        : "bg-white/10 text-slate-300 hover:bg-white/20"
+                                    }`}
+                                  >
+                                    {p}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] uppercase font-bold text-slate-400">Level:</span>
+                              <div className="flex gap-1">
+                                {[
+                                  { lvl: 0 as SkillLevel, label: "Beginner" },
+                                  { lvl: 1 as SkillLevel, label: "Intermediate" },
+                                  { lvl: 2 as SkillLevel, label: "Advanced" }
+                                ].map((item) => (
+                                  <button
+                                    key={item.lvl}
+                                    type="button"
+                                    onClick={() => setDomainLevel(cat.id, item.lvl)}
+                                    className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
+                                      selectedMeta?.selfLevel === item.lvl
+                                        ? "bg-[#7B57FF] text-white"
+                                        : "bg-white/10 text-slate-300 hover:bg-white/20"
+                                    }`}
+                                  >
+                                    {item.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
 
-                {/* Calibration Level per selected category */}
-                <div className="space-y-3 pt-3 border-t border-[#E8ECF2]">
-                  <p className="text-xs font-bold uppercase tracking-wider text-[#8E95A5]">
-                    Baseline Skill Level Calibrations:
-                  </p>
-                  {Object.keys(selectedDomains).map((id) => {
-                    const cat = AVAILABLE_CATEGORIES.find((c) => c.id === id);
-                    const currentLvl = selectedDomains[id];
-                    return (
-                      <div key={id} className="p-3 bg-[#F4F6FB] rounded-2xl border border-[#E8ECF2] flex items-center justify-between gap-2">
-                        <span className="text-xs font-bold text-[#13141B]">{cat?.name || id}</span>
-                        <div className="flex gap-1.5">
-                          {[
-                            { lvl: 0 as SkillLevel, label: "Beginner" },
-                            { lvl: 1 as SkillLevel, label: "Intermediate" },
-                            { lvl: 2 as SkillLevel, label: "Advanced" },
-                          ].map((item) => (
-                            <button
-                              key={item.lvl}
-                              type="button"
-                              onClick={() => setDomainLevel(id, item.lvl)}
-                              className={`px-2.5 py-1 rounded-xl text-[10px] font-bold transition-all ${
-                                currentLvl === item.lvl
-                                  ? "bg-[#7B57FF] text-white shadow-sm"
-                                  : "bg-white text-[#5E6573] border border-[#E8ECF2] hover:bg-slate-50"
-                              }`}
-                            >
-                              {item.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
+                {/* Target Timeframe & Daily Hours */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-[#E8ECF2]">
+                  <div>
+                    <label className="block text-xs font-bold text-[#13141B] uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                      <Target className="w-3.5 h-3.5 text-[#7B57FF]" />
+                      Target Timeframe
+                    </label>
+                    <select
+                      value={targetTimeframe}
+                      onChange={(e) => setTargetTimeframe(Number(e.target.value))}
+                      className="w-full px-4 py-3 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] text-xs text-[#13141B] focus:outline-none focus:border-[#13141B]"
+                    >
+                      <option value={3}>3 Months (Fast-Track Placement)</option>
+                      <option value={6}>6 Months (Standard Comprehensive)</option>
+                      <option value={12}>12 Months (Deep Mastery Track)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#13141B] uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-[#00D2B4]" />
+                      Daily Available Hours
+                    </label>
+                    <select
+                      value={dailyHours}
+                      onChange={(e) => setDailyHours(Number(e.target.value))}
+                      className="w-full px-4 py-3 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] text-xs text-[#13141B] focus:outline-none focus:border-[#13141B]"
+                    >
+                      <option value={1}>1 Hour / day (Light Pace)</option>
+                      <option value={2}>2 Hours / day (Recommended)</option>
+                      <option value={3}>3 Hours / day (Accelerated)</option>
+                      <option value={4}>4+ Hours / day (Intensive Boot Camp)</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             )}
@@ -628,7 +748,7 @@ export default function OnboardingPage() {
                     <span>Goals &amp; Professional Links</span>
                   </h2>
                   <p className="text-xs text-[#5E6573]">
-                    Set your target outcome and optionally link your GitHub, LinkedIn, or portfolio for ATS audits.
+                    Set your target outcome and link your developer profiles for automatic evidence calibration.
                   </p>
                 </div>
 
@@ -722,11 +842,11 @@ export default function OnboardingPage() {
                 {saving ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Finalizing Setup...</span>
+                    <span>Building Career Plan...</span>
                   </>
                 ) : currentStep === totalSteps ? (
                   <>
-                    <span>Complete &amp; Enter Dashboard</span>
+                    <span>Generate Career OS &amp; Enter</span>
                     <Check className="w-4 h-4" />
                   </>
                 ) : (
@@ -743,11 +863,10 @@ export default function OnboardingPage() {
 
         <div className="text-center text-xs text-[#8E95A5] flex items-center justify-center gap-2">
           <ShieldCheck className="w-4 h-4 text-emerald-500" />
-          <span>All settings can be updated anytime from your Profile Settings</span>
+          <span>Your roadmap &amp; daily timetable adapt automatically based on your real performance</span>
         </div>
 
       </div>
     </div>
   );
 }
-
