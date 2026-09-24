@@ -696,7 +696,7 @@ export default function DashboardPage() {
               </div>
 
               <Link
-                href="/resume-maker"
+                href="/resumes"
                 className="block text-center py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-violet-300 transition-all"
               >
                 Open Resume Maker &rarr;

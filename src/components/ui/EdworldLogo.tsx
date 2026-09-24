@@ -18,7 +18,7 @@ export const EdworldLogo: React.FC<EdworldLogoProps> = ({
   showText = true,
   textClassName = "",
   variant = "auto",
-  href,
+  href = "/",
   className = "",
 }) => {
   const dimension = {
@@ -60,7 +60,11 @@ export const EdworldLogo: React.FC<EdworldLogoProps> = ({
   );
 
   if (href) {
-    return <Link href={href} className="inline-block">{content}</Link>;
+    return (
+      <Link href={href} aria-label="EdWorld Co. Home" className="inline-block hover:opacity-95 transition-opacity">
+        {content}
+      </Link>
+    );
   }
 
   return content;

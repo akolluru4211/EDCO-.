@@ -6,7 +6,6 @@ import { useAuth } from "@/lib/auth-context";
 import { CURRENT_TOS_VERSION, CURRENT_PRIVACY_VERSION } from "@/lib/types";
 import ReconsentModal from "@/components/legal/ReconsentModal";
 import Navbar from "@/components/navbar";
-import MobileDeviceRestriction from "@/components/ui/MobileDeviceRestriction";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -34,22 +33,20 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <MobileDeviceRestriction>
-      <div
-        data-visual-mode={visualMode}
-        data-age-band={user?.ageBand || "18+"}
-        className={`min-h-screen flex flex-col font-sans selection:bg-[#E1FD53] selection:text-[#181920] ${
-          isLandingPage ? "bg-white text-slate-900 overflow-hidden" : "bg-[#F4F6FB] text-[#181920]"
-        }`}
-      >
-        {!isAuthPage && !isLandingPage && <Navbar />}
-        <main className={`flex-1 ${noBottomPadding ? "" : "pb-24 md:pb-20 lg:pb-0"}`}>{children}</main>
+    <div
+      data-visual-mode={visualMode}
+      data-age-band={user?.ageBand || "18+"}
+      className={`min-h-screen flex flex-col font-sans selection:bg-[#E1FD53] selection:text-[#181920] overflow-x-clip ${
+        isLandingPage ? "bg-white text-slate-900" : "bg-[#F4F6FB] text-[#181920]"
+      }`}
+    >
+      {!isAuthPage && !isLandingPage && <Navbar />}
+      <main className={`flex-1 w-full max-w-full ${noBottomPadding ? "" : "pb-24 md:pb-20 lg:pb-0"}`}>{children}</main>
 
-        <ReconsentModal
-          isOpen={showReconsent}
-          onAccept={handleReconsentAccept}
-        />
-      </div>
-    </MobileDeviceRestriction>
+      <ReconsentModal
+        isOpen={showReconsent}
+        onAccept={handleReconsentAccept}
+      />
+    </div>
   );
 }

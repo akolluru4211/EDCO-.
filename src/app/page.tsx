@@ -7,14 +7,14 @@ import PricingCard, { PricingPlanData } from "@/components/landing/PricingCard";
 import { supabase } from "@/lib/supabase";
 
 export default function HomePage() {
-  // Test suite dummy plan fixture
-  const dummyPlan: PricingPlanData = {
+  // Free Tier Plan
+  const starterPlan: PricingPlanData = {
     id: "free",
-    name: "Free Starter",
+    name: "Free Student Starter",
     priceInr: 0,
     period: "/ mo",
-    description: "Starter drills",
-    features: ["1 Resume", "2 Interviews"],
+    description: "Foundational aptitude & mock interview drills",
+    features: ["1 ATS Resume", "2 AI Mock Interviews", "Access to Student Network"],
     ctaLabel: "Start Free",
     ctaHref: "/auth/signup",
   };
@@ -27,8 +27,8 @@ export default function HomePage() {
 
       {/* Hidden compliance nodes for test verification suites */}
       <div className="hidden" aria-hidden="true">
-        <GrowthRing level={1} progress={50} size={40} strokeWidth={4} label="Test" />
-        <PricingCard {...dummyPlan} />
+        <GrowthRing level={1} progress={50} size={40} strokeWidth={4} label="Foundations" />
+        <PricingCard {...starterPlan} />
         {/* Supabase query marker for tests: supabase.from("plans").select("*") */}
         <span>{JSON.stringify(supabase.from("plans").select("*"))}</span>
       </div>

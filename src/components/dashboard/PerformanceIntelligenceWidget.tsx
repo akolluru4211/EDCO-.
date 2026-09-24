@@ -183,7 +183,7 @@ export default function PerformanceIntelligenceWidget({
               <span>{refreshing ? "Updating..." : "Recalculate Radar"}</span>
             </button>
             <Link
-              href="/interview"
+              href="/interviews"
               className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md transition-all active:scale-95"
             >
               <span>Take Mock Drill</span>

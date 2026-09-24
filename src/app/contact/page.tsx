@@ -45,7 +45,15 @@ export default function ContactPage() {
               <div className="text-xs text-ink space-y-1 bg-paper-soft p-4 rounded-2xl border border-line font-medium">
                 <div><strong>Officer:</strong> Grievance Redressal Officer</div>
                 <div><strong>Designation:</strong> Head of Compliance &amp; Privacy</div>
-                <div><strong>Email:</strong> grievance-officer@edworld.co</div>
+                <div>
+                  <strong>Email:</strong>{" "}
+                  <a
+                    href="mailto:grievance-officer@edworld.co?subject=Grievance%20Redressal%20Inquiry"
+                    className="text-forest hover:underline font-bold"
+                  >
+                    grievance-officer@edworld.co
+                  </a>
+                </div>
                 <div><strong>Response SLA:</strong> Within 24–48 hours</div>
               </div>
             </div>
@@ -53,7 +61,15 @@ export default function ContactPage() {
             <div className="bg-paper-raised p-6 rounded-3xl border border-line space-y-3 text-xs text-ink-soft">
               <div className="flex items-center gap-3">
                 <Mail className="w-4 h-4 text-forest shrink-0" />
-                <span>General Support: support@edworld.co</span>
+                <span>
+                  General Support:{" "}
+                  <a
+                    href="mailto:support@edworld.co?subject=EdWorld%20Support%20Request"
+                    className="text-forest hover:underline font-bold"
+                  >
+                    support@edworld.co
+                  </a>
+                </span>
               </div>
               <div className="flex items-center gap-3">
                 <MapPin className="w-4 h-4 text-forest shrink-0" />

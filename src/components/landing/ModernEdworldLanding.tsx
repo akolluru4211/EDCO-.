@@ -232,7 +232,7 @@ export default function ModernEdworldLanding() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#FCFCFB] text-[#13141B] selection:bg-[#00D2B4]/20 selection:text-[#0A5245] font-sans antialiased">
+    <div className="min-h-screen bg-[#FCFCFB] text-[#13141B] selection:bg-[#00D2B4]/20 selection:text-[#0A5245] font-sans antialiased overflow-x-clip">
       
       {/* 1. TOP NAVIGATION */}
       <header className="sticky top-0 z-50 bg-[#FCFCFB]/90 backdrop-blur-md border-b border-[#EBECEF]">
@@ -869,12 +869,12 @@ export default function ModernEdworldLanding() {
 
             {/* Footer Navigation Links */}
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-semibold text-[#5E6573]">
-              <a href="#about" className="hover:text-[#13141B] transition-colors">About</a>
+              <Link href="/about" className="hover:text-[#13141B] transition-colors">About</Link>
               <Link href="/problems" className="hover:text-[#13141B] transition-colors">Learning</Link>
               <Link href="/network" className="hover:text-[#13141B] transition-colors">Network</Link>
               <Link href="/jobs" className="hover:text-[#13141B] transition-colors">Opportunities</Link>
+              <Link href="/pricing" className="hover:text-[#13141B] transition-colors">Pricing</Link>
               <a href="#ednews" className="hover:text-[#13141B] transition-colors">EdNews</a>
-              <a href="#community" className="hover:text-[#13141B] transition-colors">Community</a>
               <Link href="/contact" className="hover:text-[#13141B] transition-colors">Contact</Link>
               <Link href="/privacy" className="hover:text-[#13141B] transition-colors">Privacy</Link>
               <Link href="/terms" className="hover:text-[#13141B] transition-colors">Terms</Link>

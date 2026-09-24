@@ -38,7 +38,13 @@ export default function PrivacyPolicyPage() {
         <section className="space-y-3 text-xs sm:text-sm">
           <h2 className="text-lg font-bold font-display text-ink">3. Grievance Officer &amp; Inquiries</h2>
           <p className="text-xs text-ink-soft">
-            To exercise your right to access, rectify, or erase your personal data, contact our Grievance Officer directly at <Link href="/contact" className="text-forest font-bold underline">contact &amp; grievance page</Link> or email <strong>grievance-officer@edworld.co</strong>.
+            To exercise your right to access, rectify, or erase your personal data, contact our Grievance Officer directly at <Link href="/contact" className="text-forest font-bold underline">contact &amp; grievance page</Link> or email{" "}
+            <a
+              href="mailto:grievance-officer@edworld.co?subject=DPDP%20Data%20Privacy%20Request"
+              className="text-forest font-bold underline"
+            >
+              grievance-officer@edworld.co
+            </a>.
           </p>
         </section>
       </div>

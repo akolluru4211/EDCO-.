@@ -25,47 +25,56 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://edworld.co"),
-  title: "Edworld Co — Personalized Career-Readiness & Skills Growth Platform",
+  metadataBase: new URL("https://www.edworld.co.in"),
+  title: {
+    default: "EdWorld Co. — Career & Skills Platform",
+    template: "%s — EdWorld Co.",
+  },
   description:
-    "From college students building early engineering foundations to working professionals landing senior roles — Edworld Co adapts ATS resumes and mock interviews to your proven effective level.",
+    "EdWorld Co. is a student-focused education, networking, career readiness and opportunities platform for learners from 9th grade to B.Tech/M.Tech, researchers, and professionals.",
   keywords: [
+    "EdWorld Co",
+    "EdWorld",
     "Career Readiness",
     "ATS Resume Maker",
     "AI Mock Interviews",
+    "Student Network",
     "Job Board",
     "Skill Calibration",
-    "Student Safety",
     "Interview Practice",
+    "Project Studio",
   ],
-  authors: [{ name: "Edworld Co Team", url: "https://edworld.co" }],
+  authors: [{ name: "EdWorld Co. Team", url: "https://www.edworld.co.in" }],
   manifest: "/manifest.json",
   icons: {
-    icon: "/images/edworld-logo.png",
-    shortcut: "/images/edworld-logo.png",
-    apple: "/images/edworld-logo.png",
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icon.png", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
   },
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://edworld.co",
-    siteName: "Edworld Co",
-    title: "Edworld Co — Real Adaptivity for Every Career Stage",
+    url: "https://www.edworld.co.in",
+    siteName: "EdWorld Co.",
+    title: "EdWorld Co. — Career & Skills Platform",
     description:
-      "Personalized career readiness, ATS Resume Maker, and Adaptive Mock Interviews tailored to individual skill levels and age-band safety.",
+      "Student-focused education, networking, ATS Resume Maker, and Adaptive Mock Interviews.",
     images: [
       {
         url: "/images/edworld-logo.png",
         width: 800,
         height: 800,
-        alt: "Edworld Co Logo",
+        alt: "EdWorld Co. Logo",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Edworld Co — Adaptive Career Readiness Platform",
-    description: "Adaptive AI mock interviews, ATS resume optimization, and curated job board for every career stage.",
+    title: "EdWorld Co. — Career & Skills Platform",
+    description: "Adaptive AI mock interviews, ATS resume optimization, and curated opportunities for students.",
     images: ["/images/edworld-logo.png"],
   },
 };

@@ -2,15 +2,18 @@
 
 import React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import EdworldLogo from "@/components/ui/EdworldLogo";
-import { Compass, Home, ArrowLeft } from "lucide-react";
+import { Compass, Home, ArrowLeft, RotateCcw } from "lucide-react";
 
 export default function NotFound() {
+  const router = useRouter();
+
   return (
-    <div className="min-h-[70vh] flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-3xl border border-slate-200 shadow-2xl p-8 text-center space-y-6 animate-in fade-in zoom-in-95 duration-200">
-        <div className="w-16 h-16 rounded-2xl bg-indigo-50 border border-indigo-100 text-brand-600 flex items-center justify-center mx-auto shadow-md shadow-brand-500/10">
+    <div className="min-h-[80vh] flex items-center justify-center p-4 sm:p-6">
+      <div className="max-w-md w-full bg-white rounded-3xl border border-slate-200 shadow-2xl p-6 sm:p-8 text-center space-y-6 animate-in fade-in zoom-in-95 duration-200">
+        <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-md">
           <Compass className="w-8 h-8 animate-spin" style={{ animationDuration: "12s" }} />
         </div>
 
@@ -28,22 +31,23 @@ export default function NotFound() {
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
           <Button
-            href="/dashboard"
+            href="/"
             variant="primary"
             size="md"
             icon={<Home className="w-4 h-4 shrink-0" />}
-          >
-            <span>Open Dashboard</span>
-          </Button>
-
-          <Button
-            href="/"
-            variant="neumorphic"
-            size="md"
-            icon={<ArrowLeft className="w-4 h-4 shrink-0" />}
+            className="w-full sm:w-auto"
           >
             <span>Go to Home</span>
           </Button>
+
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-700 flex items-center justify-center gap-2 transition-colors cursor-pointer"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Go Back</span>
+          </button>
         </div>
 
         <div className="pt-4 border-t border-slate-100 flex items-center justify-center">
