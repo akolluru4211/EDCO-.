@@ -166,13 +166,24 @@ export default function CareerEvidencePage() {
             </div>
           </div>
 
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="px-5 py-2.5 rounded-2xl bg-[#5C38FF] hover:bg-[#4D2CE0] text-white text-xs font-black shadow-lg flex items-center gap-2 transition-all hover:scale-105"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Career Evidence</span>
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Link href="/career/readiness" className="px-3.5 py-2 rounded-2xl bg-white border border-[#E8ECF2] hover:bg-[#EDE8FD] text-xs font-bold text-[#181920] transition-colors">
+              Readiness View
+            </Link>
+            <Link href="/career/applications" className="px-3.5 py-2 rounded-2xl bg-white border border-[#E8ECF2] hover:bg-[#EDE8FD] text-xs font-bold text-[#181920] transition-colors">
+              Applications
+            </Link>
+            <Link href="/career/copilot" className="px-3.5 py-2 rounded-2xl bg-white border border-[#E8ECF2] hover:bg-[#EDE8FD] text-xs font-bold text-[#181920] transition-colors">
+              Copilot
+            </Link>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="px-4 py-2 rounded-2xl bg-[#5C38FF] hover:bg-[#4D2CE0] text-white text-xs font-black shadow-lg flex items-center gap-2 transition-all hover:scale-105"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Evidence</span>
+            </button>
+          </div>
         </div>
 
         {/* Filter Bar */}

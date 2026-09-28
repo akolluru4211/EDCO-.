@@ -257,7 +257,7 @@ export default function ResumesDirectEditorPage() {
     <AuthGuard>
       <div className="min-h-[calc(100vh-4rem)] bg-slate-100 flex flex-col">
         {/* Top Action Bar */}
-        <header className="bg-white border-b border-slate-200 sticky top-16 z-30 px-4 sm:px-6 lg:px-8 py-3.5 shadow-xs">
+        <header className="bg-white border-b border-slate-200 sticky top-0 z-20 px-4 sm:px-6 lg:px-8 py-3.5 shadow-xs">
           <div className="max-w-[1536px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <Link

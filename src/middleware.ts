@@ -52,6 +52,17 @@ const PUBLIC_API_PREFIXES = [
 
 export function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
+  let requestId = req.headers.get("x-request-id");
+  if (!requestId) {
+    try {
+      requestId = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function" 
+        ? crypto.randomUUID() 
+        : `req-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    } catch {
+      requestId = `req-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    }
+  }
+
 
   // 1. Always allow static files, internal Next.js assets, and favicon
   if (
@@ -61,7 +72,9 @@ export function middleware(req: NextRequest) {
     pathname.startsWith("/sitemap.xml") ||
     pathname.startsWith("/robots.txt")
   ) {
-    return NextResponse.next();
+    const res = NextResponse.next();
+    res.headers.set("x-request-id", requestId);
+    return res;
   }
 
   // 2. Subdomain Routing: Check Host header
@@ -73,7 +86,9 @@ export function middleware(req: NextRequest) {
     // If visitor visits root on subdomain (e.g. junior.edworldco.in/), rewrite internally to /sector-landing/[sector]
     if (pathname === "/" || pathname === "") {
       const rewriteUrl = new URL(`/sector-landing/${matchedSector}`, req.url);
-      return NextResponse.rewrite(rewriteUrl);
+      const res = NextResponse.rewrite(rewriteUrl);
+      res.headers.set("x-request-id", requestId);
+      return res;
     }
 
     // If visitor attempts to access auth from a subdomain, redirect to main app domain
@@ -88,20 +103,26 @@ export function middleware(req: NextRequest) {
 
   // 3. Allow root landing page
   if (pathname === "/") {
-    return NextResponse.next();
+    const res = NextResponse.next();
+    res.headers.set("x-request-id", requestId);
+    return res;
   }
 
   // 4. Allow public pages
   const isPublicPage = PUBLIC_PAGE_PREFIXES.some((prefix) => pathname.startsWith(prefix));
   if (isPublicPage) {
-    return NextResponse.next();
+    const res = NextResponse.next();
+    res.headers.set("x-request-id", requestId);
+    return res;
   }
 
   // 5. Check API endpoints
   if (pathname.startsWith("/api")) {
     const isPublicApi = PUBLIC_API_PREFIXES.some((prefix) => pathname.startsWith(prefix));
     if (isPublicApi) {
-      return NextResponse.next();
+      const res = NextResponse.next();
+      res.headers.set("x-request-id", requestId);
+      return res;
     }
 
     // Protected API: Check for session cookie or authorization header
@@ -113,12 +134,27 @@ export function middleware(req: NextRequest) {
 
     if (!hasSessionCookie && !hasAuthHeader) {
       return NextResponse.json(
-        { error: "Unauthorized: Authentication required." },
-        { status: 401 }
+        {
+          success: false,
+          error: {
+            code: "AUTH_REQUIRED",
+            message: "Unauthorized: Authentication session required to access this resource.",
+            request_id: requestId
+          }
+        },
+        {
+          status: 401,
+          headers: {
+            "x-request-id": requestId,
+            "Cache-Control": "no-store"
+          }
+        }
       );
     }
 
-    return NextResponse.next();
+    const res = NextResponse.next();
+    res.headers.set("x-request-id", requestId);
+    return res;
   }
 
   // 6. Protected Page Routes (/dashboard, /employee, /hr, /founder, /admin, /profile, etc.)
@@ -136,6 +172,7 @@ export function middleware(req: NextRequest) {
 
   // Add strict security and data protection firewall headers
   const response = NextResponse.next();
+  response.headers.set("x-request-id", requestId);
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("X-XSS-Protection", "1; mode=block");

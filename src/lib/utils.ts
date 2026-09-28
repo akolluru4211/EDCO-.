@@ -91,25 +91,38 @@ export function calculateScoreColor(score: number): string {
   return "text-rose-600";
 }
 
-/**
- * Generates a deterministic, unique official EdWorld Special ID (Ed ID)
- * e.g., "usr_abc123" -> "ED-8241-K9"
- */
-export function formatEdId(userId?: string | null): string {
-  if (!userId) return "ED-2026-0001";
+export function formatEdworldId(userId?: string | null): string {
+  if (!userId) return "EDW-2026-X901";
   
-  let hash = 0;
+  let hash1 = 5381;
+  let hash2 = 0;
   for (let i = 0; i < userId.length; i++) {
-    hash = (hash << 5) - hash + userId.charCodeAt(i);
-    hash |= 0;
+    const char = userId.charCodeAt(i);
+    hash1 = ((hash1 << 5) + hash1) ^ char;
+    hash2 = (hash2 << 4) - hash2 + char;
   }
-  const absHash = Math.abs(hash);
-  const numPart = String((absHash % 9000) + 1000);
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  const char1 = chars[(absHash >> 3) % chars.length];
-  const char2 = chars[(absHash >> 7) % chars.length];
+  const chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const abs1 = Math.abs(hash1);
+  const abs2 = Math.abs(hash2);
   
-  return `ED-${numPart}-${char1}${char2}`;
+  const chunk1 = 
+    chars[abs1 % chars.length] + 
+    chars[(abs1 >> 3) % chars.length] + 
+    chars[(abs1 >> 6) % chars.length] + 
+    chars[(abs1 >> 9) % chars.length];
+    
+  const chunk2 = 
+    chars[abs2 % chars.length] + 
+    chars[(abs2 >> 4) % chars.length] + 
+    chars[(abs2 >> 8) % chars.length] + 
+    chars[(abs2 >> 12) % chars.length];
+    
+  return `EDW-${chunk1}-${chunk2}`;
 }
+
+export function formatEdId(userId?: string | null): string {
+  return formatEdworldId(userId);
+}
+
 
 

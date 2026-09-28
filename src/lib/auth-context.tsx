@@ -682,24 +682,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         id: userId,
         user_id: userId,
         name: cleanName,
-        display_name: cleanName,
-        first_name: firstName,
-        last_name: lastName,
         email: cleanEmail,
         phone: cleanPhone,
         dob: defaultDob,
         age_band: ageBand,
-        career_stage: resolvedStage,
+        career_stage: resolvedStage === "PROFESSIONAL" ? "working_professional" : "college",
         grade_level: gradeLevel || "College",
         username: cleanName.toLowerCase().replace(/\s+/g, "_") + "_" + userId.substring(0, 4),
         primary_goal: userProfile.primaryGoal,
-        onboarding_completed: false,
         is_public: false,
+        created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
 
+      const userRecord = {
+        id: userId,
+        name: cleanName,
+        email: cleanEmail,
+        age_band: ageBand,
+        grade: gradeLevel || "College",
+        career_stage: resolvedStage === "PROFESSIONAL" ? "working_professional" : "college",
+        is_employer: false,
+        is_admin: false,
+        is_mentor: false,
+        created_at: new Date().toISOString(),
+      };
+
       supabase.from("profiles").upsert(profileRecord).then(() => {}, (e: any) => console.warn("[Profile Sync Note]:", e));
-      supabase.from("users").upsert(profileRecord).then(() => {}, (e: any) => console.warn("[Users Table Sync Note]:", e));
+      supabase.from("users").upsert(userRecord).then(() => {}, (e: any) => console.warn("[Users Table Sync Note]:", e));
 
       return { needsEmailVerification: false };
     } finally {
@@ -873,7 +883,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (data.experience_level !== undefined) updatePayload.experience_level = data.experience_level;
     if (data.current_company !== undefined) updatePayload.current_company = data.current_company;
 
-    await supabase.from("profiles").update(updatePayload).eq("id", user.uid);
+    // Post to server-side profile update API for authoritative validation & database persistence
+    try {
+      const res = await fetch("/api/profile/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...data,
+          name: normalizedName,
+          firstName,
+          lastName,
+        }),
+      });
+
+      if (!res.ok) {
+        // Direct Supabase fallback
+        const { error: directErr } = await supabase
+          .from("profiles")
+          .update(updatePayload)
+          .eq("id", user.uid);
+
+        if (directErr) {
+          throw new Error(directErr.message || "Failed to update profile record");
+        }
+      }
+    } catch (apiErr: any) {
+      // Fallback direct update to supabase
+      const { error: directErr } = await supabase
+        .from("profiles")
+        .update(updatePayload)
+        .eq("id", user.uid);
+
+      if (directErr) {
+        throw new Error(directErr.message || apiErr.message || "Failed to save profile changes.");
+      }
+    }
+
     if (normalizedName !== undefined || data.phone !== undefined) {
       const userUpdate: Record<string, any> = {};
       if (normalizedName !== undefined) userUpdate.name = normalizedName;

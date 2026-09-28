@@ -77,17 +77,31 @@ export default function SkillsGapPage() {
       <div className="max-w-5xl mx-auto space-y-6">
 
         {/* Top bar */}
-        <div className="space-y-1">
-          <Link href="/dashboard" className="inline-flex items-center text-xs font-bold text-[#5C38FF] hover:underline mb-1">
-            <ArrowLeft className="w-3.5 h-3.5 mr-1" /> Back to Dashboard
-          </Link>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#EDE8FD] text-[#5C38FF] flex items-center justify-center font-bold">
-              <Target className="w-5 h-5" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <Link href="/dashboard" className="inline-flex items-center text-xs font-bold text-[#5C38FF] hover:underline mb-1">
+              <ArrowLeft className="w-3.5 h-3.5 mr-1" /> Back to Dashboard
+            </Link>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-[#EDE8FD] text-[#5C38FF] flex items-center justify-center font-bold">
+                <Target className="w-5 h-5" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-black text-[#181920]">Skills Gap Planner</h1>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-black text-[#181920]">Skills Gap Planner</h1>
-            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <Link href="/career/readiness" className="px-3.5 py-2 rounded-2xl bg-white border border-[#E8ECF2] hover:bg-[#EDE8FD] text-xs font-bold text-[#181920] transition-colors">
+              Readiness View
+            </Link>
+            <Link href="/career/applications" className="px-3.5 py-2 rounded-2xl bg-white border border-[#E8ECF2] hover:bg-[#EDE8FD] text-xs font-bold text-[#181920] transition-colors">
+              Applications
+            </Link>
+            <Link href="/career/copilot" className="px-3.5 py-2 rounded-2xl bg-white border border-[#E8ECF2] hover:bg-[#EDE8FD] text-xs font-bold text-[#181920] transition-colors">
+              Copilot
+            </Link>
           </div>
         </div>
 

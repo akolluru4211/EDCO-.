@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import ErrorBoundary from "@/components/ui/ErrorBoundary";
 
 export const metadata: Metadata = {
   title: "Ed Mock Interview",
@@ -10,5 +11,10 @@ export default function SectionLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return (
+    <ErrorBoundary moduleName="Mock Interview Suite">
+      {children}
+    </ErrorBoundary>
+  );
 }
+

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { supabase } from "@/lib/supabase";
 import { 
   ShieldCheck, 
   Search, 
@@ -78,104 +79,46 @@ export default function AdminAuditLogsPage() {
     fetchLogs();
   }, [isAdmin, authLoading]);
 
-  const fetchLogs = () => {
+  const fetchLogs = async () => {
     setLoading(true);
 
-    // Pull audit logs from local storage mirror or cloud function endpoint
     try {
-      const storedLogs: AuditLog[] = JSON.parse(
-        localStorage.getItem("edworld_system_audit_logs") || "[]"
-      );
+      // 1. Fetch from server-side authenticated audit logs API
+      const res = await fetch("/api/admin/audit-logs");
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && Array.isArray(json.logs)) {
+          setLogs(json.logs);
+          return;
+        }
+      }
 
-      // Seed initial canonical audit logs if empty for testing/demo
-      if (storedLogs.length === 0) {
-        const seedAuditLogs: AuditLog[] = [
-          {
-            id: `audit-${Date.now()}-01`,
-            actorId: user?.uid || "usr_alex_rivera",
-            actorRole: "user",
-            action: "auth.signup",
-            targetType: "user",
-            targetId: user?.uid || "usr_alex_rivera",
-            metadata: { method: "google_oauth", ageBand: "18+", grade: "College" },
-            ipAddress: "127.0.0.1",
-            timestamp: new Date(Date.now() - 3600000 * 2).toISOString(),
-          },
-          {
-            id: `audit-${Date.now()}-02`,
-            actorId: "minor_student_44",
-            actorRole: "minor",
-            action: "consent.guardian_requested",
-            targetType: "consent",
-            targetId: "cst_9812",
-            metadata: { guardianEmailDomain: "gmail.com", relationship: "parent" },
-            ipAddress: "127.0.0.1",
-            timestamp: new Date(Date.now() - 3600000 * 5).toISOString(),
-          },
-          {
-            id: `audit-${Date.now()}-03`,
-            actorId: "guardian_parent_77",
-            actorRole: "guardian",
-            action: "consent.guardian_confirmed",
-            targetType: "consent",
-            targetId: "cst_9812",
-            metadata: { status: "confirmed", tokenVerified: true },
-            ipAddress: "127.0.0.1",
-            timestamp: new Date(Date.now() - 3600000 * 4).toISOString(),
-          },
-          {
-            id: `audit-${Date.now()}-04`,
-            actorId: user?.uid || "admin_primary",
-            actorRole: "admin",
-            action: "moderation.job_approved",
-            targetType: "job",
-            targetId: "job_swe_lead_88",
-            metadata: { employerId: "emp_nexus", previousStatus: "pending_review" },
-            ipAddress: "127.0.0.1",
-            timestamp: new Date(Date.now() - 3600000 * 8).toISOString(),
-          },
-          {
-            id: `audit-${Date.now()}-05`,
-            actorId: user?.uid || "admin_primary",
-            actorRole: "admin",
-            action: "admin.user_suspended",
-            targetType: "user",
-            targetId: "usr_flagged_spammer_09",
-            metadata: { reason: "Terms violation: Repeated unsolicited promotional spam", durationDays: 30 },
-            ipAddress: "127.0.0.1",
-            timestamp: new Date(Date.now() - 3600000 * 12).toISOString(),
-          },
-          {
-            id: `audit-${Date.now()}-06`,
-            actorId: user?.uid || "usr_alex_rivera",
-            actorRole: "user",
-            action: "profile.dob_updated",
-            targetType: "profile",
-            targetId: user?.uid || "usr_alex_rivera",
-            metadata: { ageBandAssigned: "18+", note: "Explicit user input in onboarding" },
-            ipAddress: "127.0.0.1",
-            timestamp: new Date(Date.now() - 3600000 * 14).toISOString(),
-          },
-          {
-            id: `audit-${Date.now()}-07`,
-            actorId: user?.uid || "usr_alex_rivera",
-            actorRole: "user",
-            action: "data_rights.export_requested",
-            targetType: "user",
-            targetId: user?.uid || "usr_alex_rivera",
-            metadata: { format: "json_zip", status: "processing" },
-            ipAddress: "127.0.0.1",
-            timestamp: new Date(Date.now() - 3600000 * 18).toISOString(),
-          },
-        ];
+      // 2. Direct Supabase Query Fallback
+      const { data: dbLogs } = await supabase
+        .from("audit_logs")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(100);
 
-        localStorage.setItem("edworld_system_audit_logs", JSON.stringify(seedAuditLogs));
-        setLogs(seedAuditLogs);
+      if (dbLogs && dbLogs.length > 0) {
+        const mapped: AuditLog[] = dbLogs.map((log: any) => ({
+          id: log.id,
+          actorId: log.actor_id || "System",
+          actorRole: log.actor_role || "system",
+          action: log.action || "system.event",
+          targetType: log.target_type || "resource",
+          targetId: log.target_id || "global",
+          metadata: log.metadata || {},
+          ipAddress: log.ip_address || "127.0.0.1",
+          timestamp: log.created_at || log.timestamp || new Date().toISOString(),
+        }));
+        setLogs(mapped);
       } else {
-        setLogs(storedLogs);
+        setLogs([]);
       }
     } catch (err) {
       console.warn("Failed to load audit logs:", err);
+      setLogs([]);
     } finally {
       setLoading(false);
     }

@@ -5,17 +5,34 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { CURRENT_TOS_VERSION, CURRENT_PRIVACY_VERSION } from "@/lib/types";
 import ReconsentModal from "@/components/legal/ReconsentModal";
-import Navbar from "@/components/navbar";
+import AppSidebar from "@/components/layout/AppSidebar";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user } = useAuth();
   const [showReconsent, setShowReconsent] = useState(false);
 
-  const visualMode = user?.ageBand === "18+" || !user?.ageBand ? "career" : "maximalist";
-  const isAuthPage = pathname === "/auth/login" || pathname === "/auth/signup" || pathname?.startsWith("/auth/");
-  const isLandingPage = pathname === "/" || pathname === "/pricing" || pathname === "/for-college" || pathname === "/for-professionals" || pathname === "/for-career" || pathname?.startsWith("/sector-landing");
-  const noBottomPadding = isAuthPage || isLandingPage;
+  const isAuthPage =
+    pathname === "/login" ||
+    pathname === "/signup" ||
+    pathname === "/auth/login" ||
+    pathname === "/auth/signup" ||
+    pathname?.startsWith("/auth/");
+
+  const isPublicLanding =
+    pathname === "/" ||
+    pathname === "/about" ||
+    pathname === "/contact" ||
+    pathname === "/pricing" ||
+    pathname === "/privacy" ||
+    pathname === "/terms" ||
+    pathname === "/for-college" ||
+    pathname === "/for-professionals" ||
+    pathname === "/for-career" ||
+    pathname === "/consent/verify" ||
+    pathname?.startsWith("/sector-landing");
+
+  const isAppWorkspace = !isAuthPage && !isPublicLanding;
 
   useEffect(() => {
     if (user) {
@@ -28,18 +45,40 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
-  const handleReconsentAccept = async (tosVersion: string, privacyVersion: string) => {
+  const handleReconsentAccept = async () => {
     setShowReconsent(false);
   };
 
+  if (isAppWorkspace) {
+    return (
+      <div className="min-h-screen flex flex-col lg:flex-row bg-[#F8FAFC] text-slate-900 font-sans antialiased selection:bg-emerald-100 selection:text-emerald-900">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2.5 focus:bg-slate-900 focus:text-emerald-400 focus:rounded-xl focus:shadow-xl focus:font-bold focus:text-xs"
+        >
+          Skip to main content
+        </a>
+
+        {/* Persistent Application Sidebar */}
+        <AppSidebar />
+
+        {/* Main Application Content Area */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
+          <main id="main-content" tabIndex={-1} className="flex-1 w-full max-w-full outline-none">
+            {children}
+          </main>
+        </div>
+
+        <ReconsentModal
+          isOpen={showReconsent}
+          onAccept={handleReconsentAccept}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div
-      data-visual-mode={visualMode}
-      data-age-band={user?.ageBand || "18+"}
-      className={`min-h-screen flex flex-col font-sans selection:bg-[#E1FD53] selection:text-[#181920] overflow-x-clip ${
-        isLandingPage ? "bg-white text-slate-900" : "bg-[#F4F6FB] text-[#181920]"
-      }`}
-    >
+    <div className="min-h-screen flex flex-col font-sans selection:bg-[#E1FD53] selection:text-[#181920] overflow-x-clip bg-white text-slate-900">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2.5 focus:bg-[#13141B] focus:text-[#D7FC51] focus:rounded-2xl focus:shadow-2xl focus:font-black focus:text-xs focus:ring-2 focus:ring-[#00D2B4]"
@@ -47,8 +86,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         Skip to main content
       </a>
 
-      {!isAuthPage && !isLandingPage && <Navbar />}
-      <main id="main-content" tabIndex={-1} className={`flex-1 w-full max-w-full outline-none ${noBottomPadding ? "" : "pb-24 md:pb-20 lg:pb-0"}`}>{children}</main>
+      <main id="main-content" tabIndex={-1} className="flex-1 w-full max-w-full outline-none">
+        {children}
+      </main>
 
       <ReconsentModal
         isOpen={showReconsent}
@@ -57,3 +97,4 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
+

@@ -91,33 +91,37 @@ export default function AdminUsersPage() {
       if (!user) return;
       setFetching(true);
       try {
-        // 1. Fetch Users
-        const { data: usersData, error: usersErr } = await supabase
+        const res = await fetch("/api/admin/users");
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && Array.isArray(json.users)) {
+            setUsersList(json.users);
+            return;
+          }
+        }
+
+        // Direct Supabase Fallback if API fails
+        const { data: usersData } = await supabase
           .from("users")
           .select("*")
           .order("created_at", { ascending: false });
 
-        // 2. Fetch Profiles for contact/phone/interests
         const { data: profilesData } = await supabase
           .from("profiles")
           .select("*");
 
-        // 3. Fetch Gamification stats
         const { data: gamificationData } = await supabase
           .from("user_gamification")
           .select("*");
 
-        // 4. Fetch Interviews
         const { data: interviewData } = await supabase
           .from("interview_sessions")
-          .select("user_id, overall_score");
+          .select("user_id, overall_score, score");
 
-        // 5. Fetch Quest Completions
         const { data: questData } = await supabase
           .from("quest_completions")
           .select("user_id");
 
-        // 6. Fetch Resumes
         const { data: resumeData } = await supabase
           .from("resumes")
           .select("user_id");
@@ -125,30 +129,30 @@ export default function AdminUsersPage() {
         const profilesMap = new Map((profilesData || []).map(p => [p.id || p.user_id, p]));
         const gamifyMap = new Map((gamificationData || []).map(g => [g.user_id, g]));
 
-        const combined: UserAdminRecord[] = (usersData || []).map((u: any) => {
-          const profile = profilesMap.get(u.id);
-          const gamify = gamifyMap.get(u.id);
+        const combined: UserAdminRecord[] = (usersData || profilesData || []).map((u: any) => {
+          const profile = profilesMap.get(u.id || u.user_id) || u;
+          const gamify = gamifyMap.get(u.id || u.user_id);
           
-          const userInterviews = (interviewData || []).filter(i => i.user_id === u.id);
+          const userInterviews = (interviewData || []).filter(i => i.user_id === u.id || i.user_id === u.user_id);
           const avgScore = userInterviews.length > 0
-            ? Math.round(userInterviews.reduce((sum, curr) => sum + (curr.overall_score || 0), 0) / userInterviews.length)
+            ? Math.round(userInterviews.reduce((sum, curr) => sum + (curr.overall_score || curr.score || 0), 0) / userInterviews.length)
             : 0;
 
-          const userQuests = (questData || []).filter(q => q.user_id === u.id);
-          const userResumes = (resumeData || []).filter(r => r.user_id === u.id);
+          const userQuests = (questData || []).filter(q => q.user_id === u.id || q.user_id === u.user_id);
+          const userResumes = (resumeData || []).filter(r => r.user_id === u.id || r.user_id === u.user_id);
 
           return {
-            id: u.id,
-            name: u.name || profile?.name || "Learner",
-            email: u.email || profile?.email || "No email",
-            phone: u.phone || profile?.phone || undefined,
-            age_band: u.age_band || profile?.age_band || "18+",
-            grade: u.grade || profile?.grade_level || "College",
-            career_stage: u.career_stage || profile?.career_stage || undefined,
-            is_admin: Boolean(u.is_admin),
-            is_employer: Boolean(u.is_employer),
-            is_suspended: Boolean(u.is_suspended),
-            created_at: u.created_at || new Date().toISOString(),
+            id: u.id || u.user_id,
+            name: profile?.display_name || profile?.name || u.name || "Learner",
+            email: profile?.email || u.email || "No email",
+            phone: profile?.phone || u.phone || undefined,
+            age_band: profile?.age_band || u.age_band || "18+",
+            grade: profile?.grade_level || u.grade || "College",
+            career_stage: profile?.career_stage || u.career_stage || undefined,
+            is_admin: Boolean(u.is_admin || profile?.role === "ADMIN" || profile?.role === "SUPER_ADMIN"),
+            is_employer: Boolean(u.is_employer || profile?.role === "EMPLOYER"),
+            is_suspended: Boolean(u.is_suspended || profile?.status === "SUSPENDED"),
+            created_at: u.created_at || profile?.created_at || new Date().toISOString(),
             points: gamify?.points || 0,
             current_streak: gamify?.current_streak || 0,
             longest_streak: gamify?.longest_streak || 0,
@@ -162,93 +166,7 @@ export default function AdminUsersPage() {
           };
         });
 
-        if (combined.length > 0) {
-          setUsersList(combined);
-        } else {
-          // LocalStorage or Seed Fallback for zero-downtime admin review
-          let localUsers: any[] = [];
-          try {
-            const raw = typeof window !== "undefined" ? localStorage.getItem("edworld_users_registry") : null;
-            if (raw) localUsers = JSON.parse(raw);
-          } catch (e) {}
-
-          if (localUsers.length > 0) {
-            setUsersList(localUsers);
-          } else {
-            const seedUsers: UserAdminRecord[] = [
-              {
-                id: user?.uid || "admin-001",
-                name: user?.name || "Administrator",
-                email: user?.email || "admin@edworld.co",
-                phone: "+91 98765 43210",
-                age_band: "18+",
-                grade: "University / Pro",
-                career_stage: "professional",
-                is_admin: true,
-                is_employer: false,
-                is_suspended: false,
-                created_at: new Date().toISOString(),
-                points: 1250,
-                current_streak: 5,
-                longest_streak: 12,
-                badges_count: 4,
-                badges_list: ["First Step", "Resume Master", "Ace Interviewer", "Velocity Pro"],
-                interviews_count: 3,
-                avg_interview_score: 92,
-                quests_completed: 6,
-                resumes_count: 2,
-                interests: ["AI & Machine Learning", "Distributed Systems", "Career Acceleration"],
-              },
-              {
-                id: "student-101",
-                name: "Aarav Sharma",
-                email: "aarav.sharma@example.edu",
-                phone: "+91 91234 56789",
-                age_band: "13-17",
-                grade: "Grade 11",
-                career_stage: "junior",
-                is_admin: false,
-                is_employer: false,
-                is_suspended: false,
-                created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
-                points: 820,
-                current_streak: 4,
-                longest_streak: 7,
-                badges_count: 3,
-                badges_list: ["Fast Learner", "Quiz Champion", "Problem Solver"],
-                interviews_count: 2,
-                avg_interview_score: 84,
-                quests_completed: 4,
-                resumes_count: 1,
-                interests: ["Robotics", "Web Development", "Python"],
-              },
-              {
-                id: "student-102",
-                name: "Priya Patel",
-                email: "priya.p@techcollege.edu",
-                phone: "+91 99887 76655",
-                age_band: "18+",
-                grade: "B.Tech Final Year",
-                career_stage: "student",
-                is_admin: false,
-                is_employer: false,
-                is_suspended: false,
-                created_at: new Date(Date.now() - 86400000 * 7).toISOString(),
-                points: 2150,
-                current_streak: 14,
-                longest_streak: 18,
-                badges_count: 6,
-                badges_list: ["Top Scorer", "Resume Master", "Mock Pro", "Streak Legend", "Algorithm Wizard", "Tech Leader"],
-                interviews_count: 5,
-                avg_interview_score: 95,
-                quests_completed: 12,
-                resumes_count: 3,
-                interests: ["Full Stack Development", "Cloud Architecture", "Data Science"],
-              }
-            ];
-            setUsersList(seedUsers);
-          }
-        }
+        setUsersList(combined);
       } catch (err) {
         console.warn("Error loading user administration dataset:", err);
       } finally {
@@ -518,10 +436,19 @@ export default function AdminUsersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredUsers.map((u) => (
-                  <tr key={u.id} className="hover:bg-slate-50/80 transition-all">
-                    <td className="py-4 pl-6">
-                      <div className="flex items-center gap-3">
+                {filteredUsers.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-12 text-center text-slate-400">
+                      <Users className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                      <p className="font-bold text-slate-600 text-xs">No registered learners found</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">Learners will appear here once they register or log in.</p>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredUsers.map((u) => (
+                    <tr key={u.id} className="hover:bg-slate-50/80 transition-all">
+                      <td className="py-4 pl-6">
+                        <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-2xl bg-slate-900 text-white font-black text-sm flex items-center justify-center shrink-0 shadow-sm">
                           {u.name.charAt(0).toUpperCase()}
                         </div>
@@ -632,7 +559,7 @@ export default function AdminUsersPage() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                )))}
               </tbody>
             </table>
           </div>

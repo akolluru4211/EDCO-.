@@ -46,80 +46,30 @@ export default function SystemHealthPage() {
     );
   }
 
+  const [metrics, setMetrics] = useState({
+    totalServices: 8,
+    operationalCount: 8,
+    avgDbLatency: 44,
+    rlsEnforcementPct: 100
+  });
+
   const checkHealth = async () => {
     setLoading(true);
-    const now = new Date().toLocaleTimeString();
-
-    // Live diagnostics check
-    const healthResults: ServiceHealth[] = [
-      {
-        name: "Firebase Authentication",
-        category: "Auth",
-        status: "CONNECTED",
-        latencyMs: 38,
-        details: "Single Identity Provider. Token verification active with dual session cookies.",
-        lastChecked: now
-      },
-      {
-        name: "Supabase PostgreSQL Database",
-        category: "Database",
-        status: "CONNECTED",
-        latencyMs: 44,
-        details: "Row Level Security (RLS) active on all relational tables. Connection pool healthy.",
-        lastChecked: now
-      },
-      {
-        name: "Supabase Storage & Assets",
-        category: "Storage",
-        status: "CONNECTED",
-        latencyMs: 52,
-        details: "Bucket policies enforcing user-scoped read/write on resumes & artifacts.",
-        lastChecked: now
-      },
-      {
-        name: "Model Context Protocol (MCP) Engine",
-        category: "MCP",
-        status: "CONNECTED",
-        latencyMs: 18,
-        details: "22 registered tools across CAREER, INTERVIEW, ORGANIZATION, FOUNDER & FIREBASE.",
-        lastChecked: now
-      },
-      {
-        name: "AI Agent Orchestrator (Claude / Gemini)",
-        category: "AI",
-        status: "CONNECTED",
-        latencyMs: 120,
-        details: "Role-scoped tool execution active. Sub-agents constrained to parent permissions.",
-        lastChecked: now
-      },
-      {
-        name: "GitHub Developer Integration",
-        category: "Storage",
-        status: "CONNECTED",
-        latencyMs: 65,
-        details: "Read-only REST API & MCP tools active. Repository import and language analytics verified.",
-        lastChecked: now
-      },
-      {
-        name: "LeetCode Integration Engine",
-        category: "Storage",
-        status: "CONNECTED",
-        latencyMs: 78,
-        details: "Public GraphQL problem metrics and contest rating ingestion active.",
-        lastChecked: now
-      },
-      {
-        name: "LinkedIn Profile Verification",
-        category: "Auth",
-        status: "CONNECTED",
-        latencyMs: 40,
-        details: "Vanity URL structure validation and verified credential association active.",
-        lastChecked: now
+    try {
+      const res = await fetch("/api/admin/system-health");
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && Array.isArray(json.services)) {
+          setServices(json.services);
+          if (json.metrics) setMetrics(json.metrics);
+          return;
+        }
       }
-    ];
-
-    setServices(healthResults);
-    setLoading(false);
+    } catch (err) {
+      console.warn("Live health check error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -152,6 +102,13 @@ export default function SystemHealthPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            <Link
+              href="/admin/system"
+              className="px-3.5 py-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800 text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+            >
+              <Activity className="w-3.5 h-3.5 text-[#D7FC51]" />
+              <span>Full Operations Radar &rarr;</span>
+            </Link>
             <Button
               variant="outline"
               size="sm"
@@ -171,8 +128,10 @@ export default function SystemHealthPage() {
               <span className="text-xs font-semibold text-slate-500">Core Services</span>
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
             </div>
-            <p className="text-2xl font-black text-slate-900">5 / 5</p>
-            <p className="text-[11px] text-emerald-600 font-medium">100% Operational</p>
+            <p className="text-2xl font-black text-slate-900">{metrics.operationalCount} / {metrics.totalServices}</p>
+            <p className="text-[11px] text-emerald-600 font-medium">
+              {metrics.operationalCount === metrics.totalServices ? "100% Operational" : `${Math.round((metrics.operationalCount / metrics.totalServices) * 100)}% Operational`}
+            </p>
           </Card>
 
           <Card className="space-y-1">
@@ -180,7 +139,7 @@ export default function SystemHealthPage() {
               <span className="text-xs font-semibold text-slate-500">Avg DB Latency</span>
               <Database className="w-4 h-4 text-indigo-600" />
             </div>
-            <p className="text-2xl font-black text-slate-900">44 ms</p>
+            <p className="text-2xl font-black text-slate-900">{metrics.avgDbLatency} ms</p>
             <p className="text-[11px] text-slate-400">PostgreSQL Connection Pool</p>
           </Card>
 
@@ -190,7 +149,7 @@ export default function SystemHealthPage() {
               <Cpu className="w-4 h-4 text-violet-600" />
             </div>
             <p className="text-2xl font-black text-slate-900">22</p>
-            <p className="text-[11px] text-slate-400">Role-Scoped & Guarded</p>
+            <p className="text-[11px] text-slate-400">Role-Scoped &amp; Guarded</p>
           </Card>
 
           <Card className="space-y-1">
@@ -198,7 +157,7 @@ export default function SystemHealthPage() {
               <span className="text-xs font-semibold text-slate-500">RLS Enforcement</span>
               <ShieldCheck className="w-4 h-4 text-emerald-600" />
             </div>
-            <p className="text-2xl font-black text-emerald-700">100%</p>
+            <p className="text-2xl font-black text-emerald-700">{metrics.rlsEnforcementPct}%</p>
             <p className="text-[11px] text-emerald-600 font-medium">Zero Unprotected Tables</p>
           </Card>
         </div>

@@ -223,22 +223,17 @@ export default function SyncedAccountsCard({
   };
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-200">
-              Verified Profiles
-            </span>
-            <h2 className="text-base sm:text-lg font-black text-slate-900">
-              Connected Developer Accounts
-            </h2>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Real data synchronized from GitHub, LinkedIn, and LeetCode powering your ATS resume and evidence scores.
-          </p>
-        </div>
+    <div className="bg-white rounded-3xl border border-stone-200/80 shadow-xs p-6 sm:p-8 space-y-6">
+      <div className="border-b border-stone-100 pb-4">
+        <h2 className="text-lg font-serif font-bold text-stone-900 flex items-center gap-2">
+          <GitBranch className="w-5 h-5 text-emerald-700" />
+          <span>Connected Accounts</span>
+        </h2>
+        <p className="text-xs text-stone-500 mt-1">
+          Connect your GitHub, LinkedIn, and LeetCode accounts to automatically sync projects, problem solving, and verified achievements.
+        </p>
       </div>
+
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* GitHub Card */}
