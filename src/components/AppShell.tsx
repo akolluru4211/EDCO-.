@@ -51,10 +51,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   if (isAppWorkspace) {
     return (
-      <div className="min-h-screen flex flex-col lg:flex-row bg-[#F8FAFC] text-slate-900 font-sans antialiased selection:bg-emerald-100 selection:text-emerald-900">
+      <div className="min-h-screen flex flex-col lg:flex-row bg-[#FCFCFB] text-[#13141B] font-sans antialiased selection:bg-[#00D2B4]/20 selection:text-[#0A5245]">
         <a
           href="#main-content"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2.5 focus:bg-slate-900 focus:text-emerald-400 focus:rounded-xl focus:shadow-xl focus:font-bold focus:text-xs"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2.5 focus:bg-[#13141B] focus:text-[#00D2B4] focus:rounded-xl focus:shadow-xl focus:font-bold focus:text-xs"
         >
           Skip to main content
         </a>
@@ -78,10 +78,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col font-sans selection:bg-[#E1FD53] selection:text-[#181920] overflow-x-clip bg-white text-slate-900">
+    <div className="min-h-screen flex flex-col font-sans selection:bg-[#00D2B4]/20 selection:text-[#0A5245] overflow-x-clip bg-[#FCFCFB] text-[#13141B]">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2.5 focus:bg-[#13141B] focus:text-[#D7FC51] focus:rounded-2xl focus:shadow-2xl focus:font-black focus:text-xs focus:ring-2 focus:ring-[#00D2B4]"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2.5 focus:bg-[#13141B] focus:text-[#00D2B4] focus:rounded-xl focus:shadow-2xl focus:font-bold focus:text-xs focus:ring-2 focus:ring-[#00D2B4]"
       >
         Skip to main content
       </a>
@@ -97,4 +97,3 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
-

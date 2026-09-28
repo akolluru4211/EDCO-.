@@ -116,44 +116,48 @@ export default function AptitudeStudioPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0E0F15] flex flex-col items-center justify-center p-6 text-white">
-        <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center animate-spin mb-4">
-          <Brain className="w-6 h-6" />
+      <div className="min-h-screen bg-[#FCFCFB] flex flex-col items-center justify-center p-6 text-[#13141B]">
+        <div className="w-12 h-12 rounded-2xl bg-[#00D2B4]/10 text-[#0A5245] border border-[#00D2B4]/20 flex items-center justify-center animate-spin mb-4">
+          <Brain className="w-6 h-6 text-[#00D2B4]" />
         </div>
-        <h2 className="text-lg font-bold">Calibrating Daily Aptitude Pool...</h2>
-        <p className="text-xs text-slate-400 mt-1">Generating 10 cross-domain questions for today</p>
+        <h2 className="text-sm font-extrabold font-sans">Calibrating Daily Aptitude Pool...</h2>
+        <p className="text-xs text-[#5E6573] mt-1">Generating 10 cross-domain questions for today</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0E0F15] text-slate-100 p-4 sm:p-8 lg:p-10 font-sans">
+    <div className="min-h-screen bg-[#FCFCFB] text-[#13141B] p-4 sm:p-8 lg:p-10 font-sans">
       <div className="max-w-5xl lg:max-w-6xl mx-auto space-y-6 lg:space-y-8">
-        <div className="flex flex-wrap items-center justify-between gap-4 p-5 sm:p-6 rounded-3xl bg-[#151621] border border-white/10 shadow-xl">
+        {/* Header Capsule */}
+        <div className="flex flex-wrap items-center justify-between gap-4 p-5 sm:p-6 rounded-2xl bg-white border border-[#EBECEF] shadow-xs">
           <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-indigo-500 to-violet-500 flex items-center justify-center text-white shadow-md">
-              <Brain className="w-6 h-6 text-[#D7FC51]" />
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[#13141B] text-white flex items-center justify-center shadow-2xs">
+              <Brain className="w-6 h-6 text-[#00D2B4]" />
             </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-base sm:text-lg lg:text-xl font-black text-white">Daily Aptitude Sprint</h1>
-                <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-[#D7FC51]/20 text-[#D7FC51] font-bold border border-[#D7FC51]/30">
+                <h1 className="text-base sm:text-lg lg:text-xl font-extrabold text-[#13141B]">Daily Aptitude Sprint</h1>
+                <span className="text-xs font-mono px-2.5 py-0.5 rounded-md bg-[#00D2B4]/10 text-[#0A5245] font-bold border border-[#00D2B4]/20">
                   +50 XP
                 </span>
               </div>
+              <p className="text-xs text-[#5E6573] font-medium mt-0.5">
+                10 timed cross-domain questions to benchmark quantitative and logical speed.
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             {!result && (
-              <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 border border-white/10 text-xs sm:text-sm font-mono font-bold text-amber-400">
-                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 animate-pulse" />
+              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#FCFCFB] border border-[#EBECEF] text-xs font-mono font-bold text-[#13141B]">
+                <Clock className="w-4 h-4 text-amber-500 animate-pulse" />
                 <span>{formatTime(timeRemaining)}</span>
               </div>
             )}
             <Link
               href="/dashboard"
-              className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs sm:text-sm font-bold text-slate-300 transition-all"
+              className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-[#EBECEF] text-xs font-bold text-[#5E6573] hover:text-[#13141B] transition-all shadow-2xs"
             >
               Dashboard
             </Link>
@@ -162,17 +166,19 @@ export default function AptitudeStudioPage() {
 
         {result ? (
           <div className="space-y-6 lg:space-y-8">
-            <div className="p-6 sm:p-10 rounded-3xl bg-gradient-to-br from-[#181926] via-[#1B1D2C] to-[#141520] border border-white/10 shadow-2xl space-y-6 text-center">
-              <div className="inline-flex p-3.5 sm:p-4 rounded-2xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
-                <Award className="w-9 h-9 sm:w-11 sm:h-11 text-[#D7FC51]" />
+            <div className="p-6 sm:p-10 rounded-2xl bg-white border border-[#EBECEF] shadow-xs space-y-6 text-center">
+              <div className="inline-flex p-3.5 rounded-2xl bg-[#00D2B4]/10 text-[#0A5245] border border-[#00D2B4]/20">
+                <Award className="w-9 h-9 text-[#00D2B4]" />
               </div>
 
               <div>
-                <span className="text-xs sm:text-sm font-mono font-bold text-[#D7FC51] tracking-widest uppercase">Assessment Complete</span>
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white mt-2">
+                <span className="text-xs font-mono font-bold text-[#0A5245] bg-[#00D2B4]/10 border border-[#00D2B4]/20 px-3 py-1 rounded-full uppercase tracking-wider">
+                  Assessment Complete
+                </span>
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#13141B] mt-4">
                   You Scored {result.score} / {result.totalQuestions} ({result.percentage}%)
                 </h2>
-                <p className="text-xs sm:text-sm text-slate-400 mt-2 max-w-lg mx-auto">
+                <p className="text-xs sm:text-sm text-[#5E6573] mt-2 max-w-lg mx-auto">
                   {result.percentage >= 80
                     ? "Outstanding mastery! You demonstrated top-tier problem solving and accuracy."
                     : result.percentage >= 60
@@ -181,12 +187,12 @@ export default function AptitudeStudioPage() {
                 </p>
               </div>
 
-              <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-bold text-xs sm:text-sm">
-                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-[#D7FC51]" />
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold text-xs sm:text-sm">
+                <Sparkles className="w-4 h-4 text-emerald-600" />
                 <span>+{result.pointsAwarded || 50} Gamification XP Awarded &bull; Streak Updated!</span>
               </div>
 
-              <div className="flex justify-center gap-3 sm:gap-4 pt-2">
+              <div className="flex justify-center gap-3 pt-2">
                 <button
                   onClick={() => {
                     setResult(null);
@@ -194,65 +200,65 @@ export default function AptitudeStudioPage() {
                     setTimeRemaining(600);
                     setTimerActive(true);
                   }}
-                  className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs sm:text-sm font-bold flex items-center gap-2 transition-all"
+                  className="px-4 py-2 rounded-xl bg-white hover:bg-slate-50 border border-[#EBECEF] text-[#13141B] text-xs sm:text-sm font-bold flex items-center gap-2 transition-all shadow-2xs"
                 >
                   <RotateCcw className="w-4 h-4" />
                   <span>Retake Sprint</span>
                 </button>
                 <Link
                   href="/dashboard"
-                  className="px-6 py-2.5 rounded-xl bg-[#D7FC51] text-slate-950 text-xs sm:text-sm font-black flex items-center gap-2 hover:bg-[#cbf13f] transition-all"
+                  className="px-5 py-2 rounded-xl bg-[#13141B] text-white text-xs sm:text-sm font-bold flex items-center gap-2 hover:bg-black transition-all shadow-2xs"
                 >
                   <span>Return to Hub</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="w-4 h-4 text-[#00D2B4]" />
                 </Link>
               </div>
             </div>
 
-            <div className="space-y-4 sm:space-y-5">
-              <h3 className="text-sm sm:text-base font-black text-white uppercase tracking-wider flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-indigo-400" />
+            <div className="space-y-4">
+              <h3 className="text-xs sm:text-sm font-extrabold text-[#13141B] uppercase tracking-wider flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-[#00D2B4]" />
                 <span>Question Breakdown &amp; Explanations</span>
               </h3>
 
               {result.reviewDetails?.map((item: any, idx: number) => (
                 <div
                   key={item.id}
-                  className={"p-5 sm:p-6 rounded-2xl border space-y-3.5 " + (item.isCorrect ? "bg-[#151621] border-emerald-500/30" : "bg-[#151621] border-rose-500/30")}
+                  className={"p-5 rounded-2xl border space-y-3 shadow-xs " + (item.isCorrect ? "bg-white border-emerald-200" : "bg-white border-rose-200")}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs sm:text-sm font-mono font-bold text-slate-400">
+                    <span className="text-xs font-mono font-bold text-[#5E6573]">
                       Q{idx + 1} &bull; {item.category}
                     </span>
                     {item.isCorrect ? (
-                      <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold flex items-center gap-1 border border-emerald-500/30">
-                        <CheckCircle2 className="w-4 h-4" /> Correct
+                      <span className="px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[11px] font-bold flex items-center gap-1 border border-emerald-200">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Correct
                       </span>
                     ) : (
-                      <span className="px-3 py-1 rounded-full bg-rose-500/20 text-rose-400 text-xs font-bold flex items-center gap-1 border border-rose-500/30">
-                        <XCircle className="w-4 h-4" /> Incorrect
+                      <span className="px-2.5 py-0.5 rounded-md bg-rose-50 text-rose-700 text-[11px] font-bold flex items-center gap-1 border border-rose-200">
+                        <XCircle className="w-3.5 h-3.5" /> Incorrect
                       </span>
                     )}
                   </div>
 
-                  <p className="text-xs sm:text-sm lg:text-base font-semibold text-white leading-relaxed">{item.question}</p>
+                  <p className="text-xs sm:text-sm font-semibold text-[#13141B] leading-relaxed">{item.question}</p>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs sm:text-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                     {item.options?.map((opt: any) => {
                       const isCorrectOpt = opt.id === item.correctOptionId;
                       const isSelectedOpt = opt.id === item.selectedOption;
                       return (
                         <div
                           key={opt.id}
-                          className={"p-3 sm:p-3.5 rounded-xl border flex items-center gap-2.5 " + (
+                          className={"p-3 rounded-xl border flex items-center gap-2.5 " + (
                             isCorrectOpt
-                              ? "bg-emerald-950/40 border-emerald-500/50 text-emerald-200 font-bold"
+                              ? "bg-emerald-50 border-emerald-300 text-emerald-900 font-bold"
                               : isSelectedOpt
-                              ? "bg-rose-950/40 border-rose-500/50 text-rose-200"
-                              : "bg-slate-900/50 border-white/5 text-slate-400"
+                              ? "bg-rose-50 border-rose-300 text-rose-900 line-through"
+                              : "bg-[#FCFCFB] border-[#EBECEF] text-[#5E6573]"
                           )}
                         >
-                          <span className="w-6 h-6 rounded-md bg-white/10 text-center font-mono text-xs leading-6 shrink-0">
+                          <span className="w-5 h-5 rounded-md font-mono text-[10px] font-bold flex items-center justify-center bg-white border border-[#EBECEF]">
                             {opt.id}
                           </span>
                           <span>{opt.text}</span>
@@ -261,121 +267,126 @@ export default function AptitudeStudioPage() {
                     })}
                   </div>
 
-                  <div className="p-4 rounded-xl bg-slate-900/80 border border-white/5 text-xs sm:text-sm text-slate-300">
-                    <span className="font-bold text-[#D7FC51] block mb-1">💡 Solution &amp; Explanation:</span>
-                    <p className="text-slate-300 leading-relaxed font-sans">{item.explanation}</p>
-                  </div>
+                  {item.explanation && (
+                    <div className="p-3 rounded-xl bg-[#FCFCFB] border border-[#EBECEF] text-xs text-[#5E6573] space-y-1">
+                      <span className="font-bold text-[#13141B] flex items-center gap-1">
+                        <HelpCircle className="w-3.5 h-3.5 text-[#00D2B4]" />
+                        Explanation:
+                      </span>
+                      <p>{item.explanation}</p>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           </div>
         ) : (
-          <div className="space-y-6 lg:space-y-8">
-            <div className="flex items-center gap-2 overflow-x-auto pb-2">
-              {questions.map((q, idx) => {
-                const isCurrent = idx === currentIdx;
-                const isAnswered = Boolean(userAnswers[q.id]);
-                return (
-                  <button
-                    key={q.id}
-                    onClick={() => setCurrentIdx(idx)}
-                    className={"w-10 h-10 sm:w-11 sm:h-11 rounded-xl font-mono text-xs sm:text-sm font-bold flex items-center justify-center transition-all shrink-0 " + (
-                      isCurrent
-                        ? "bg-[#D7FC51] text-slate-950 shadow-md ring-2 ring-[#D7FC51]/50"
-                        : isAnswered
-                        ? "bg-indigo-600 text-white"
-                        : "bg-[#1C1D2B] text-slate-400 hover:bg-[#25273A]"
-                    )}
-                  >
-                    {idx + 1}
-                  </button>
-                );
-              })}
+          <div className="space-y-6">
+            {/* Progress indicators */}
+            <div className="bg-white p-4 rounded-2xl border border-[#EBECEF] shadow-xs space-y-3">
+              <div className="flex items-center justify-between text-xs font-bold text-[#5E6573]">
+                <span>Question {currentIdx + 1} of {questions.length}</span>
+                <span>{answeredCount} of {questions.length} Answered</span>
+              </div>
+
+              <div className="grid grid-cols-10 gap-1.5">
+                {questions.map((q, idx) => {
+                  const isAnswered = !!userAnswers[q.id];
+                  const isCurrent = idx === currentIdx;
+                  return (
+                    <button
+                      key={q.id}
+                      onClick={() => setCurrentIdx(idx)}
+                      className={`h-8 rounded-lg text-xs font-bold font-mono transition-all flex items-center justify-center ${
+                        isCurrent
+                          ? "bg-[#13141B] text-white ring-2 ring-[#00D2B4]"
+                          : isAnswered
+                          ? "bg-[#00D2B4]/15 text-[#0A5245] border border-[#00D2B4]/30"
+                          : "bg-[#FCFCFB] text-[#5E6573] border border-[#EBECEF] hover:bg-slate-100"
+                      }`}
+                    >
+                      {idx + 1}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
+            {/* Question card */}
             {currentQ && (
-              <div className="p-6 sm:p-8 lg:p-10 rounded-3xl bg-[#151621] border border-white/10 shadow-2xl space-y-6 lg:space-y-8">
-                <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-xs sm:text-sm font-mono font-bold text-indigo-400 uppercase tracking-wider">
-                      Question {currentIdx + 1} of {questions.length}
-                    </span>
-                    <span className="px-3 py-0.5 rounded-full bg-white/10 text-slate-300 text-xs font-bold">
-                      {currentQ.category}
-                    </span>
-                  </div>
-                  <span className="text-xs sm:text-sm text-slate-400 font-mono">
-                    {answeredCount} / {questions.length} Answered
+              <div className="bg-white rounded-2xl p-6 sm:p-8 border border-[#EBECEF] shadow-xs space-y-6">
+                <div className="flex items-center justify-between border-b border-[#EBECEF] pb-4">
+                  <span className="px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-[#FCFCFB] text-[#5E6573] border border-[#EBECEF] uppercase">
+                    {currentQ.category}
+                  </span>
+                  <span className="text-xs font-mono font-bold text-[#5E6573]">
+                    Difficulty: {currentQ.difficulty}/5
                   </span>
                 </div>
 
-                <div className="text-sm sm:text-base lg:text-lg font-semibold text-white leading-relaxed">
+                <h2 className="text-base sm:text-lg font-bold text-[#13141B] leading-relaxed">
                   {currentQ.question}
-                </div>
+                </h2>
 
-                <div className="grid grid-cols-1 gap-3 sm:gap-4">
+                <div className="space-y-3">
                   {currentQ.options.map((opt) => {
                     const isSelected = userAnswers[currentQ.id] === opt.id;
                     return (
                       <button
                         key={opt.id}
                         onClick={() => handleSelectOption(currentQ.id, opt.id)}
-                        className={"p-4 sm:p-5 rounded-2xl border text-left flex items-center gap-3.5 transition-all cursor-pointer " + (
+                        className={`w-full text-left p-4 rounded-xl border text-xs sm:text-sm font-medium transition-all flex items-center gap-3.5 ${
                           isSelected
-                            ? "bg-indigo-600/20 border-indigo-500 text-white font-bold ring-1 ring-indigo-500"
-                            : "bg-[#1C1D2B]/80 hover:bg-[#232537] border-white/5 text-slate-300 hover:text-white"
-                        )}
+                            ? "bg-[#13141B] text-white border-[#13141B] shadow-xs"
+                            : "bg-[#FCFCFB] hover:bg-slate-50 border-[#EBECEF] text-[#13141B]"
+                        }`}
                       >
-                        <div
-                          className={"w-7 h-7 rounded-lg font-mono text-xs sm:text-sm font-bold flex items-center justify-center shrink-0 " + (
-                            isSelected ? "bg-[#D7FC51] text-slate-950" : "bg-white/10 text-slate-400"
-                          )}
+                        <span
+                          className={`w-7 h-7 rounded-lg text-xs font-mono font-bold flex items-center justify-center shrink-0 border ${
+                            isSelected
+                              ? "bg-white text-[#13141B] border-white"
+                              : "bg-white text-[#5E6573] border-[#EBECEF]"
+                          }`}
                         >
                           {opt.id}
-                        </div>
-                        <span className="text-xs sm:text-sm lg:text-base">{opt.text}</span>
+                        </span>
+                        <span className="flex-1">{opt.text}</span>
+                        {isSelected && <Check className="w-4 h-4 text-[#00D2B4]" />}
                       </button>
                     );
                   })}
                 </div>
 
-                <div className="flex items-center justify-between pt-4 border-t border-white/10">
+                <div className="pt-4 border-t border-[#EBECEF] flex items-center justify-between gap-3">
                   <button
-                    type="button"
                     disabled={currentIdx === 0}
-                    onClick={() => setCurrentIdx((p) => p - 1)}
-                    className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-30 text-white text-xs sm:text-sm font-bold flex items-center gap-2 transition-all"
+                    onClick={() => setCurrentIdx((prev) => prev - 1)}
+                    className="px-4 py-2 rounded-xl bg-white hover:bg-slate-50 border border-[#EBECEF] text-xs font-bold text-[#13141B] disabled:opacity-40 flex items-center gap-1.5 shadow-2xs"
                   >
-                    <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <ChevronLeft className="w-4 h-4" />
                     <span>Previous</span>
                   </button>
 
-                  {currentIdx < questions.length - 1 ? (
-                    <button
-                      type="button"
-                      onClick={() => setCurrentIdx((p) => p + 1)}
-                      className="px-5 sm:px-6 py-2 sm:py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-bold flex items-center gap-2 transition-all"
-                    >
-                      <span>Next</span>
-                      <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      disabled={submitting}
-                      onClick={handleSubmit}
-                      className="px-6 sm:px-7 py-2.5 sm:py-3 rounded-xl bg-[#D7FC51] hover:bg-[#cbf13f] text-slate-950 text-xs sm:text-sm font-black flex items-center gap-2 shadow-lg transition-all"
-                    >
-                      {submitting ? (
-                        <span>Evaluating...</span>
-                      ) : (
-                        <>
-                          <Check className="w-4 h-4 sm:w-5 sm:h-5" />
-                          <span>Submit &amp; View Results</span>
-                        </>
-                      )}
-                    </button>
-                  )}
+                  <div className="flex items-center gap-3">
+                    {currentIdx < questions.length - 1 ? (
+                      <button
+                        onClick={() => setCurrentIdx((prev) => prev + 1)}
+                        className="px-4 py-2 rounded-xl bg-[#13141B] hover:bg-black text-white text-xs font-bold flex items-center gap-1.5 shadow-2xs"
+                      >
+                        <span>Next</span>
+                        <ChevronRight className="w-4 h-4 text-[#00D2B4]" />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleSubmit}
+                        disabled={submitting}
+                        className="px-5 py-2 rounded-xl bg-[#13141B] hover:bg-black text-white text-xs font-extrabold flex items-center gap-1.5 shadow-2xs"
+                      >
+                        <ShieldCheck className="w-4 h-4 text-[#00D2B4]" />
+                        <span>{submitting ? "Submitting..." : "Submit Sprint"}</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
