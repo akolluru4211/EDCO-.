@@ -57,11 +57,12 @@ export default function AppSidebar() {
     logout
   } = useAuth();
 
-  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
+  const [isHovered, setIsHovered] = useState<boolean>(false);
   const [isMobileOpen, setIsMobileOpen] = useState<boolean>(false);
   const [isMounted, setIsMounted] = useState<boolean>(false);
 
-  // Read collapsed preference from localStorage once mounted
+  // Read collapsed preference from localStorage once mounted (defaults to true for auto-hover expand)
   useEffect(() => {
     setIsMounted(true);
     try {
@@ -89,6 +90,9 @@ export default function AppSidebar() {
       // Ignore storage errors
     }
   };
+
+  // The sidebar is expanded if not collapsed OR when the user hovers over it
+  const isExpanded = !isCollapsed || isHovered;
 
   // Close drawer on Escape
   useEffect(() => {
@@ -323,17 +327,20 @@ export default function AppSidebar() {
       </header>
 
       {/* 2. DESKTOP PERSISTENT SIDEBAR (>= lg screens) */}
+      {/* 2. DESKTOP PERSISTENT SIDEBAR (>= lg screens with Hover Open / Close) */}
       <aside
-        className={`hidden lg:flex flex-col sticky top-0 h-screen z-30 bg-[#FCFCFB] border-r border-[#EBECEF] transition-all duration-200 ease-in-out shrink-0 ${
-          isCollapsed ? "w-[72px]" : "w-64"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className={`hidden lg:flex flex-col sticky top-0 h-screen z-40 bg-[#FCFCFB] border-r border-[#EBECEF] transition-all duration-300 ease-in-out shrink-0 ${
+          isExpanded ? "w-64 shadow-xl" : "w-[72px]"
         }`}
       >
-        {/* Top Branding & Collapse Button */}
+        {/* Top Branding & Pin / Collapse Button */}
         <div className="p-4 border-b border-[#EBECEF] flex items-center justify-between h-16 shrink-0">
           <Link
             href={user ? "/dashboard" : "/"}
             className={`flex items-center gap-3 overflow-hidden transition-all ${
-              isCollapsed ? "justify-center w-full" : ""
+              !isExpanded ? "justify-center w-full" : ""
             }`}
             title="Edworld Co. Home"
           >
@@ -347,8 +354,8 @@ export default function AppSidebar() {
                 priority
               />
             </div>
-            {!isCollapsed && (
-              <div className="flex flex-col min-w-0">
+            {isExpanded && (
+              <div className="flex flex-col min-w-0 animate-in fade-in duration-200">
                 <span className="text-sm font-extrabold tracking-tight text-[#13141B] leading-none">
                   EdWorld <span className="text-[#00D2B4]">Co.</span>
                 </span>
@@ -359,14 +366,18 @@ export default function AppSidebar() {
             )}
           </Link>
 
-          {!isCollapsed && (
+          {isExpanded && (
             <button
               onClick={toggleCollapsed}
-              aria-label="Collapse Sidebar"
-              title="Collapse Sidebar"
-              className="p-1.5 rounded-lg text-[#8E95A5] hover:text-[#13141B] hover:bg-[#F4F6FB] transition-colors cursor-pointer"
+              aria-label={isCollapsed ? "Pin Sidebar Open" : "Collapse Sidebar (Auto-Hover Mode)"}
+              title={isCollapsed ? "Pin Sidebar Open" : "Collapse Sidebar (Auto-Hover Mode)"}
+              className={`p-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                !isCollapsed
+                  ? "bg-[#13141B] text-[#00D2B4]"
+                  : "text-[#8E95A5] hover:text-[#13141B] hover:bg-[#F4F6FB]"
+              }`}
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className={`w-4 h-4 transition-transform ${isCollapsed ? "rotate-180" : ""}`} />
             </button>
           )}
         </div>
@@ -378,8 +389,8 @@ export default function AppSidebar() {
         >
           {NAV_GROUPS.map((group) => (
             <div key={group.title} className="space-y-1">
-              {!isCollapsed ? (
-                <div className="px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-[#8E95A5]">
+              {isExpanded ? (
+                <div className="px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-[#8E95A5] animate-in fade-in duration-150">
                   {group.title}
                 </div>
               ) : (
@@ -395,9 +406,9 @@ export default function AppSidebar() {
                     key={item.href}
                     href={item.href}
                     aria-label={item.label}
-                    title={isCollapsed ? item.label : undefined}
+                    title={!isExpanded ? item.label : undefined}
                     className={`group relative flex items-center rounded-xl transition-all duration-150 ${
-                      isCollapsed
+                      !isExpanded
                         ? "justify-center p-2.5 mx-auto"
                         : "justify-between px-3 py-2 text-xs font-semibold"
                     } ${
@@ -412,12 +423,12 @@ export default function AppSidebar() {
                           active ? "text-[#00D2B4]" : "text-[#8E95A5] group-hover:text-[#13141B]"
                         }`}
                       />
-                      {!isCollapsed && <span className="truncate">{item.label}</span>}
+                      {isExpanded && <span className="truncate animate-in fade-in duration-150">{item.label}</span>}
                     </div>
 
-                    {!isCollapsed && item.badge && (
+                    {isExpanded && item.badge && (
                       <span
-                        className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md ${
+                        className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md animate-in fade-in duration-150 ${
                           active
                             ? "bg-[#00D2B4]/20 text-[#00D2B4]"
                             : "bg-[#F4F6FB] text-[#5E6573] border border-[#E8ECF2]"
@@ -428,7 +439,7 @@ export default function AppSidebar() {
                     )}
 
                     {/* Floating Tooltip in Collapsed Mode */}
-                    {isCollapsed && (
+                    {!isExpanded && (
                       <div className="absolute left-full ml-3 px-2.5 py-1 bg-[#13141B] text-white text-xs font-medium rounded-lg shadow-xl whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
                         {item.label}
                         {item.badge && (
@@ -445,25 +456,11 @@ export default function AppSidebar() {
           ))}
         </nav>
 
-        {/* Collapsed Expand Trigger Button at Bottom */}
-        {isCollapsed && (
-          <div className="p-2 border-t border-[#EBECEF] flex justify-center">
-            <button
-              onClick={toggleCollapsed}
-              aria-label="Expand Sidebar"
-              title="Expand Sidebar"
-              className="p-2 rounded-xl text-[#8E95A5] hover:text-[#13141B] hover:bg-[#F4F6FB] transition-colors cursor-pointer"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-
         {/* User Profile Footer Section */}
         {user ? (
           <div className="p-3 border-t border-[#EBECEF] bg-[#FCFCFB] shrink-0">
-            {!isCollapsed ? (
-              <div className="space-y-2">
+            {isExpanded ? (
+              <div className="space-y-2 animate-in fade-in duration-150">
                 <Link
                   href="/profile"
                   className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-white transition-colors border border-transparent hover:border-[#E8ECF2] group shadow-2xs"
@@ -541,7 +538,7 @@ export default function AppSidebar() {
               href="/auth/login"
               className="w-full py-2 px-3 rounded-xl bg-[#13141B] hover:bg-[#252632] text-white text-xs font-bold text-center block transition-colors shadow-2xs"
             >
-              Sign In
+              {isExpanded ? "Sign In" : "In"}
             </Link>
           </div>
         )}
