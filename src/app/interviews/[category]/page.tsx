@@ -304,51 +304,102 @@ export default function ActiveInterviewStudioPage() {
         </div>
 
         {!sessionStarted ? (
-          /* PRE-SESSION SETUP: RESUME SELECTION & CLAUDE AI CONFIGURATION */
-          <div className="card-quixel p-6 sm:p-8 space-y-6 animate-in fade-in">
-            <div className="space-y-1.5">
+          /* PRE-SESSION SETUP: 3-STEP VISIBLE FLOW STEPPER & CLAUDE AI CONFIGURATION */
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#EBECEF] shadow-xs space-y-8 animate-in fade-in">
+            
+            {/* 3-Step Flow Stepper Header */}
+            <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#13141B] text-[#D7FC51] flex items-center gap-1.5 shadow-sm">
+                <span className="px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-[#13141B] text-[#00D2B4] flex items-center gap-1.5 shadow-2xs">
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>Claude AI &bull; Resume-Connected Studio</span>
+                  <span>AI Mock Interview Studio</span>
                 </span>
-                <span className="text-[10px] font-mono text-[#767E94] bg-white px-2 py-0.5 rounded-md border border-[#E8ECF2]">
-                  v2.5 Production
+                <span className="text-[10px] font-mono text-[#5E6573] bg-[#FCFCFB] px-2 py-0.5 rounded-md border border-[#EBECEF]">
+                  Production
                 </span>
               </div>
-              <h1 className="text-2xl font-black text-[#181920] tracking-tight mt-1">
-                Configure Your {categoryName} Practice Session
-              </h1>
-              <p className="text-xs text-[#767E94] max-w-2xl leading-relaxed">
-                Connect your verified resume so Claude AI can conduct a real-world interview citing your actual past projects, technical stack, architecture decisions, and metrics.
-              </p>
+
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-[#13141B] tracking-tight">
+                  {categoryName} Mock Interview Setup
+                </h1>
+                <p className="text-xs sm:text-sm text-[#5E6573] max-w-2xl leading-relaxed mt-1">
+                  Experience a realistic AI interview customized to your exact resume projects and target role requirements.
+                </p>
+              </div>
+
+              {/* 3-Step Visual Progress Flow */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                <div className="p-4 rounded-2xl bg-[#FCFCFB] border-2 border-[#00D2B4] space-y-1">
+                  <div className="flex items-center gap-2 text-xs font-bold text-[#13141B]">
+                    <span className="w-5 h-5 rounded-full bg-[#00D2B4] text-[#0A5245] flex items-center justify-center text-[11px] font-mono font-black">1</span>
+                    <span>Role &amp; Job Description</span>
+                  </div>
+                  <p className="text-[11px] text-[#5E6573] pl-7">Paste target JD or specify role title</p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-[#FCFCFB] border border-[#EBECEF] space-y-1">
+                  <div className="flex items-center gap-2 text-xs font-bold text-[#13141B]">
+                    <span className="w-5 h-5 rounded-full bg-[#13141B] text-white flex items-center justify-center text-[11px] font-mono font-black">2</span>
+                    <span>Resume Connection</span>
+                  </div>
+                  <p className="text-[11px] text-[#5E6573] pl-7">Synthesize questions from your real projects</p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-[#FCFCFB] border border-[#EBECEF] space-y-1">
+                  <div className="flex items-center gap-2 text-xs font-bold text-[#13141B]">
+                    <span className="w-5 h-5 rounded-full bg-slate-200 text-[#5E6573] flex items-center justify-center text-[11px] font-mono font-black">3</span>
+                    <span>Practice &amp; Get Scored</span>
+                  </div>
+                  <p className="text-[11px] text-[#5E6573] pl-7">STAR rubric, clarity &amp; technical depth feedback</p>
+                </div>
+              </div>
             </div>
 
-            {/* 1. Target Role & Category Customizer */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-black text-[#181920] uppercase tracking-wider flex items-center gap-1.5">
-                <Briefcase className="w-3.5 h-3.5 text-[#7B57FF]" />
-                <span>Target Position / Title</span>
-              </label>
-              <input
-                type="text"
-                value={targetRole}
-                onChange={(e) => setTargetRole(e.target.value)}
-                placeholder="e.g. Senior Full-Stack Engineer, Distributed Systems Lead, Product Manager..."
-                className="w-full p-3.5 rounded-2xl bg-white border border-[#E8ECF2] text-xs font-bold text-[#181920] focus:outline-none focus:ring-2 focus:ring-[#13141B] shadow-inner"
-              />
+            {/* Step 1: Job Description (Primary Default) & Target Role */}
+            <div className="space-y-4 pt-2">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-[#13141B] uppercase tracking-wider flex items-center gap-1.5">
+                    <Briefcase className="w-3.5 h-3.5 text-[#00D2B4]" />
+                    <span>Step 1: Paste Target Job Description (Primary)</span>
+                  </label>
+                  <span className="text-[10px] font-mono text-[#5E6573]">Recommended</span>
+                </div>
+                <textarea
+                  rows={4}
+                  value={jobDescriptionInput}
+                  onChange={(e) => setJobDescriptionInput(e.target.value)}
+                  placeholder="Paste the full job description or key technical requirements here (e.g. required tech stack, responsibilities, years of experience)..."
+                  className="w-full p-3.5 rounded-2xl bg-[#FCFCFB] border border-[#EBECEF] text-xs text-[#13141B] focus:outline-none focus:ring-2 focus:ring-[#00D2B4] focus:border-transparent transition-all"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-[#13141B] uppercase tracking-wider flex items-center gap-1.5">
+                  <Briefcase className="w-3.5 h-3.5 text-[#5E6573]" />
+                  <span>Target Role Title</span>
+                </label>
+                <input
+                  type="text"
+                  value={targetRole}
+                  onChange={(e) => setTargetRole(e.target.value)}
+                  placeholder="e.g. Full-Stack Software Engineer, Machine Learning Engineer, Systems Architect..."
+                  className="w-full p-3.5 rounded-2xl bg-[#FCFCFB] border border-[#EBECEF] text-xs font-medium text-[#13141B] focus:outline-none focus:ring-2 focus:ring-[#00D2B4] focus:border-transparent transition-all"
+                />
+              </div>
             </div>
 
-            {/* 2. Resume Connection Selector */}
-            <div className="space-y-3 p-5 rounded-2xl bg-white border border-[#E8ECF2] shadow-xs">
+            {/* Step 2: Resume Connection Selector */}
+            <div className="space-y-3 p-5 rounded-2xl bg-[#FCFCFB] border border-[#EBECEF]">
               <div className="flex items-center justify-between">
-                <label className="block text-xs font-black text-[#181920] uppercase tracking-wider flex items-center gap-1.5">
+                <label className="block text-xs font-bold text-[#13141B] uppercase tracking-wider flex items-center gap-1.5">
                   <FileText className="w-3.5 h-3.5 text-[#00D2B4]" />
-                  <span>Connect Resume for AI Question Generation</span>
+                  <span>Step 2: Connect Resume for AI Question Generation</span>
                 </label>
                 {savedResumes.length > 0 && (
-                  <span className="text-[10px] font-bold text-[#00D2B4] bg-[#E0FAF6] px-2 py-0.5 rounded-full">
-                    {savedResumes.length} Resume{savedResumes.length > 1 ? "s" : ""} Found in Supabase
+                  <span className="text-[10px] font-mono font-bold text-[#0A5245] bg-[#00D2B4]/10 border border-[#00D2B4]/20 px-2 py-0.5 rounded-full">
+                    {savedResumes.length} Resume{savedResumes.length > 1 ? "s" : ""} in Database
                   </span>
                 )}
               </div>
@@ -359,21 +410,21 @@ export default function ActiveInterviewStudioPage() {
                     key={resume.id}
                     type="button"
                     onClick={() => setSelectedResumeId(resume.id)}
-                    className={`p-3.5 rounded-2xl text-left border transition-all flex flex-col justify-between ${
+                    className={`p-3.5 rounded-2xl text-left border transition-all flex flex-col justify-between cursor-pointer ${
                       selectedResumeId === resume.id
-                        ? "border-[#13141B] bg-[#13141B] text-white shadow-md scale-102"
-                        : "border-[#E8ECF2] bg-[#F4F6FB] text-[#181920] hover:bg-slate-100"
+                        ? "border-[#00D2B4] bg-white text-[#13141B] shadow-sm ring-1 ring-[#00D2B4]"
+                        : "border-[#EBECEF] bg-white text-[#13141B] hover:border-slate-300"
                     }`}
                   >
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <FileText className={`w-4 h-4 ${selectedResumeId === resume.id ? "text-[#D7FC51]" : "text-[#7B57FF]"}`} />
+                        <FileText className={`w-4 h-4 ${selectedResumeId === resume.id ? "text-[#00D2B4]" : "text-[#5E6573]"}`} />
                         {selectedResumeId === resume.id && (
-                          <CheckCircle2 className="w-4 h-4 text-[#D7FC51]" />
+                          <CheckCircle2 className="w-4 h-4 text-[#00D2B4]" />
                         )}
                       </div>
-                      <p className="font-black text-xs line-clamp-1">{resume.title || "Resume"}</p>
-                      <p className={`text-[10px] line-clamp-1 ${selectedResumeId === resume.id ? "text-slate-300" : "text-[#8E95A5]"}`}>
+                      <p className="font-bold text-xs line-clamp-1">{resume.title || "Portfolio Resume"}</p>
+                      <p className="text-[10px] text-[#5E6573] line-clamp-1">
                         Updated {new Date(resume.updated_at).toLocaleDateString()}
                       </p>
                     </div>
@@ -384,21 +435,19 @@ export default function ActiveInterviewStudioPage() {
                 <button
                   type="button"
                   onClick={() => setSelectedResumeId("custom")}
-                  className={`p-3.5 rounded-2xl text-left border transition-all flex flex-col justify-between ${
+                  className={`p-3.5 rounded-2xl text-left border transition-all flex flex-col justify-between cursor-pointer ${
                     selectedResumeId === "custom"
-                      ? "border-[#13141B] bg-[#13141B] text-white shadow-md scale-102"
-                      : "border-[#E8ECF2] bg-[#F4F6FB] text-[#181920] hover:bg-slate-100"
+                      ? "border-[#00D2B4] bg-white text-[#13141B] shadow-sm ring-1 ring-[#00D2B4]"
+                      : "border-[#EBECEF] bg-white text-[#13141B] hover:border-slate-300"
                   }`}
                 >
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <Code2 className={`w-4 h-4 ${selectedResumeId === "custom" ? "text-[#D7FC51]" : "text-[#7B57FF]"}`} />
-                      {selectedResumeId === "custom" && <CheckCircle2 className="w-4 h-4 text-[#D7FC51]" />}
+                      <Code2 className={`w-4 h-4 ${selectedResumeId === "custom" ? "text-[#00D2B4]" : "text-[#5E6573]"}`} />
+                      {selectedResumeId === "custom" && <CheckCircle2 className="w-4 h-4 text-[#00D2B4]" />}
                     </div>
-                    <p className="font-black text-xs">Paste Resume Text</p>
-                    <p className={`text-[10px] ${selectedResumeId === "custom" ? "text-slate-300" : "text-[#8E95A5]"}`}>
-                      Manual bullet points
-                    </p>
+                    <p className="font-bold text-xs">Paste Resume Text</p>
+                    <p className="text-[10px] text-[#5E6573]">Manual bullet points</p>
                   </div>
                 </button>
 
@@ -406,21 +455,19 @@ export default function ActiveInterviewStudioPage() {
                 <button
                   type="button"
                   onClick={() => setSelectedResumeId("none")}
-                  className={`p-3.5 rounded-2xl text-left border transition-all flex flex-col justify-between ${
+                  className={`p-3.5 rounded-2xl text-left border transition-all flex flex-col justify-between cursor-pointer ${
                     selectedResumeId === "none"
-                      ? "border-[#13141B] bg-[#13141B] text-white shadow-md scale-102"
-                      : "border-[#E8ECF2] bg-[#F4F6FB] text-[#181920] hover:bg-slate-100"
+                      ? "border-[#00D2B4] bg-white text-[#13141B] shadow-sm ring-1 ring-[#00D2B4]"
+                      : "border-[#EBECEF] bg-white text-[#13141B] hover:border-slate-300"
                   }`}
                 >
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <Sparkles className={`w-4 h-4 ${selectedResumeId === "none" ? "text-[#D7FC51]" : "text-[#7B57FF]"}`} />
-                      {selectedResumeId === "none" && <CheckCircle2 className="w-4 h-4 text-[#D7FC51]" />}
+                      <Sparkles className={`w-4 h-4 ${selectedResumeId === "none" ? "text-[#00D2B4]" : "text-[#5E6573]"}`} />
+                      {selectedResumeId === "none" && <CheckCircle2 className="w-4 h-4 text-[#00D2B4]" />}
                     </div>
-                    <p className="font-black text-xs">General Practice</p>
-                    <p className={`text-[10px] ${selectedResumeId === "none" ? "text-slate-300" : "text-[#8E95A5]"}`}>
-                      Standard role questions
-                    </p>
+                    <p className="font-bold text-xs">General Practice</p>
+                    <p className="text-[10px] text-[#5E6573]">Standard role bank</p>
                   </div>
                 </button>
               </div>
@@ -433,40 +480,40 @@ export default function ActiveInterviewStudioPage() {
                     value={rawResumeInput}
                     onChange={(e) => setRawResumeInput(e.target.value)}
                     placeholder="Paste your key projects, technical skills, languages, tools, and achievements here..."
-                    className="w-full p-3.5 rounded-2xl bg-[#F4F6FB] border border-[#E8ECF2] text-xs text-[#181920] focus:outline-none focus:ring-2 focus:ring-[#13141B]"
+                    className="w-full p-3.5 rounded-2xl bg-white border border-[#EBECEF] text-xs text-[#13141B] focus:outline-none focus:ring-2 focus:ring-[#00D2B4]"
                   />
                 </div>
               )}
 
               {/* Connected Resume Deep-Dive Insights */}
               {selectedResumeObj && selectedResumeId !== "none" && selectedResumeId !== "custom" && (
-                <div className="mt-3 p-4 rounded-xl bg-[#E0FAF6]/60 border border-[#00D2B4]/30 space-y-2">
+                <div className="mt-3 p-4 rounded-xl bg-[#00D2B4]/10 border border-[#00D2B4]/20 space-y-2">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-[#00D2B4]" />
-                    <span className="font-black text-xs text-[#181920]">
-                      Resume Connected: {selectedResumeObj.title}
+                    <span className="font-bold text-xs text-[#13141B]">
+                      Connected Resume: {selectedResumeObj.title}
                     </span>
                   </div>
                   
                   {resumeSkills.length > 0 && (
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[10px] font-mono uppercase text-[#767E94]">Detected Skills:</span>
+                      <span className="text-[10px] font-mono text-[#5E6573]">Skills extracted:</span>
                       {resumeSkills.slice(0, 6).map((sk, i) => (
-                        <span key={i} className="px-2 py-0.5 rounded-md bg-white text-[10px] font-bold text-[#181920] border border-[#E8ECF2]">
+                        <span key={i} className="px-2 py-0.5 rounded-md bg-white text-[10px] font-bold text-[#13141B] border border-[#EBECEF]">
                           {sk}
                         </span>
                       ))}
                       {resumeSkills.length > 6 && (
-                        <span className="text-[10px] font-bold text-[#767E94]">+{resumeSkills.length - 6} more</span>
+                        <span className="text-[10px] font-bold text-[#5E6573]">+{resumeSkills.length - 6} more</span>
                       )}
                     </div>
                   )}
 
                   {resumeProjects.length > 0 && (
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[10px] font-mono uppercase text-[#767E94]">Projects for Deep-Dive:</span>
+                      <span className="text-[10px] font-mono text-[#5E6573]">Projects for deep-dive:</span>
                       {resumeProjects.slice(0, 3).map((pj, i) => (
-                        <span key={i} className="px-2 py-0.5 rounded-md bg-white text-[10px] font-bold text-[#7B57FF] border border-[#7B57FF]/30">
+                        <span key={i} className="px-2 py-0.5 rounded-md bg-white text-[10px] font-bold text-[#0A5245] border border-[#00D2B4]/30">
                           {pj.title}
                         </span>
                       ))}
@@ -476,54 +523,15 @@ export default function ActiveInterviewStudioPage() {
               )}
             </div>
 
-            {/* 3. Optional Job Description Input */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-black text-[#181920] uppercase tracking-wider flex items-center gap-1.5">
-                <Briefcase className="w-3.5 h-3.5 text-[#7B57FF]" />
-                <span>Target Job Description / Specific Focus (Optional)</span>
-              </label>
-              <textarea
-                rows={3}
-                value={jobDescriptionInput}
-                onChange={(e) => setJobDescriptionInput(e.target.value)}
-                placeholder="Paste key responsibilities, requirements, or focus topics from a job posting..."
-                className="w-full p-3.5 rounded-2xl bg-white border border-[#E8ECF2] text-xs text-[#181920] focus:outline-none focus:ring-2 focus:ring-[#13141B] shadow-inner"
-              />
-            </div>
-
-            {/* Session Features Callout */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-              <div className="p-3.5 rounded-2xl bg-white border border-[#E8ECF2] space-y-1 shadow-xs">
-                <div className="font-black text-[#181920] flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-[#7B57FF]" />
-                  <span>1. Resume Deep-Dive</span>
-                </div>
-                <p className="text-[11px] text-[#767E94]">Questions probe your exact projects and technical stack decisions.</p>
-              </div>
-              <div className="p-3.5 rounded-2xl bg-white border border-[#E8ECF2] space-y-1 shadow-xs">
-                <div className="font-black text-[#181920] flex items-center gap-1.5">
-                  <Award className="w-3.5 h-3.5 text-[#00D2B4]" />
-                  <span>2. STAR Methodology</span>
-                </div>
-                <p className="text-[11px] text-[#767E94]">Evaluates Situation, Task, Action, and measurable Result.</p>
-              </div>
-              <div className="p-3.5 rounded-2xl bg-white border border-[#E8ECF2] space-y-1 shadow-xs">
-                <div className="font-black text-[#181920] flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#FFB800]" />
-                  <span>3. Claude Coaching</span>
-                </div>
-                <p className="text-[11px] text-[#767E94]">Provides exact "What You Said" vs "Better Way to Say It" rewrites.</p>
-              </div>
-            </div>
-
+            {/* Launch Action */}
             <div className="pt-2 flex justify-end">
               <button
                 onClick={handleStartSession}
                 disabled={generating}
-                className="btn-shine px-7 py-3.5 rounded-2xl bg-[#13141B] hover:bg-black text-[#D7FC51] text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-lg transition-all hover:scale-102 disabled:opacity-50"
+                className="px-7 py-3.5 rounded-2xl bg-[#13141B] hover:bg-black text-[#00D2B4] text-xs font-extrabold uppercase tracking-wider flex items-center gap-2 shadow-md transition-all hover:scale-102 disabled:opacity-50 cursor-pointer"
               >
                 <Play className="w-4 h-4 fill-current" />
-                <span>{generating ? "Claude AI Generating Tailored Questions..." : "Launch Resume-Connected Studio"}</span>
+                <span>{generating ? "Generating Tailored Questions from Resume & JD..." : "Step 3: Generate Questions & Start Interview"}</span>
               </button>
             </div>
           </div>
@@ -531,21 +539,21 @@ export default function ActiveInterviewStudioPage() {
           /* ACTIVE INTERVIEW STUDIO */
           <div className="space-y-4">
             
-            {/* Header with AI Model Badge & Progress */}
-            <div className="card-quixel p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase bg-[#13141B] text-[#D7FC51]">
-                  Question {currentQuestionIdx + 1} of {questions.length}
-                </span>
-                {currentQ.contextSource && (
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#EDE8FD] text-[#7B57FF] border border-[#7B57FF]/30">
-                    {currentQ.contextSource}
+            {/* Header with AI Model Badge, Generation Source Label & Progress */}
+            <div className="bg-white rounded-2xl p-4 border border-[#EBECEF] shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase bg-[#13141B] text-white">
+                    Question {currentQuestionIdx + 1} of {questions.length}
                   </span>
-                )}
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#00D2B4]/10 text-[#0A5245] border border-[#00D2B4]/30">
+                    Generated from your resume &amp; {targetRole || categoryName} JD
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center gap-2 text-[11px] font-mono text-[#767E94]">
+              <div className="flex items-center gap-2 text-[11px] font-mono text-[#5E6573]">
                 <span>Engine:</span>
-                <span className="font-bold text-[#181920] bg-white px-2 py-0.5 rounded-md border border-[#E8ECF2]">
+                <span className="font-bold text-[#13141B] bg-slate-100 px-2 py-0.5 rounded-md border border-[#EBECEF]">
                   {aiModelUsed || "Claude AI"}
                 </span>
               </div>

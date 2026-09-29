@@ -42,6 +42,9 @@ export default function ProjectFormModal({
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+
   if (!isOpen) return null;
 
   const isValidUrl = (urlString: string): boolean => {
@@ -54,34 +57,68 @@ export default function ProjectFormModal({
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const processFiles = (fileList: FileList | File[]) => {
     setError(null);
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+    const files = Array.from(fileList);
+    if (files.length === 0) return;
 
     if (images.length + files.length > 5) {
       setError("You can upload a maximum of 5 screenshot images per project.");
       return;
     }
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+    setUploadProgress(20);
+    let loadedCount = 0;
+
+    files.forEach((file) => {
       if (!file.type.startsWith("image/")) {
-        setError("File " + file.name + " is not an accepted image format.");
+        setError(`File "${file.name}" is not an accepted image format.`);
+        setUploadProgress(null);
         return;
       }
       if (file.size > 5 * 1024 * 1024) {
-        setError("File " + file.name + " exceeds the 5MB maximum file size.");
+        setError(`File "${file.name}" exceeds the 5MB maximum file size.`);
+        setUploadProgress(null);
         return;
       }
 
       const reader = new FileReader();
       reader.onload = (readEvent) => {
-        if (readEvent.target && readEvent.target.result) {
+        if (readEvent.target?.result) {
           setImages((prev) => [...prev, readEvent.target!.result as string]);
+          loadedCount += 1;
+          const prog = Math.min(100, Math.round((loadedCount / files.length) * 100));
+          setUploadProgress(prog);
+          if (loadedCount === files.length) {
+            setTimeout(() => setUploadProgress(null), 600);
+          }
         }
       };
       reader.readAsDataURL(file);
+    });
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      processFiles(e.target.files);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processFiles(e.dataTransfer.files);
     }
   };
 
@@ -261,31 +298,75 @@ export default function ProjectFormModal({
           </div>
 
           {mode === "detailed" && (
-            <div className="space-y-2 pt-2 border-t border-slate-100">
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Screenshots &amp; Previews (Max 5)
-              </label>
-              <div className="flex flex-wrap gap-2.5">
-                {images.map((img, idx) => (
-                  <div key={idx} className="relative w-20 h-20 rounded-2xl border border-slate-200 overflow-hidden group">
-                    <Image src={img} alt={"Preview " + (idx + 1)} width={80} height={80} unoptimized className="w-full h-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveImage(idx)}
-                      className="absolute inset-0 bg-slate-950/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Trash2 className="w-4 h-4 text-rose-400" />
-                    </button>
+            <div className="space-y-3 pt-2 border-t border-slate-100">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Screenshots &amp; Project Assets (Max 5)
+                </label>
+                <span className="text-[10px] font-mono text-slate-500">{images.length}/5 uploaded</span>
+              </div>
+
+              {/* Drag and Drop Zone */}
+              {images.length < 5 && (
+                <div
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  className={`p-6 rounded-2xl border-2 border-dashed transition-all flex flex-col items-center justify-center text-center gap-2 cursor-pointer ${
+                    isDragging
+                      ? "border-[#00D2B4] bg-[#00D2B4]/5 scale-101"
+                      : "border-slate-200 bg-slate-50/70 hover:border-slate-300 hover:bg-slate-50"
+                  }`}
+                >
+                  <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center shadow-2xs text-[#13141B]">
+                    <Upload className="w-5 h-5 text-[#00D2B4]" />
                   </div>
-                ))}
-                {images.length < 5 && (
-                  <label className="w-20 h-20 rounded-2xl border-2 border-dashed border-slate-300 hover:border-slate-400 flex flex-col items-center justify-center gap-1 cursor-pointer text-slate-400 hover:text-slate-600 transition-colors">
-                    <Upload className="w-4 h-4" />
-                    <span className="text-[9px] font-mono">Upload</span>
+                  <div>
+                    <p className="text-xs font-bold text-slate-900">
+                      {isDragging ? "Drop images here" : "Drag & drop images here, or browse"}
+                    </p>
+                    <p className="text-[11px] text-slate-500">PNG, JPG, WebP up to 5MB each</p>
+                  </div>
+                  <label className="px-3.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-800 hover:bg-slate-100 cursor-pointer transition-colors shadow-2xs">
+                    <span>Browse Files</span>
                     <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
                   </label>
-                )}
-              </div>
+                </div>
+              )}
+
+              {/* Upload Progress Indicator */}
+              {uploadProgress !== null && (
+                <div className="space-y-1 animate-in fade-in">
+                  <div className="flex items-center justify-between text-[11px] font-mono text-slate-600">
+                    <span>Processing images...</span>
+                    <span>{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                    <div
+                      className="h-full bg-[#00D2B4] transition-all duration-300 ease-out"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Previews Grid */}
+              {images.length > 0 && (
+                <div className="flex flex-wrap gap-2.5 pt-1">
+                  {images.map((img, idx) => (
+                    <div key={idx} className="relative w-20 h-20 rounded-2xl border border-slate-200 overflow-hidden group shadow-2xs">
+                      <Image src={img} alt={`Preview ${idx + 1}`} width={80} height={80} unoptimized className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(idx)}
+                        className="absolute inset-0 bg-slate-950/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      >
+                        <Trash2 className="w-4 h-4 text-rose-400" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

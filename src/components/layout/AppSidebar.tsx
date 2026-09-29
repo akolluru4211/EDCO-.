@@ -15,7 +15,7 @@ import {
   Briefcase,
   Users,
   GraduationCap,
-  MessageSquare,
+  Sparkles,
   Brain,
   BookOpen,
   ShieldCheck,
@@ -147,16 +147,11 @@ export default function AppSidebar() {
           icon: FolderKanban
         },
         {
-          href: "/career/dashboard",
-          label: "Career Hub",
-          shortLabel: "Career",
-          icon: Target
-        },
-        {
-          href: "/problems",
-          label: "Code Sandbox",
-          shortLabel: "Problems",
-          icon: Code2
+          href: "/edfix",
+          label: "EdFix Problem Board",
+          shortLabel: "EdFix",
+          icon: Sparkles,
+          badge: "Live"
         },
         {
           href: "/jobs",
@@ -167,25 +162,13 @@ export default function AppSidebar() {
       ]
     },
     {
-      title: "NETWORK & MENTORSHIP",
+      title: "COMMUNITY",
       items: [
         {
           href: "/network",
-          label: "Network & Peers",
+          label: "Member Directory",
           shortLabel: "Network",
           icon: Users
-        },
-        {
-          href: "/networking/mentors",
-          label: "Mentorship & Alumni",
-          shortLabel: "Mentors",
-          icon: GraduationCap
-        },
-        {
-          href: "/networking/messages",
-          label: "Direct Messages",
-          shortLabel: "Messages",
-          icon: MessageSquare
         }
       ]
     },

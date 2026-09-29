@@ -256,11 +256,11 @@ export default function PublicProfileViewPage() {
                 </Link>
               ) : user ? (
                 <Link
-                  href={`/networking/messages?to=${profile.id}`}
-                  className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-colors flex items-center gap-1.5 shadow-xs"
+                  href="/network"
+                  className="px-4 py-2 rounded-xl bg-[#13141B] hover:bg-black text-white text-xs font-bold transition-colors flex items-center gap-1.5 shadow-xs"
                 >
-                  <MessageSquare className="w-3.5 h-3.5" />
-                  <span>Message</span>
+                  <UserPlus className="w-3.5 h-3.5 text-[#00D2B4]" />
+                  <span>Network Directory</span>
                 </Link>
               ) : null}
             </div>

@@ -171,16 +171,16 @@ export default function DashboardPage() {
     },
     {
       id: "mod-4",
-      type: "Problem",
-      title: "Algorithmic Complexity & Live Coding Sandbox",
+      type: "Challenge",
+      title: "EdFix Real-World Problem Solution Challenge",
       difficulty: "Intermediate",
       duration: "30 mins",
-      category: "Coding",
-      badgeColor: "bg-amber-50 text-amber-800 border-amber-200",
-      href: "/problems",
+      category: "EdFix",
+      badgeColor: "bg-teal-50 text-teal-800 border-teal-200",
+      href: "/edfix",
       illustration: (
-        <div className="w-11 h-11 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 flex items-center justify-center">
-          <Code2 className="w-5 h-5 text-amber-600" />
+        <div className="w-11 h-11 rounded-xl bg-[#00D2B4]/10 border border-[#00D2B4]/20 text-[#0A5245] flex items-center justify-center font-bold">
+          <Sparkles className="w-5 h-5 text-[#00D2B4]" />
         </div>
       )
     }
@@ -369,14 +369,14 @@ export default function DashboardPage() {
                   </Link>
 
                   <Link
-                    href="/problems"
+                    href="/edfix"
                     className="p-3 rounded-xl bg-[#FCFCFB] hover:bg-slate-50 border border-[#EBECEF] hover:border-[#D1D5DC] flex flex-col items-start gap-1.5 transition-all group"
                   >
                     <div className="w-7 h-7 rounded-lg bg-[#13141B] text-[#00D2B4] flex items-center justify-center shadow-2xs">
-                      <Code2 className="w-3.5 h-3.5" />
+                      <Sparkles className="w-3.5 h-3.5" />
                     </div>
                     <span className="text-xs font-bold text-[#13141B] group-hover:text-[#00D2B4] transition-colors">
-                      Code Sandbox
+                      EdFix Board
                     </span>
                   </Link>
 

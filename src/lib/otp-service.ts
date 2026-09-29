@@ -123,8 +123,7 @@ export function getRedirectForRole(role: UserRole | string, careerStage?: string
     case "STUDENT":
     case "CLIENT":
       if (careerStage === "JUNIOR") return "/student/junior/dashboard";
-      if (careerStage === "STUDENT") return "/dashboard";
-      return "/career/dashboard";
+      return "/dashboard";
     case "EMPLOYEE":
       return "/employee";
     case "HR":
@@ -140,8 +139,7 @@ export function getRedirectForRole(role: UserRole | string, careerStage?: string
       return "/admin";
     default:
       if (careerStage === "JUNIOR") return "/student/junior/dashboard";
-      if (careerStage === "STUDENT") return "/dashboard";
-      return "/career/dashboard";
+      return "/dashboard";
   }
 }
 

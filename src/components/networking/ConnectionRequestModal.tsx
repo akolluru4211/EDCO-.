@@ -32,12 +32,8 @@ export default function ConnectionRequestModal({
   targetUserId,
   targetName,
   targetHeadline,
-  isMentor = false,
   onSendRequest,
 }: ConnectionRequestModalProps) {
-  const [requestType, setRequestType] = useState<ConnectionRequestType>(
-    isMentor ? "mentorship" : "connection"
-  );
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -52,7 +48,7 @@ export default function ConnectionRequestModal({
     try {
       await onSendRequest({
         recipientId: targetUserId,
-        requestType,
+        requestType: "connection",
         message: message.trim(),
       });
       setIsSuccess(true);
@@ -69,13 +65,9 @@ export default function ConnectionRequestModal({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2">
-            {requestType === "mentorship" ? (
-              <GraduationCap className="w-5 h-5 text-brand-600" />
-            ) : (
-              <UserPlus className="w-5 h-5 text-slate-900" />
-            )}
+            <UserPlus className="w-5 h-5 text-slate-900" />
             <h3 className="text-base font-bold text-slate-900">
-              {requestType === "mentorship" ? "Request Mentorship" : "Connect with Professional"}
+              Connect with Member
             </h3>
           </div>
           <button
@@ -93,7 +85,7 @@ export default function ConnectionRequestModal({
             </div>
             <h4 className="font-bold text-sm text-slate-900">Request Sent!</h4>
             <p className="text-xs text-slate-600 max-w-xs mx-auto">
-              {targetName} will be notified. Once accepted, you will be able to message each other directly.
+              {targetName} will be notified. Once accepted, they will appear in your verified connections.
             </p>
             <button
               onClick={onClose}
@@ -121,47 +113,15 @@ export default function ConnectionRequestModal({
               </div>
             </div>
 
-            {isMentor && (
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setRequestType("connection")}
-                  className={`w-1/2 py-2 rounded-xl font-bold transition-all border ${
-                    requestType === "connection"
-                      ? "bg-slate-900 text-white border-slate-900"
-                      : "bg-white text-slate-600 border-slate-200"
-                  }`}
-                >
-                  Standard Connect
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRequestType("mentorship")}
-                  className={`w-1/2 py-2 rounded-xl font-bold transition-all border ${
-                    requestType === "mentorship"
-                      ? "bg-slate-900 text-white border-slate-900"
-                      : "bg-white text-slate-600 border-slate-200"
-                  }`}
-                >
-                  Mentorship Ask
-                </button>
-              </div>
-            )}
-
             <div>
               <label className="block font-bold text-slate-700 uppercase mb-1">
-                {requestType === "mentorship" ? "Mentorship Ask / Focus Topic *" : "Personalized Note (Optional)"}
+                Personalized Note (Optional)
               </label>
               <textarea
                 rows={3}
-                required={requestType === "mentorship"}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder={
-                  requestType === "mentorship"
-                    ? "Explain what technical guidance or mock interview practice you're seeking..."
-                    : "Introduce yourself or share mutual career interests..."
-                }
+                placeholder="Introduce yourself or share mutual professional interests..."
                 className="w-full px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-slate-900 focus:outline-none"
               />
             </div>

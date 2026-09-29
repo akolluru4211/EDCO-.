@@ -294,22 +294,22 @@ export default function InterviewsHubPage() {
                 </Link>
               </div>
 
-              {/* Format 3: Sandboxed Coding Round */}
+              {/* Format 3: Technical Architecture & Code Reasoning */}
               <div className="p-5 sm:p-6 rounded-2xl bg-white border border-stone-200/80 shadow-xs space-y-4 flex flex-col justify-between hover:border-stone-400 transition-all">
                 <div className="space-y-2.5">
                   <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
                     <Zap className="w-5 h-5 text-amber-700" />
                   </div>
-                  <h3 className="font-serif font-medium text-stone-900 text-base">Live Coding Round</h3>
+                  <h3 className="font-serif font-medium text-stone-900 text-base">Technical Code Reasoning</h3>
                   <p className="text-xs text-stone-500 leading-relaxed">
-                    Integrated code editor with isolated sandboxed execution, unit test runner, and complexity analysis.
+                    Verbal &amp; structured explanation of algorithms, system design, data structures, and edge-case handling.
                   </p>
                 </div>
                 <Link
-                  href="/interviews/swe?format=coding"
+                  href="/interviews/swe"
                   className="w-full py-2.5 rounded-xl bg-stone-50 hover:bg-stone-100 text-stone-900 border border-stone-200 text-xs font-medium flex items-center justify-center gap-2 transition-colors shadow-2xs"
                 >
-                  <span>Launch Coding Round</span>
+                  <span>Launch Technical Round</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>

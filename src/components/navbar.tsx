@@ -151,12 +151,13 @@ export default function Navbar() {
       category: "core"
     },
     {
-      href: "/problems",
-      label: "Problem Solving & Code Sandbox",
-      shortLabel: "Problems",
-      icon: Code2,
-      desc: "Real-world engineering challenges & PyTorch/Systems practice",
-      category: "core"
+      href: "/edfix",
+      label: "EdFix Real-World Problem Board",
+      shortLabel: "EdFix",
+      icon: Sparkles,
+      desc: "Curated industry & product challenges with verified peer solutions",
+      category: "core",
+      badge: "Active"
     },
     {
       href: "/projects",
@@ -257,46 +258,13 @@ export default function Navbar() {
       requiresAdult: true
     },
 
-    // 3. Networking & Mentorship
+    // 3. Networking & Community
     {
       href: "/network",
-      label: "Professional Network",
-      shortLabel: "Network",
+      label: "Member Directory",
+      shortLabel: "Directory",
       icon: Users,
       desc: "Connect with verified peers, engineers & students",
-      category: "networking"
-    },
-    {
-      href: "/networking/alumni",
-      label: "Alumni Directory",
-      shortLabel: "Alumni",
-      icon: GraduationCap,
-      desc: "Find alumni working at top tech and product companies",
-      category: "networking"
-    },
-    {
-      href: "/networking/mentors",
-      label: "Verified Mentors Directory",
-      shortLabel: "Mentors",
-      icon: Users,
-      desc: "Book 1:1 guidance with industry practitioners",
-      category: "networking"
-    },
-    {
-      href: "/networking/become-mentor",
-      label: "Become a Verified Mentor",
-      shortLabel: "Become Mentor",
-      icon: Award,
-      desc: "Share industry experience and mentor rising talent",
-      category: "networking",
-      requiresAdult: true
-    },
-    {
-      href: "/networking/messages",
-      label: "Direct Messages",
-      shortLabel: "Messages",
-      icon: MessageSquare,
-      desc: "Safe, peer-to-peer discussions and mentor messaging",
       category: "networking"
     },
     {

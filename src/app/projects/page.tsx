@@ -310,9 +310,41 @@ export default function ProjectStudioPage() {
             </div>
           </div>
 
-          {/* Projects Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.map((project) => (
+          {/* Projects Grid or Empty State */}
+          {projects.length === 0 ? (
+            <div className="bg-white rounded-3xl p-10 sm:p-14 text-center space-y-4 border border-[#EBECEF] shadow-xs max-w-xl mx-auto">
+              <div className="w-16 h-16 rounded-2xl bg-[#00D2B4]/10 text-[#00D2B4] flex items-center justify-center mx-auto">
+                <FolderGit2 className="w-8 h-8" />
+              </div>
+              <div className="space-y-1.5">
+                <h3 className="text-base sm:text-lg font-extrabold text-[#13141B]">No projects published yet</h3>
+                <p className="text-xs text-[#5E6573] max-w-sm mx-auto leading-relaxed">
+                  Import repositories directly from GitHub or create a manual showcase to highlight your technical engineering work.
+                </p>
+              </div>
+              <div className="pt-2 flex items-center justify-center gap-3 flex-wrap">
+                <button
+                  onClick={() => setIsGitHubModalOpen(true)}
+                  className="px-4 py-2 rounded-xl bg-[#13141B] hover:bg-black text-white text-xs font-bold flex items-center gap-2 shadow-2xs cursor-pointer"
+                >
+                  <GitBranch className="w-4 h-4 text-[#00D2B4]" />
+                  <span>Import from GitHub</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setEditingProject(null);
+                    setIsFormModalOpen(true);
+                  }}
+                  className="px-4 py-2 rounded-xl border border-[#EBECEF] bg-white hover:bg-slate-50 text-[#13141B] text-xs font-bold flex items-center gap-2 transition-colors cursor-pointer"
+                >
+                  <Plus className="w-4 h-4 text-[#5E6573]" />
+                  <span>Add Project Manually</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {projects.map((project) => (
               <div
                 key={project.id}
                 className="p-6 sm:p-7 rounded-2xl bg-white border border-stone-200/80 hover:border-stone-400 shadow-xs hover:shadow-sm transition-all flex flex-col justify-between space-y-4 group"
@@ -409,6 +441,7 @@ export default function ProjectStudioPage() {
               </div>
             ))}
           </div>
+        )}
 
           {/* Modals */}
           <ClaudeAnalysisModal

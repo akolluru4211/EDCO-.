@@ -65,7 +65,7 @@ const TABLET_STAGES: Record<StageKey, TabletStageConfig> = {
     description: "Single-column ATS resume maker, multimodal STAR AI mock interview studio, and verified public showcase profiles.",
     keyFeature: "Single-Column ATS Scoring & Keyword Calibration",
     secondaryFeature: "STAR Video AI Interview Drills & Salary Radar",
-    targetDashboard: "/career/dashboard",
+    targetDashboard: "/dashboard",
     ctaUrl: "/auth/signup?track=pro&stage=professional",
     loginUrl: "/auth/login?track=pro",
     icon: Briefcase,
