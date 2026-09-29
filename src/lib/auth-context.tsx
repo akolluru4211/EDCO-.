@@ -74,7 +74,6 @@ interface AuthContextType {
   sendOtp: (identifier: string, purpose?: "login" | "signup") => Promise<{ success: boolean; maskedIdentifier: string; cooldownSeconds: number; devOtp?: string }>;
   verifyOtp: (identifier: string, otp: string, purpose?: "login" | "signup", metaData?: any) => Promise<{ role: UserRole; redirectUrl: string }>;
   loginWithEmail: (emailOrPhone: string, pass: string) => Promise<{ role: UserRole; redirectUrl: string; careerStage?: CareerStage; onboardingCompleted?: boolean }>;
-  loginWithGoogle: (redirectUrl?: string) => Promise<any>;
   signupWithEmail: (name: string, email: string, pass: string, dob?: string, gradeLevel?: string, phone?: string, careerStage?: CareerStage) => Promise<{ needsEmailVerification?: boolean }>;
   resetPassword: (email: string) => Promise<void>;
   requestPasswordReset: (email: string) => Promise<void>;
@@ -392,23 +391,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         return "/dashboard";
     }
-  };
-
-  const loginWithGoogle = async (redirectUrl?: string) => {
-    const origin = typeof window !== "undefined" ? window.location.origin : "";
-    const redirectTo = `${origin}/auth/callback${redirectUrl ? `?next=${encodeURIComponent(redirectUrl)}` : ""}`;
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo,
-        queryParams: {
-          access_type: "offline",
-          prompt: "consent",
-        },
-      },
-    });
-    if (error) throw error;
-    return data;
   };
 
   const loginWithEmail = async (emailOrPhone: string, pass: string): Promise<{ role: UserRole; redirectUrl: string; careerStage?: CareerStage; onboardingCompleted?: boolean }> => {
@@ -1078,7 +1060,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         sendOtp,
         verifyOtp,
         loginWithEmail,
-        loginWithGoogle,
         signupWithEmail,
         resetPassword,
         requestPasswordReset,
