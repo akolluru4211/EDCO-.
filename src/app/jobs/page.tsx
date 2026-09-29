@@ -165,11 +165,8 @@ export default function JobBoardPage() {
                 <span className="text-xs font-mono text-[#8E95A5]">Curated Opportunities &bull; Zero Spam</span>
               </div>
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#13141B]">
-                Opportunity &amp; Placement Board
+                EdJobs
               </h1>
-              <p className="text-xs sm:text-sm text-[#5E6573]">
-                Discover verified internships, full-time engineering roles, and high-growth opportunities.
-              </p>
             </div>
 
             <div className="flex items-center flex-wrap gap-2.5 sm:gap-3">

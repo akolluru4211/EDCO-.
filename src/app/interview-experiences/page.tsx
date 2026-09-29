@@ -132,7 +132,7 @@ export default function InterviewExperiencesPage() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-lg sm:text-xl font-black text-white">Interview Experience Database</h1>
+                <h1 className="text-lg sm:text-xl font-black text-white">EdArchives</h1>
                 <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold border border-emerald-500/30">
                   Moderated UGC
                 </span>

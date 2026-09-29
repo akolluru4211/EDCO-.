@@ -122,41 +122,41 @@ export default function AppSidebar() {
       items: [
         {
           href: "/dashboard",
-          label: "Dashboard",
-          shortLabel: "Dashboard",
+          label: "EdDashboard",
+          shortLabel: "EdDashboard",
           icon: LayoutDashboard,
           exactMatch: true
         },
         {
           href: "/resumes",
-          label: "ATS Resume Builder",
-          shortLabel: "Resume",
+          label: "EdResume",
+          shortLabel: "EdResume",
           icon: FileText,
           badge: "ATS 90+"
         },
         {
           href: "/interviews",
-          label: "AI Mock Interviews",
-          shortLabel: "Interviews",
+          label: "EdInterview",
+          shortLabel: "EdInterview",
           icon: Video
         },
         {
           href: "/projects",
-          label: "Project Studio",
-          shortLabel: "Projects",
+          label: "EdProjects",
+          shortLabel: "EdProjects",
           icon: FolderKanban
         },
         {
           href: "/edfix",
-          label: "EdFix Problem Board",
+          label: "EdFix",
           shortLabel: "EdFix",
           icon: Sparkles,
           badge: "Live"
         },
         {
           href: "/jobs",
-          label: "Opportunities & Jobs",
-          shortLabel: "Jobs",
+          label: "EdJobs",
+          shortLabel: "EdJobs",
           icon: Briefcase
         }
       ]
@@ -166,8 +166,8 @@ export default function AppSidebar() {
       items: [
         {
           href: "/network",
-          label: "Member Directory",
-          shortLabel: "Network",
+          label: "EdNetwork",
+          shortLabel: "EdNetwork",
           icon: Users
         }
       ]
@@ -177,14 +177,14 @@ export default function AppSidebar() {
       items: [
         {
           href: "/aptitude",
-          label: "Aptitude Drills",
-          shortLabel: "Aptitude",
+          label: "EdAptitude",
+          shortLabel: "EdAptitude",
           icon: Brain
         },
         {
           href: "/interview-experiences",
-          label: "Interview Archives",
-          shortLabel: "Archives",
+          label: "EdArchives",
+          shortLabel: "EdArchives",
           icon: BookOpen
         }
       ]

@@ -180,11 +180,8 @@ export default function EdFixPage() {
                 </span>
               </div>
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#13141B]">
-                Curated Real-World Engineering Problems
+                EdFix
               </h1>
-              <p className="text-xs sm:text-sm text-[#5E6573] max-w-2xl leading-relaxed">
-                Tackle industry challenges from leading tech teams. Build production solutions in Project Studio, submit verifiable proof points, and earn placement reputation.
-              </p>
             </div>
 
             {successMessage && (

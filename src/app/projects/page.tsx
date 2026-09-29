@@ -267,10 +267,10 @@ export default function ProjectStudioPage() {
                 <span className="text-xs font-semibold uppercase tracking-wider bg-stone-100 text-stone-700 px-2.5 py-1 rounded-md">
                   Career Track
                 </span>
-                <span className="text-xs font-mono text-stone-400">Project Studio &bull; Verified Portfolio</span>
+                <span className="text-xs font-mono text-stone-400">EdProjects Studio</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-serif font-medium text-stone-900 tracking-tight">
-                Engineering Project Showcases
+                EdProjects
               </h1>
             </div>
 
@@ -305,7 +305,7 @@ export default function ProjectStudioPage() {
                 className="px-4 py-2.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-stone-800 text-xs font-medium flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
               >
                 <Plus className="w-4 h-4 text-stone-600" />
-                <span>Add Manual Project</span>
+                <span>Add Project Manually</span>
               </button>
             </div>
           </div>
@@ -316,11 +316,8 @@ export default function ProjectStudioPage() {
               <div className="w-16 h-16 rounded-2xl bg-[#00D2B4]/10 text-[#00D2B4] flex items-center justify-center mx-auto">
                 <FolderGit2 className="w-8 h-8" />
               </div>
-              <div className="space-y-1.5">
-                <h3 className="text-base sm:text-lg font-extrabold text-[#13141B]">No projects published yet</h3>
-                <p className="text-xs text-[#5E6573] max-w-sm mx-auto leading-relaxed">
-                  Import repositories directly from GitHub or create a manual showcase to highlight your technical engineering work.
-                </p>
+              <div className="space-y-1">
+                <h3 className="text-base sm:text-lg font-extrabold text-[#13141B]">EdProjects Workspace</h3>
               </div>
               <div className="pt-2 flex items-center justify-center gap-3 flex-wrap">
                 <button

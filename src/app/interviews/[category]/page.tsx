@@ -312,7 +312,7 @@ export default function ActiveInterviewStudioPage() {
               <div className="flex items-center gap-2">
                 <span className="px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-[#13141B] text-[#00D2B4] flex items-center gap-1.5 shadow-2xs">
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>AI Mock Interview Studio</span>
+                  <span>EdInterview Studio</span>
                 </span>
                 <span className="text-[10px] font-mono text-[#5E6573] bg-[#FCFCFB] px-2 py-0.5 rounded-md border border-[#EBECEF]">
                   Production
@@ -321,11 +321,8 @@ export default function ActiveInterviewStudioPage() {
 
               <div>
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-[#13141B] tracking-tight">
-                  {categoryName} Mock Interview Setup
+                  EdInterview &bull; {categoryName}
                 </h1>
-                <p className="text-xs sm:text-sm text-[#5E6573] max-w-2xl leading-relaxed mt-1">
-                  Experience a realistic AI interview customized to your exact resume projects and target role requirements.
-                </p>
               </div>
 
               {/* 3-Step Visual Progress Flow */}
@@ -335,15 +332,13 @@ export default function ActiveInterviewStudioPage() {
                     <span className="w-5 h-5 rounded-full bg-[#00D2B4] text-[#0A5245] flex items-center justify-center text-[11px] font-mono font-black">1</span>
                     <span>Role &amp; Job Description</span>
                   </div>
-                  <p className="text-[11px] text-[#5E6573] pl-7">Paste target JD or specify role title</p>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-[#FCFCFB] border border-[#EBECEF] space-y-1">
                   <div className="flex items-center gap-2 text-xs font-bold text-[#13141B]">
                     <span className="w-5 h-5 rounded-full bg-[#13141B] text-white flex items-center justify-center text-[11px] font-mono font-black">2</span>
-                    <span>Resume Connection</span>
+                    <span>EdResume Connection</span>
                   </div>
-                  <p className="text-[11px] text-[#5E6573] pl-7">Synthesize questions from your real projects</p>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-[#FCFCFB] border border-[#EBECEF] space-y-1">
@@ -351,7 +346,6 @@ export default function ActiveInterviewStudioPage() {
                     <span className="w-5 h-5 rounded-full bg-slate-200 text-[#5E6573] flex items-center justify-center text-[11px] font-mono font-black">3</span>
                     <span>Practice &amp; Get Scored</span>
                   </div>
-                  <p className="text-[11px] text-[#5E6573] pl-7">STAR rubric, clarity &amp; technical depth feedback</p>
                 </div>
               </div>
             </div>

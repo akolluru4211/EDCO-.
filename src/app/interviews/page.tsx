@@ -184,21 +184,17 @@ export default function InterviewsHubPage() {
                 <span className="text-xs font-semibold uppercase tracking-wider bg-stone-100 text-stone-700 px-2.5 py-1 rounded-md">
                   Career Track
                 </span>
-                <span className="text-xs font-mono text-stone-400">AI Resume-Connected Studio</span>
+                <span className="text-xs font-mono text-stone-400">EdInterview Studio</span>
               </div>
               <UserGreeting
                 context="interview"
-                subtitle="Evaluate technical depth, STAR methodology, and train English fluency with AI interviewing your exact resume projects."
               />
             </div>
 
-            <div className="p-4 sm:p-5 rounded-xl bg-stone-50 border border-stone-200/60 flex items-start gap-3.5 max-w-md text-xs text-stone-700 shadow-2xs">
-              <TrendingUp className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+            <div className="p-4 sm:p-5 rounded-xl bg-stone-50 border border-stone-200/60 flex items-center gap-3.5 max-w-md text-xs text-stone-700 shadow-2xs">
+              <TrendingUp className="w-5 h-5 text-emerald-600 shrink-0" />
               <div>
-                <p className="font-serif font-medium text-sm text-stone-900">Resume-Tailored Questions</p>
-                <p className="text-stone-500 text-xs mt-1 leading-relaxed">
-                  AI analyzes your saved resume projects and skills to ask authentic technical trade-off and STAR behavioral questions.
-                </p>
+                <p className="font-serif font-medium text-sm text-stone-900">EdInterview Architecture</p>
               </div>
             </div>
           </div>
@@ -209,21 +205,18 @@ export default function InterviewsHubPage() {
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2">
                   <span className="px-2.5 py-0.5 rounded-md bg-emerald-900 text-emerald-300 font-medium text-xs">
-                    Resume Connected
+                    EdResume Connected
                   </span>
                   <span className="text-xs sm:text-sm font-mono text-stone-300">
                     {activeResume.title}
                   </span>
                 </div>
-                <p className="text-xs text-stone-400 leading-relaxed">
-                  Ready for AI mock interview with {activeResume.skillsCount > 0 ? `${activeResume.skillsCount} detected skills` : "technical profile"} and {activeResume.projectsCount > 0 ? `${activeResume.projectsCount} portfolio projects` : "experience"}.
-                </p>
               </div>
               <Link
                 href="/interviews/swe"
                 className="px-5 py-2.5 rounded-xl bg-white hover:bg-stone-100 text-stone-900 font-medium text-xs uppercase tracking-wider flex items-center gap-2 shadow-xs shrink-0 transition-colors"
               >
-                <span>Launch Interview with Resume</span>
+                <span>Launch EdInterview</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -242,14 +235,13 @@ export default function InterviewsHubPage() {
                 <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-stone-600 bg-stone-100 border border-stone-200/80 px-2.5 py-1 rounded-md">
                   Practice Formats
                 </span>
-                <h2 className="text-xl sm:text-2xl font-serif font-medium text-stone-900 tracking-tight mt-1.5">Choose Interview Mode</h2>
-                <p className="text-xs text-stone-500 mt-0.5">Practice verbal Q&amp;A, standalone language training drills, live coding, or group discussions.</p>
+                <h2 className="text-xl sm:text-2xl font-serif font-medium text-stone-900 tracking-tight mt-1.5">EdInterview Modes</h2>
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
               
-              {/* Format 1: Standalone Language Training Drills */}
+              {/* Format 1: EdSpeech */}
               <div className="p-5 sm:p-6 rounded-2xl bg-white border border-stone-200/80 shadow-xs space-y-4 flex flex-col justify-between hover:border-stone-400 transition-all">
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between">
@@ -260,50 +252,41 @@ export default function InterviewsHubPage() {
                       Fast Drill
                     </span>
                   </div>
-                  <h3 className="font-serif font-medium text-stone-900 text-base">Language Training</h3>
-                  <p className="text-xs text-stone-500 leading-relaxed">
-                    Rapid 60-second spoken drills with live speech-to-text, filler counting, and attempt comparison.
-                  </p>
+                  <h3 className="font-serif font-medium text-stone-900 text-base">EdSpeech Drills</h3>
                 </div>
                 <Link
                   href="/interviews/language-training"
                   className="w-full py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-medium flex items-center justify-center gap-2 shadow-xs transition-colors"
                 >
-                  <span>Launch Language Drills</span>
+                  <span>Launch EdSpeech</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
 
-              {/* Format 2: Standard Full Verbal Studio */}
+              {/* Format 2: EdInterview Full Verbal */}
               <div className="p-5 sm:p-6 rounded-2xl bg-white border border-stone-200/80 shadow-xs space-y-4 flex flex-col justify-between hover:border-stone-400 transition-all">
                 <div className="space-y-2.5">
                   <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center">
                     <Video className="w-5 h-5" />
                   </div>
-                  <h3 className="font-serif font-medium text-stone-900 text-base">Full Verbal Studio</h3>
-                  <p className="text-xs text-stone-500 leading-relaxed">
-                    Multi-question verbal interview with camera engagement, STAR rubric scoring, and resume project deep-dives.
-                  </p>
+                  <h3 className="font-serif font-medium text-stone-900 text-base">EdInterview Full Studio</h3>
                 </div>
                 <Link
                   href="/interviews/swe"
                   className="w-full py-2.5 rounded-xl bg-stone-50 hover:bg-stone-100 text-stone-900 border border-stone-200 text-xs font-medium flex items-center justify-center gap-2 transition-colors shadow-2xs"
                 >
-                  <span>Launch Verbal Session</span>
+                  <span>Launch EdInterview</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
 
-              {/* Format 3: Technical Architecture & Code Reasoning */}
+              {/* Format 3: EdInterview Technical Code Reasoning */}
               <div className="p-5 sm:p-6 rounded-2xl bg-white border border-stone-200/80 shadow-xs space-y-4 flex flex-col justify-between hover:border-stone-400 transition-all">
                 <div className="space-y-2.5">
                   <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
                     <Zap className="w-5 h-5 text-amber-700" />
                   </div>
-                  <h3 className="font-serif font-medium text-stone-900 text-base">Technical Code Reasoning</h3>
-                  <p className="text-xs text-stone-500 leading-relaxed">
-                    Verbal &amp; structured explanation of algorithms, system design, data structures, and edge-case handling.
-                  </p>
+                  <h3 className="font-serif font-medium text-stone-900 text-base">EdInterview Code Reasoning</h3>
                 </div>
                 <Link
                   href="/interviews/swe"
@@ -314,16 +297,13 @@ export default function InterviewsHubPage() {
                 </Link>
               </div>
 
-              {/* Format 4: AI Group Discussion */}
+              {/* Format 4: EdInterview Group Discussion */}
               <div className="p-5 sm:p-6 rounded-2xl bg-white border border-stone-200/80 shadow-xs space-y-4 flex flex-col justify-between hover:border-stone-400 transition-all">
                 <div className="space-y-2.5">
                   <div className="w-10 h-10 rounded-xl bg-stone-100 text-stone-700 flex items-center justify-center">
                     <MessageSquare className="w-5 h-5 text-stone-700" />
                   </div>
-                  <h3 className="font-serif font-medium text-stone-900 text-base">AI Group Discussion</h3>
-                  <p className="text-xs text-stone-500 leading-relaxed">
-                    Simulated round-table with opposing AI personas, turn-taking state machine, and collaboration scoring.
-                  </p>
+                  <h3 className="font-serif font-medium text-stone-900 text-base">EdInterview Discussion</h3>
                 </div>
                 <Link
                   href="/interviews/behavioral?format=group_discussion"

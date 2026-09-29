@@ -285,11 +285,8 @@ export default function NetworkPage() {
                 <span className="text-xs text-[#5E6573] font-medium">• Verified Members</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold font-sans text-[#13141B] tracking-tight">
-                Peer &amp; Professional Network
+                EdNetwork
               </h1>
-              <p className="text-xs text-[#5E6573] font-medium">
-                Connect with verified students, alumni, and industry engineers for mentorship and career growth.
-              </p>
             </div>
 
             <div className="flex items-center gap-3">

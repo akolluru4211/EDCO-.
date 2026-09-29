@@ -153,11 +153,11 @@ export default function LanguageTrainingPage() {
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#D7FC51]/20 text-[#D7FC51] border border-[#D7FC51]/40 flex items-center gap-1.5">
                 <Sparkles className="w-3 h-3 text-[#D7FC51]" />
-                <span>Personalized Language &amp; Communication Trainer</span>
+                <span>EdSpeech</span>
               </span>
               <span className="text-xs text-[#8E95A5] font-mono">Attempt #{attemptNumber}</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white">Rapid Spoken Communication Drills</h1>
+            <h1 className="text-2xl sm:text-3xl font-black text-white">EdSpeech</h1>
           </div>
 
           <div className="flex items-center gap-2">

@@ -109,8 +109,8 @@ export default function Navbar() {
     // 1. Core Learning & Practice OS
     {
       href: "/dashboard",
-      label: "Main Dashboard",
-      shortLabel: "Dashboard",
+      label: "EdDashboard",
+      shortLabel: "EdDashboard",
       icon: LayoutDashboard,
       desc: "Personalized skills radar, daily streak & priority drills",
       category: "core",
@@ -118,8 +118,8 @@ export default function Navbar() {
     },
     {
       href: "/interviews",
-      label: "AI Mock Interview Studio",
-      shortLabel: "Interviews",
+      label: "EdInterview",
+      shortLabel: "EdInterview",
       icon: Video,
       desc: "STAR behavioral & technical questions with Claude AI",
       category: "core",
@@ -127,8 +127,8 @@ export default function Navbar() {
     },
     {
       href: "/interview-experiences",
-      label: "Interview Experience Database",
-      shortLabel: "Experiences",
+      label: "EdArchives",
+      shortLabel: "EdArchives",
       icon: BookOpen,
       desc: "Real company round breakdowns & question archives",
       category: "core",
@@ -136,23 +136,23 @@ export default function Navbar() {
     },
     {
       href: "/interviews/language-training",
-      label: "Spoken Fluency & Speech Coach",
-      shortLabel: "Speech Coach",
+      label: "EdSpeech",
+      shortLabel: "EdSpeech",
       icon: Sparkles,
       desc: "Rapid audio drills, grammar, pace & filler word diagnostics",
       category: "core"
     },
     {
       href: "/aptitude",
-      label: "Daily Aptitude & Logic Drills",
-      shortLabel: "Aptitude",
+      label: "EdAptitude",
+      shortLabel: "EdAptitude",
       icon: Brain,
       desc: "Quantitative, logical reasoning & CS practice with instant scoring",
       category: "core"
     },
     {
       href: "/edfix",
-      label: "EdFix Real-World Problem Board",
+      label: "EdFix",
       shortLabel: "EdFix",
       icon: Sparkles,
       desc: "Curated industry & product challenges with verified peer solutions",
@@ -161,8 +161,8 @@ export default function Navbar() {
     },
     {
       href: "/projects",
-      label: "Project Studio & Repositories",
-      shortLabel: "Projects",
+      label: "EdProjects",
+      shortLabel: "EdProjects",
       icon: Layers,
       desc: "Showcase builds, GitHub verification & live demos",
       category: "core"
@@ -171,8 +171,8 @@ export default function Navbar() {
     // 2. Career & Placement OS
     {
       href: "/resumes",
-      label: "ATS Resume Builder",
-      shortLabel: "Resumes",
+      label: "EdResume",
+      shortLabel: "EdResume",
       icon: FileText,
       desc: "ATS score optimization, JD match & peer review",
       category: "career",
@@ -180,15 +180,15 @@ export default function Navbar() {
     },
     {
       href: "/jobs",
-      label: "Opportunity & Job Board",
-      shortLabel: "Job Board",
+      label: "EdJobs",
+      shortLabel: "EdJobs",
       icon: Briefcase,
       desc: "Direct employer postings calibrated to your skill profile",
       category: "career"
     },
     {
       href: "/jobs/applications",
-      label: "My Applications Tracker",
+      label: "EdApplications Tracker",
       shortLabel: "Applications",
       icon: FileCheck,
       desc: "Track interview statuses, feedback & outreach",
@@ -196,7 +196,7 @@ export default function Navbar() {
     },
     {
       href: "/career/skills-gap",
-      label: "Skills Gap Planner",
+      label: "EdSkills Gap Planner",
       shortLabel: "Skills Gap",
       icon: Target,
       desc: "Benchmark verified evidence against target role benchmarks",
@@ -205,7 +205,7 @@ export default function Navbar() {
     },
     {
       href: "/career/evidence",
-      label: "Verified Developer Evidence",
+      label: "EdEvidence Verified Evidence",
       shortLabel: "Evidence",
       icon: GitBranch,
       desc: "GitHub, LeetCode & verifiable repository metrics",
@@ -214,7 +214,7 @@ export default function Navbar() {
     },
     {
       href: "/career/timeline",
-      label: "Career Readiness Timeline",
+      label: "EdTimeline Readiness Timeline",
       shortLabel: "Timeline",
       icon: Calendar,
       desc: "Step-by-step milestones to placement readiness",
@@ -223,7 +223,7 @@ export default function Navbar() {
     },
     {
       href: "/offers/compare",
-      label: "Offer Comparison Calculator",
+      label: "EdOffer Compare Calculator",
       shortLabel: "Offer Compare",
       icon: Scale,
       desc: "Side-by-side total compensation, ESOP & growth evaluation",
@@ -232,7 +232,7 @@ export default function Navbar() {
     },
     {
       href: "/interviews/reflection",
-      label: "Post-Interview Reflection",
+      label: "EdReflection Post-Interview",
       shortLabel: "Reflection",
       icon: Award,
       desc: "Capture questions asked, performance debrief & actionable fixes",
@@ -241,7 +241,7 @@ export default function Navbar() {
     },
     {
       href: "/career/documents",
-      label: "Career Documents & Certifications",
+      label: "EdDocuments & Certifications",
       shortLabel: "Documents",
       icon: FileText,
       desc: "Offer letters, transcripts & verified certificates",
@@ -250,7 +250,7 @@ export default function Navbar() {
     },
     {
       href: "/leadership-assessment",
-      label: "Leadership & Executive Assessment",
+      label: "EdLeadership Assessment",
       shortLabel: "Leadership",
       icon: Crown,
       desc: "Situational judgment, delegation & cross-functional readiness",
@@ -261,15 +261,15 @@ export default function Navbar() {
     // 3. Networking & Community
     {
       href: "/network",
-      label: "Member Directory",
-      shortLabel: "Directory",
+      label: "EdNetwork",
+      shortLabel: "EdNetwork",
       icon: Users,
       desc: "Connect with verified peers, engineers & students",
       category: "networking"
     },
     {
       href: "/colleges",
-      label: "College Ambassador Program",
+      label: "EdAmbassadors Program",
       shortLabel: "Ambassadors",
       icon: GraduationCap,
       desc: "Represent EdWorld on campus & earn leadership perks",

@@ -282,8 +282,6 @@ export default function ResumesDirectEditorPage() {
                     <Check className="w-3.5 h-3.5 text-emerald-500" />
                     {savedStatus}
                   </span>
-                  <span>&bull;</span>
-                  <span>ATS Optimized Single-Column</span>
                 </div>
               </div>
             </div>

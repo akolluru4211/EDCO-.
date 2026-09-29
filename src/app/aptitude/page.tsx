@@ -137,14 +137,11 @@ export default function AptitudeStudioPage() {
             </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-base sm:text-lg lg:text-xl font-extrabold text-[#13141B]">Daily Aptitude Sprint</h1>
+                <h1 className="text-base sm:text-lg lg:text-xl font-extrabold text-[#13141B]">EdAptitude</h1>
                 <span className="text-xs font-mono px-2.5 py-0.5 rounded-md bg-[#00D2B4]/10 text-[#0A5245] font-bold border border-[#00D2B4]/20">
                   +50 XP
                 </span>
               </div>
-              <p className="text-xs text-[#5E6573] font-medium mt-0.5">
-                10 timed cross-domain questions to benchmark quantitative and logical speed.
-              </p>
             </div>
           </div>
 

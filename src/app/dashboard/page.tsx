@@ -352,7 +352,7 @@ export default function DashboardPage() {
                       <Video className="w-3.5 h-3.5" />
                     </div>
                     <span className="text-xs font-bold text-[#13141B] group-hover:text-[#00D2B4] transition-colors">
-                      AI Mock Interview
+                      EdInterview
                     </span>
                   </Link>
 
@@ -364,7 +364,7 @@ export default function DashboardPage() {
                       <FileText className="w-3.5 h-3.5" />
                     </div>
                     <span className="text-xs font-bold text-[#13141B] group-hover:text-[#00D2B4] transition-colors">
-                      ATS Resume Maker
+                      EdResume
                     </span>
                   </Link>
 
@@ -376,7 +376,7 @@ export default function DashboardPage() {
                       <Sparkles className="w-3.5 h-3.5" />
                     </div>
                     <span className="text-xs font-bold text-[#13141B] group-hover:text-[#00D2B4] transition-colors">
-                      EdFix Board
+                      EdFix
                     </span>
                   </Link>
 
@@ -388,7 +388,7 @@ export default function DashboardPage() {
                       <FolderGit2 className="w-3.5 h-3.5" />
                     </div>
                     <span className="text-xs font-bold text-[#13141B] group-hover:text-[#00D2B4] transition-colors">
-                      Project Studio
+                      EdProjects
                     </span>
                   </Link>
 
@@ -400,7 +400,7 @@ export default function DashboardPage() {
                       <Brain className="w-3.5 h-3.5" />
                     </div>
                     <span className="text-xs font-bold text-[#13141B] group-hover:text-[#00D2B4] transition-colors">
-                      Daily Aptitude
+                      EdAptitude
                     </span>
                   </Link>
 
@@ -412,7 +412,7 @@ export default function DashboardPage() {
                       <Users className="w-3.5 h-3.5" />
                     </div>
                     <span className="text-xs font-bold text-[#13141B] group-hover:text-[#00D2B4] transition-colors">
-                      Peer Network
+                      EdNetwork
                     </span>
                   </Link>
                 </div>
