@@ -401,7 +401,7 @@ export default function Navbar() {
             
             {/* Left: Brand Logo */}
             <Link 
-              href={user ? (isStaff ? (isFounder ? "/founder" : isHR ? "/hr" : "/employee") : "/dashboard") : "/"} 
+              href="/" 
               className="flex items-center gap-3 group"
             >
               <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-[#1C1D26] border border-white/15 p-1.5 flex items-center justify-center shadow-md group-hover:scale-105 group-hover:border-[#D7FC51]/50 transition-all overflow-hidden shrink-0">

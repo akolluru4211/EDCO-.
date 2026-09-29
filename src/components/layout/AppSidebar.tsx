@@ -293,7 +293,7 @@ export default function AppSidebar() {
             <Menu className="w-5 h-5" />
           </button>
 
-          <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2.5">
+          <Link href="/" className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-[#13141B] border border-black/5 p-1 flex items-center justify-center shrink-0 shadow-2xs">
               <Image
                 src="/images/edworld-logo.png"
@@ -338,7 +338,7 @@ export default function AppSidebar() {
         {/* Top Branding & Pin / Collapse Button */}
         <div className="p-4 border-b border-[#EBECEF] flex items-center justify-between h-16 shrink-0">
           <Link
-            href={user ? "/dashboard" : "/"}
+            href="/"
             className={`flex items-center gap-3 overflow-hidden transition-all ${
               !isExpanded ? "justify-center w-full" : ""
             }`}
@@ -560,7 +560,7 @@ export default function AppSidebar() {
               {/* Drawer Top Header */}
               <div className="p-4 border-b border-[#EBECEF] flex items-center justify-between bg-white">
                 <Link
-                  href={user ? "/dashboard" : "/"}
+                  href="/"
                   onClick={() => setIsMobileOpen(false)}
                   className="flex items-center gap-2.5"
                 >
