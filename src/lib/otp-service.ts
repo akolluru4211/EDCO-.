@@ -338,7 +338,7 @@ export async function verifyOtp(
       identifier,
       timestamp: new Date().toISOString(),
     });
-    throw new Error("Your account has been suspended by organization administration. Please contact support@edworld.co.");
+    throw new Error("Your account has been suspended by organization administration. Please contact edworld.eden@gmail.com.");
   }
 
   if (status === "DISABLED") {

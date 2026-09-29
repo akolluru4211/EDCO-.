@@ -6,14 +6,41 @@ import { Mail, Phone, MapPin, ShieldAlert, CheckCircle2 } from "lucide-react";
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [category, setCategory] = useState("General Support");
   const [message, setMessage] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    if (!name.trim() || !email.trim() || !message.trim()) return;
+
+    setIsSubmitting(true);
+    setErrorMsg("");
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          category,
+          message: message.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSubmitted(true);
+      } else {
+        setErrorMsg(data.error || "Failed to send message. Please try again.");
+      }
+    } catch (err) {
+      setErrorMsg("Network error occurred. Please try again or email edworld.eden@gmail.com directly.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -48,10 +75,10 @@ export default function ContactPage() {
                 <div>
                   <strong>Email:</strong>{" "}
                   <a
-                    href="mailto:grievance-officer@edworld.co.in?subject=Grievance%20Redressal%20Inquiry"
+                    href="mailto:edworld.eden@gmail.com?subject=Grievance%20Redressal%20Inquiry"
                     className="text-forest hover:underline font-bold"
                   >
-                    grievance-officer@edworld.co.in
+                    edworld.eden@gmail.com
                   </a>
                 </div>
                 <div><strong>Response SLA:</strong> Within 24–48 hours</div>
@@ -64,10 +91,10 @@ export default function ContactPage() {
                 <span>
                   General Support:{" "}
                   <a
-                    href="mailto:support@edworld.co.in?subject=EdWorld%20Support%20Request"
+                    href="mailto:edworld.eden@gmail.com?subject=EdWorld%20Support%20Request"
                     className="text-forest hover:underline font-bold"
                   >
-                    support@edworld.co.in
+                    edworld.eden@gmail.com
                   </a>
                 </span>
               </div>
@@ -85,13 +112,19 @@ export default function ContactPage() {
                 <CheckCircle2 className="w-10 h-10 text-forest mx-auto" />
                 <h3 className="text-lg font-bold font-display text-ink">Inquiry Submitted</h3>
                 <p className="text-xs text-ink-soft">
-                  Thank you, {name}. We will review your message and reply to {email} shortly.
+                  Thank you, {name}. Your message has been routed to our core team at edworld.eden@gmail.com. We will review and reply to {email} shortly.
                 </p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <h3 className="text-lg font-bold font-display text-ink">Send us a message</h3>
                 
+                {errorMsg && (
+                  <div className="p-3 rounded-xl bg-rose-50 text-rose-700 text-xs font-medium border border-rose-200">
+                    {errorMsg}
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-xs font-bold text-ink uppercase mb-1">Your Name</label>
                   <input
@@ -141,8 +174,8 @@ export default function ContactPage() {
                   />
                 </div>
 
-                <Button variant="primary" type="submit" className="w-full">
-                  Send Message
+                <Button variant="primary" type="submit" disabled={isSubmitting} className="w-full">
+                  {isSubmitting ? "Sending..." : "Send Message"}
                 </Button>
               </form>
             )}

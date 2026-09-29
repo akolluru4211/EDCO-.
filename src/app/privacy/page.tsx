@@ -40,10 +40,10 @@ export default function PrivacyPolicyPage() {
           <p className="text-xs text-ink-soft">
             To exercise your right to access, rectify, or erase your personal data, contact our Grievance Officer directly at <Link href="/contact" className="text-forest font-bold underline">contact &amp; grievance page</Link> or email{" "}
             <a
-              href="mailto:grievance-officer@edworld.co.in?subject=DPDP%20Data%20Privacy%20Request"
+              href="mailto:edworld.eden@gmail.com?subject=DPDP%20Data%20Privacy%20Request"
               className="text-forest font-bold underline"
             >
-              grievance-officer@edworld.co.in
+              edworld.eden@gmail.com
             </a>.
           </p>
         </section>

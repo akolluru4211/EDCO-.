@@ -62,6 +62,7 @@ export function renderBrandedEmailHtml(props: EmailLayoutProps): string {
           </div>
           <div class="footer">
             <p>${footerNote || "You received this email because of your verified account on Edworld Co."}</p>
+            <p>Questions or support: <a href="mailto:edworld.eden@gmail.com">edworld.eden@gmail.com</a></p>
             <p>&copy; ${new Date().getFullYear()} EdWorld Co. All rights reserved. &bull; <a href="${appUrl}/privacy">Privacy Policy</a> &bull; <a href="${appUrl}/terms">Terms</a></p>
           </div>
         </div>

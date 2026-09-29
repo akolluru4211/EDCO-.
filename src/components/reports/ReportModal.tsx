@@ -33,6 +33,22 @@ export default function ReportModal({
 
     setIsSubmitting(true);
     try {
+      try {
+        await fetch("/api/network/report", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            reporterId: user?.uid || "anonymous",
+            reportedId: targetId,
+            category: targetType,
+            reason: reason.trim(),
+            details: `Reported item: ${targetName}`,
+          }),
+        });
+      } catch (postErr) {
+        console.warn("API report dispatch notice:", postErr);
+      }
+
       const newReport: ContentReport = {
         id: "rep-" + Date.now(),
         type: targetType,

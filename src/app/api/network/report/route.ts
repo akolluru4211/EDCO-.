@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { forwardSafetyReport } from "@/lib/email-service";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,15 @@ export async function POST(req: NextRequest) {
     if (error) {
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
+
+    // Forward report notification directly to edworld.eden@gmail.com
+    await forwardSafetyReport({
+      reporterId,
+      targetId: reportedId,
+      category,
+      reason,
+      details,
+    });
 
     return NextResponse.json({ success: true, report: reportRecord, message: "Report submitted for moderation review." });
   } catch (err: any) {

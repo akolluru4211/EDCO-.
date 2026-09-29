@@ -141,7 +141,7 @@ export default function GuardianConsentVerifyPage() {
             <div className="space-y-1">
               <h2 className="text-xl font-black text-slate-900 tracking-tight">Consent Declined</h2>
               <p className="text-xs text-slate-600 max-w-sm mx-auto leading-relaxed">
-                You have chosen not to authorize this account. The student&apos;s profile access has been restricted. You can contact support@edworld.co if you have questions.
+                You have chosen not to authorize this account. The student&apos;s profile access has been restricted. You can contact edworld.eden@gmail.com if you have questions.
               </p>
             </div>
           </div>
