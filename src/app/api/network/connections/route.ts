@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { 
+  sendConnectionRequestNotification, 
+  sendConnectionAcceptedNotification 
+} from "@/lib/email-service";
 
 export const dynamic = "force-dynamic";
 
@@ -152,6 +156,10 @@ export async function POST(req: NextRequest) {
       if (updateErr) {
         return NextResponse.json({ success: false, error: updateErr.message }, { status: 500 });
       }
+
+      // Dispatch email notification to recipient
+      notifyConnectionRequest(userId, targetUserId, message);
+
       return NextResponse.json({ success: true, connection: updated, message: "Connection request sent." });
     }
 
@@ -171,6 +179,9 @@ export async function POST(req: NextRequest) {
     if (insertErr) {
       return NextResponse.json({ success: false, error: insertErr.message }, { status: 500 });
     }
+
+    // Dispatch email notification to recipient
+    notifyConnectionRequest(userId, targetUserId, message);
 
     return NextResponse.json({ success: true, connection: created, message: "Connection request sent." });
   } catch (err: any) {
@@ -204,6 +215,11 @@ export async function PUT(req: NextRequest) {
 
     if (error) {
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+
+    // If accepted, notify the original requester via email
+    if (newStatus === "ACCEPTED" && data) {
+      notifyConnectionAccepted(data);
     }
 
     return NextResponse.json({ success: true, connection: data, action: newStatus });
@@ -240,3 +256,62 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ success: false, error: err.message || "Internal error" }, { status: 500 });
   }
 }
+
+/**
+ * Dispatches connection request received email to the target recipient
+ */
+async function notifyConnectionRequest(reqUserId: string, targetUserId: string, msg?: string) {
+  try {
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, name, email, headline, username, college, company")
+      .in("id", [reqUserId, targetUserId]);
+
+    const reqProfile = profiles?.find((p: any) => p.id === reqUserId);
+    const targetProfile = profiles?.find((p: any) => p.id === targetUserId);
+
+    if (targetProfile?.email) {
+      await sendConnectionRequestNotification({
+        recipientEmail: targetProfile.email,
+        recipientName: targetProfile.name || targetProfile.username || "EdWorld Member",
+        requesterName: reqProfile?.name || reqProfile?.username || "A fellow member",
+        requesterHeadline: reqProfile?.headline || undefined,
+        requesterCollegeOrCompany: reqProfile?.company || reqProfile?.college || undefined,
+        message: msg || undefined,
+      });
+    }
+  } catch (err) {
+    console.warn("[Connection Request Email Dispatch Note]:", err);
+  }
+}
+
+/**
+ * Dispatches connection accepted confirmation email to the original requester
+ */
+async function notifyConnectionAccepted(connectionRecord: any) {
+  try {
+    const originalRequesterId = connectionRecord.requester_id;
+    const originalReceiverId = connectionRecord.receiver_id;
+
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, name, email, headline, username, college, company")
+      .in("id", [originalRequesterId, originalReceiverId]);
+
+    const reqProfile = profiles?.find((p: any) => p.id === originalRequesterId);
+    const receiverProfile = profiles?.find((p: any) => p.id === originalReceiverId);
+
+    if (reqProfile?.email) {
+      await sendConnectionAcceptedNotification({
+        requesterEmail: reqProfile.email,
+        requesterName: reqProfile.name || reqProfile.username || "EdWorld Member",
+        accepterName: receiverProfile?.name || receiverProfile?.username || "Your connection",
+        accepterHeadline: receiverProfile?.headline || undefined,
+        accepterCollegeOrCompany: receiverProfile?.company || receiverProfile?.college || undefined,
+      });
+    }
+  } catch (err) {
+    console.warn("[Connection Accepted Email Dispatch Note]:", err);
+  }
+}
+

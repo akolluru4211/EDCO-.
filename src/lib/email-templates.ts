@@ -114,3 +114,68 @@ export function renderInterviewScorecardEmail(params: { name: string; sessionTit
     ctaUrl: `${process.env.NEXT_PUBLIC_APP_URL || "https://edworldco.in"}/interviews/results/${params.sessionId}`,
   });
 }
+
+/**
+ * Generates branded email when someone receives a connection request
+ */
+export function renderConnectionRequestReceivedEmail(params: {
+  recipientName: string;
+  requesterName: string;
+  requesterHeadline?: string;
+  requesterCollegeOrCompany?: string;
+  message?: string;
+}): string {
+  return renderBrandedEmailHtml({
+    previewText: `${params.requesterName} wants to connect with you on EdWorld Co.`,
+    title: "New Connection Request",
+    contentHtml: `
+      <p>Hi <strong>${params.recipientName}</strong>,</p>
+      <p><strong>${params.requesterName}</strong> sent you a connection request on EdWorld Co.</p>
+      
+      <div style="background-color: #F4F6FB; border: 1px solid #E8ECF2; border-radius: 16px; padding: 18px; margin: 20px 0;">
+        <div style="font-size: 16px; font-weight: 800; color: #13141B;">${params.requesterName}</div>
+        ${params.requesterHeadline ? `<div style="font-size: 13px; color: #5E6573; margin-top: 2px;">${params.requesterHeadline}</div>` : ""}
+        ${params.requesterCollegeOrCompany ? `<div style="font-size: 12px; color: #8E95A5; margin-top: 4px; font-family: monospace;">${params.requesterCollegeOrCompany}</div>` : ""}
+        ${params.message ? `
+          <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed #D0D5DD; font-size: 13px; font-style: italic; color: #344054;">
+            &ldquo;${params.message}&rdquo;
+          </div>
+        ` : ""}
+      </div>
+      
+      <p>Connect with peers, alumni, and industry engineers to collaborate on technical projects, share interview experiences, and expand your professional network.</p>
+    `,
+    ctaText: "Review & Respond to Request",
+    ctaUrl: `${process.env.NEXT_PUBLIC_APP_URL || "https://edworldco.in"}/network`,
+  });
+}
+
+/**
+ * Generates branded email when a connection request is accepted
+ */
+export function renderConnectionAcceptedEmail(params: {
+  recipientName: string;
+  accepterName: string;
+  accepterHeadline?: string;
+  accepterCollegeOrCompany?: string;
+}): string {
+  return renderBrandedEmailHtml({
+    previewText: `${params.accepterName} accepted your connection request on EdWorld Co.`,
+    title: "Connection Request Accepted!",
+    contentHtml: `
+      <p>Hi <strong>${params.recipientName}</strong>,</p>
+      <p>Great news! <strong>${params.accepterName}</strong> has accepted your connection request.</p>
+      
+      <div style="background-color: #F4F6FB; border: 1px solid #E8ECF2; border-radius: 16px; padding: 18px; margin: 20px 0;">
+        <div style="font-size: 16px; font-weight: 800; color: #13141B;">${params.accepterName}</div>
+        ${params.accepterHeadline ? `<div style="font-size: 13px; color: #5E6573; margin-top: 2px;">${params.accepterHeadline}</div>` : ""}
+        ${params.accepterCollegeOrCompany ? `<div style="font-size: 12px; color: #8E95A5; margin-top: 4px; font-family: monospace;">${params.accepterCollegeOrCompany}</div>` : ""}
+      </div>
+      
+      <p>You are now officially connected in the EdWorld Co. network. You can view their public profile and collaborate on engineering milestones.</p>
+    `,
+    ctaText: "View Network & Profile",
+    ctaUrl: `${process.env.NEXT_PUBLIC_APP_URL || "https://edworldco.in"}/network`,
+  });
+}
+

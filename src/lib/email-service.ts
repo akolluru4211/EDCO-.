@@ -7,7 +7,11 @@
 
 import { Resend } from "resend";
 import { supabase } from "@/lib/supabase";
-import { renderBrandedEmailHtml } from "./email-templates";
+import { 
+  renderBrandedEmailHtml, 
+  renderConnectionRequestReceivedEmail, 
+  renderConnectionAcceptedEmail 
+} from "./email-templates";
 
 export const PRIMARY_ADMIN_EMAIL = "edworld.eden@gmail.com";
 export const SUPPORT_EMAIL = "edworld.eden@gmail.com";
@@ -355,3 +359,66 @@ export async function forwardSafetyReport(report: {
     metadata: report,
   });
 }
+
+/**
+ * Sends an email notification to the recipient when a connection request is sent.
+ */
+export async function sendConnectionRequestNotification(params: {
+  recipientEmail: string;
+  recipientName: string;
+  requesterName: string;
+  requesterHeadline?: string;
+  requesterCollegeOrCompany?: string;
+  message?: string;
+}) {
+  const html = renderConnectionRequestReceivedEmail({
+    recipientName: params.recipientName,
+    requesterName: params.requesterName,
+    requesterHeadline: params.requesterHeadline,
+    requesterCollegeOrCompany: params.requesterCollegeOrCompany,
+    message: params.message,
+  });
+
+  return sendEmailNotification({
+    to: params.recipientEmail,
+    subject: `👋 ${params.requesterName} wants to connect with you on EdWorld Co`,
+    html,
+    category: "system",
+    metadata: {
+      type: "CONNECTION_REQUEST_RECEIVED",
+      requesterName: params.requesterName,
+      recipientEmail: params.recipientEmail,
+    },
+  });
+}
+
+/**
+ * Sends an email notification to the requester when their connection request is accepted.
+ */
+export async function sendConnectionAcceptedNotification(params: {
+  requesterEmail: string;
+  requesterName: string;
+  accepterName: string;
+  accepterHeadline?: string;
+  accepterCollegeOrCompany?: string;
+}) {
+  const html = renderConnectionAcceptedEmail({
+    recipientName: params.requesterName,
+    accepterName: params.accepterName,
+    accepterHeadline: params.accepterHeadline,
+    accepterCollegeOrCompany: params.accepterCollegeOrCompany,
+  });
+
+  return sendEmailNotification({
+    to: params.requesterEmail,
+    subject: `✨ ${params.accepterName} accepted your connection request on EdWorld Co`,
+    html,
+    category: "system",
+    metadata: {
+      type: "CONNECTION_REQUEST_ACCEPTED",
+      accepterName: params.accepterName,
+      requesterEmail: params.requesterEmail,
+    },
+  });
+}
+
