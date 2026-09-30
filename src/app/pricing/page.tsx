@@ -55,7 +55,6 @@ export default async function PricingPage() {
       description: "VIP career acceleration with direct senior engineering referrals and personalized AI appraisal coaching.",
       features: dbPlans?.find(p => p.id === "premium")?.features || [
         "Everything in Pro Tier",
-        "1:1 Verified Mentor Connect & Messaging",
         "AI Multi-Persona Group Discussion Studio",
         "Senior Executive Portfolio at edworld.co.in/u/name",
         "Direct Engineering Referrals Generator",
@@ -83,16 +82,16 @@ export default async function PricingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-paper py-16 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FCFCFB] text-[#13141B] py-16 px-4 sm:px-6 lg:px-8 font-sans selection:bg-[#00D2B4]/20 selection:text-[#0A5245]">
       <div className="max-w-7xl mx-auto space-y-12">
-        <div className="text-center space-y-4 max-w-2xl mx-auto">
-          <span className="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-forest/10 text-forest border border-forest/20">
+        <div className="text-center space-y-3 max-w-2xl mx-auto">
+          <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#00D2B4]/10 text-[#0A5245] border border-[#00D2B4]/30">
             Simple &amp; Transparent
           </span>
-          <h1 className="text-3xl sm:text-5xl font-bold font-display text-ink tracking-tight">
+          <h1 className="text-3xl sm:text-5xl font-extrabold text-[#13141B] tracking-tight">
             Plans for Every Career Stage
           </h1>
-          <p className="text-sm text-ink-soft">
+          <p className="text-xs sm:text-sm text-[#5E6573]">
             Start completely free. Upgrade only when you need intensive daily mock interview drills and active employer applications.
           </p>
         </div>
@@ -103,14 +102,19 @@ export default async function PricingPage() {
           ))}
         </div>
 
-        <div className="bg-paper-raised rounded-3xl p-8 border border-line text-center space-y-4 max-w-2xl mx-auto">
-          <h3 className="text-lg font-bold font-display text-ink">Have institutional questions?</h3>
-          <p className="text-xs text-ink-soft">
-            We partner with skill foundations, and university placement cells.
+        <div className="bg-white rounded-3xl p-8 border border-[#EBECEF] text-center space-y-3 max-w-2xl mx-auto shadow-xs">
+          <h3 className="text-lg font-bold text-[#13141B]">Have institutional questions?</h3>
+          <p className="text-xs text-[#5E6573]">
+            We partner with skill foundations, university placement cells, and corporate hiring partners.
           </p>
-          <Button variant="secondary" href="/colleges">
-            Speak to Institutional Team
-          </Button>
+          <div className="pt-2">
+            <Link
+              href="/colleges"
+              className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-[#13141B] hover:bg-[#252632] text-white text-xs font-bold transition-all shadow-xs"
+            >
+              Speak to Institutional Team
+            </Link>
+          </div>
         </div>
       </div>
     </div>
