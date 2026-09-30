@@ -25,13 +25,14 @@ import {
   Lock,
   UserX,
   ExternalLink,
-  ChevronRight,
+  Download,
   Shield,
   Cpu
 } from "lucide-react";
 import { UserRole } from "@/lib/types";
 import AccessDeniedPortal from "@/components/ui/AccessDeniedPortal";
 import { supabase } from "@/lib/supabase";
+import { downloadUsersAsExcel } from "@/lib/excel-export";
 
 interface AdminUserRecord {
   id: string;
@@ -404,6 +405,14 @@ export default function AdminControlPage() {
                 <option value="ALL">All Roles ({users.length})</option>
                 {ALL_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
               </select>
+              <button
+                onClick={() => downloadUsersAsExcel(filteredUsers as any, "edworld_admin_users")}
+                className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 shrink-0"
+                title="Download user records as an Excel spreadsheet (.xls / .xlsx)"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Export Excel</span>
+              </button>
             </div>
           </div>
 

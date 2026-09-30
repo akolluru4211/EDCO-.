@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import AccessDeniedPortal from "@/components/ui/AccessDeniedPortal";
+import { downloadUsersAsExcel, downloadUsersAsCsv } from "@/lib/excel-export";
 
 interface UserAdminRecord {
   id: string;
@@ -212,32 +213,12 @@ export default function AdminUsersPage() {
 
   
 
-  const exportCSV = () => {
-    const headers = ["ID", "Name", "Email", "Phone", "Age Band", "Grade", "Points", "Streak", "Quests", "Interviews", "Avg Interview Score", "Resumes", "Status"];
-    const rows = filteredUsers.map(u => [
-      `"${u.id}"`,
-      `"${u.name}"`,
-      `"${u.email}"`,
-      `"${u.phone || 'N/A'}"`,
-      `"${u.age_band}"`,
-      `"${u.grade}"`,
-      u.points,
-      u.current_streak,
-      u.quests_completed,
-      u.interviews_count,
-      u.avg_interview_score,
-      u.resumes_count,
-      `"${u.is_suspended ? 'Suspended' : 'Active'}"`
-    ]);
+  const handleExportExcel = () => {
+    downloadUsersAsExcel(filteredUsers, "edworld_students_directory");
+  };
 
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `edworld_students_performance_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleExportCsv = () => {
+    downloadUsersAsCsv(filteredUsers, "edworld_students_directory");
   };
 
   const filteredUsers = usersList.filter(u => {
@@ -305,12 +286,20 @@ export default function AdminUsersPage() {
               Live database records, contact records, gamification scores, and competency metrics
             </p>
           </div>
-          <div className="flex items-center gap-2 self-start sm:self-auto">
+          <div className="flex items-center flex-wrap gap-2 self-start sm:self-auto">
             <button
-              onClick={exportCSV}
+              onClick={handleExportExcel}
+              className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all"
+              title="Download full user dataset formatted for Microsoft Excel & Google Sheets"
+            >
+              <Download className="w-3.5 h-3.5 text-white" />
+              <span>Export Excel (.xls / .xlsx)</span>
+            </button>
+            <button
+              onClick={handleExportCsv}
               className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:text-slate-900 text-xs font-bold shadow-sm flex items-center gap-1.5 hover:bg-slate-50 transition-all"
             >
-              <Download className="w-3.5 h-3.5" />
+              <Download className="w-3.5 h-3.5 text-slate-500" />
               <span>Export CSV</span>
             </button>
             <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-3.5 py-2 rounded-xl">
