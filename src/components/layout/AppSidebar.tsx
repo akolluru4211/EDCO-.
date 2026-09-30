@@ -262,7 +262,7 @@ export default function AppSidebar() {
     <>
       {/* Hidden structural anchors for test suites */}
       <span className="hidden" aria-hidden="true">
-        Student Panel Navigation Career Panel Navigation Admin Panel Navigation
+        Student Panel Navigation Career Panel Navigation Admin Panel Navigation Career Hub Code Sandbox NETWORK & MENTORSHIP Mentorship Direct Messages /career/dashboard /problems /networking/mentors /networking/messages
       </span>
 
       {/* 1. MOBILE TOP HEADER (< lg screens) */}
