@@ -8,6 +8,7 @@ import { adminTools } from "./tools/admin";
 import { developerTools } from "./tools/developer";
 import { claudeMCPTools } from "./tools/claude-tools";
 import { careerTools } from "./tools/career";
+import { resendTools } from "./tools/resend";
 import { recordAuditLog } from "@/lib/audit-logger";
 import { RoleType } from "@/lib/server-role-guard";
 
@@ -21,7 +22,8 @@ export const ALL_MCP_TOOLS: MCPToolDefinition[] = [
   ...hrTools,
   ...founderTools,
   ...collegeTools,
-  ...adminTools
+  ...adminTools,
+  ...resendTools
 ];
 
 // Map by tool name for O(1) lookup

@@ -10,7 +10,8 @@ export type MCPDomain =
   | "college" 
   | "admin"
   | "developer"
-  | "career";
+  | "career"
+  | "email";
 
 export interface MCPAuthContext {
   userId: string;
