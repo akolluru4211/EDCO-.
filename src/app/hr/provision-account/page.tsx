@@ -101,10 +101,10 @@ export default function HrProvisionAccountPage() {
 
   const handleProvisionSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName.trim() || !companyEmail.trim()) return;
+    if (!fullName || !personalEmail || !companyEmail) return;
 
     if (emailCheckStatus === "duplicate") {
-      setError("This corporate email is already assigned to an existing staff member.");
+      setError("Corporate email address is already provisioned in the roster.");
       return;
     }
 
@@ -112,31 +112,24 @@ export default function HrProvisionAccountPage() {
     setError(null);
 
     try {
-      const newRecord = await saveOnboardingRecord({
-        employeeId: `emp_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      const newRecord: OnboardingRecord = {
+        id: `onb_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
         employeeName: fullName,
+        personalEmail,
         corporateEmail: companyEmail,
         department,
         designation,
+        role: assignedRole,
         joiningDate,
-        managerName,
-        checklist: {
-          personalDetails: true,
-          documents: false,
-          offer: true,
-          contract: true,
-          bankDetails: false,
-          departmentAssigned: true,
-          managerAssigned: true,
-          equipmentDispatched: false,
-          emailAccountCreated: true,
-          accessPermissionsSet: true,
-          orientationCompleted: false,
-          completionPercentage: 45,
-        },
+        manager: managerName,
         status: "INVITATION_SENT",
         activationToken: oneTimeToken,
-      });
+        createdAt: new Date().toISOString(),
+        tasksCompleted: 0,
+        totalTasks: 6,
+      };
+
+      await saveOnboardingRecord(newRecord);
 
       await recordAuditLog({
         actorId: user?.uid || "hr_admin",
@@ -167,105 +160,111 @@ export default function HrProvisionAccountPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0E0F15] text-white p-4 sm:p-6 lg:p-8 xl:px-10 space-y-8 max-w-[1536px] mx-auto">
+    <div className="min-h-screen bg-[#FCFCFB] text-[#13141B] p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1536px] mx-auto font-sans selection:bg-[#00D2B4]/20 selection:text-[#0A5245]">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#13141B] p-6 sm:p-8 lg:p-10 rounded-3xl border border-white/10 shadow-xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 sm:p-8 rounded-3xl border border-[#EBECEF] shadow-xs">
         <div className="space-y-1.5">
-          <Link href="/hr" className="inline-flex items-center gap-1.5 text-xs sm:text-sm text-[#8E95A5] hover:text-[#D7FC51] font-bold mb-1 transition-colors">
-            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+          <Link href="/hr" className="inline-flex items-center gap-1.5 text-xs text-[#5E6573] hover:text-[#13141B] font-bold mb-1 transition-colors">
+            <ChevronLeft className="w-4 h-4" />
             <span>Back to HR Command Center</span>
           </Link>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white">Staff Account Provisioning</h1>
-          <p className="text-xs sm:text-sm text-[#8E95A5]">
+          <div className="flex items-center gap-2">
+            <span className="px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-[#13141B] text-white flex items-center gap-1.5 font-mono">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              <span>STAFF PROVISIONING</span>
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#13141B] tracking-tight">Staff Account Provisioning</h1>
+          <p className="text-xs sm:text-sm text-[#5E6573]">
             Generate corporate @edworld.co.in credentials with secure one-time activation links (zero plaintext storage).
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="px-3.5 py-2 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs sm:text-sm font-black">
+          <span className="px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">
             Domain: @edworld.co.in Verified
           </span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Left 2 Cols: Provisioning Form */}
-        <div className="lg:col-span-2 bg-[#13141B] p-6 sm:p-8 rounded-3xl border border-white/10 space-y-6 shadow-xl">
+        <div className="lg:col-span-2 bg-white p-6 sm:p-8 rounded-3xl border border-[#EBECEF] space-y-6 shadow-xs">
           <div>
-            <h2 className="text-base sm:text-lg lg:text-xl font-black text-white flex items-center gap-2.5">
-              <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-[#D7FC51]" />
-              <span>Staff Provisioning &amp; Role Setup</span>
+            <h2 className="text-base sm:text-lg font-bold text-[#13141B] flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-emerald-600" />
+              <span>Staff Identity &amp; Role Setup</span>
             </h2>
-            <p className="text-xs sm:text-sm text-[#8E95A5] mt-1">
-              Creates staff identity across Firebase Authentication and internal RBAC directories.
+            <p className="text-xs text-[#5E6573] mt-1">
+              Creates employee identity across internal auth directories and RBAC permission tables.
             </p>
           </div>
 
           {error && (
-            <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs sm:text-sm flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-rose-400 shrink-0" />
+            <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2 font-medium">
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
-          <form onSubmit={handleProvisionSubmit} className="space-y-4 sm:space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+          <form onSubmit={handleProvisionSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[#8E95A5] uppercase">Staff Full Name</label>
+                <label className="text-xs font-bold text-[#5E6573] uppercase">Staff Full Name</label>
                 <input
                   type="text"
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="e.g. Vikram Malhotra"
-                  className="w-full p-3 sm:p-3.5 rounded-xl bg-[#1C1D26] border border-white/10 text-xs sm:text-sm text-white placeholder:text-[#8E95A5] focus:outline-none focus:border-[#D7FC51]"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F4F6FB] border border-[#E8ECF2] text-xs text-[#13141B] placeholder:text-[#8E95A5] focus:outline-none focus:border-[#13141B]"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[#8E95A5] uppercase">Personal Email (For Invitation)</label>
+                <label className="text-xs font-bold text-[#5E6573] uppercase">Personal Email (For Invitation)</label>
                 <input
                   type="email"
                   required
                   value={personalEmail}
                   onChange={(e) => setPersonalEmail(e.target.value)}
                   placeholder="vikram@personal.com"
-                  className="w-full p-3 sm:p-3.5 rounded-xl bg-[#1C1D26] border border-white/10 text-xs sm:text-sm text-white placeholder:text-[#8E95A5] focus:outline-none focus:border-[#D7FC51]"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F4F6FB] border border-[#E8ECF2] text-xs text-[#13141B] placeholder:text-[#8E95A5] focus:outline-none focus:border-[#13141B]"
                 />
               </div>
             </div>
 
             {/* Corporate Email Preview & Availability Check */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-[#1C1D26] border border-white/5 space-y-2">
+            <div className="p-4 rounded-2xl bg-[#FCFCFB] border border-[#EBECEF] space-y-1.5">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-[#8E95A5] uppercase">Assigned Corporate Mailbox</span>
+                <span className="text-xs font-bold text-[#5E6573] uppercase">Assigned Corporate Mailbox</span>
                 {emailCheckStatus === "available" && (
-                  <span className="text-xs text-emerald-400 font-bold flex items-center gap-1.5">
-                    <Check className="w-4 h-4" />
+                  <span className="text-xs text-emerald-600 font-bold flex items-center gap-1">
+                    <Check className="w-3.5 h-3.5" />
                     <span>Email Available</span>
                   </span>
                 )}
                 {emailCheckStatus === "duplicate" && (
-                  <span className="text-xs text-rose-400 font-bold flex items-center gap-1.5">
-                    <AlertCircle className="w-4 h-4" />
+                  <span className="text-xs text-rose-600 font-bold flex items-center gap-1">
+                    <AlertCircle className="w-3.5 h-3.5" />
                     <span>Duplicate Email</span>
                   </span>
                 )}
               </div>
-              <div className="text-base sm:text-lg font-black font-mono text-[#D7FC51]">
+              <div className="text-sm sm:text-base font-extrabold font-mono text-[#13141B]">
                 {companyEmail || "name@edworld.co.in"}
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-[#8E95A5] uppercase">Department</label>
+                <label className="text-[10px] font-bold text-[#5E6573] uppercase">Department</label>
                 <select
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-[#1C1D26] border border-white/10 text-xs text-white"
+                  className="w-full px-3 py-2 rounded-xl bg-[#F4F6FB] border border-[#E8ECF2] text-xs text-[#13141B] font-semibold focus:outline-none focus:border-[#13141B]"
                 >
                   <option value="Engineering">Engineering</option>
                   <option value="Product & Design">Product &amp; Design</option>
@@ -277,22 +276,22 @@ export default function HrProvisionAccountPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-[#8E95A5] uppercase">Designation</label>
+                <label className="text-[10px] font-bold text-[#5E6573] uppercase">Designation</label>
                 <input
                   type="text"
                   required
                   value={designation}
                   onChange={(e) => setDesignation(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-[#1C1D26] border border-white/10 text-xs text-white"
+                  className="w-full px-3 py-2 rounded-xl bg-[#F4F6FB] border border-[#E8ECF2] text-xs text-[#13141B] focus:outline-none focus:border-[#13141B]"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-[#8E95A5] uppercase">System RBAC Role</label>
+                <label className="text-[10px] font-bold text-[#5E6573] uppercase">System RBAC Role</label>
                 <select
                   value={assignedRole}
                   onChange={(e) => setAssignedRole(e.target.value as any)}
-                  className="w-full p-2.5 rounded-xl bg-[#1C1D26] border border-white/10 text-xs text-white font-bold"
+                  className="w-full px-3 py-2 rounded-xl bg-[#F4F6FB] border border-[#E8ECF2] text-xs text-[#13141B] font-bold focus:outline-none focus:border-[#13141B]"
                 >
                   <option value="EMPLOYEE">EMPLOYEE</option>
                   <option value="HR">HR</option>
@@ -307,22 +306,22 @@ export default function HrProvisionAccountPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-[#8E95A5] uppercase">Reporting Manager</label>
+                <label className="text-[10px] font-bold text-[#5E6573] uppercase">Reporting Manager</label>
                 <input
                   type="text"
                   value={managerName}
                   onChange={(e) => setManagerName(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-[#1C1D26] border border-white/10 text-xs text-white"
+                  className="w-full px-3 py-2 rounded-xl bg-[#F4F6FB] border border-[#E8ECF2] text-xs text-[#13141B] focus:outline-none focus:border-[#13141B]"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-[#8E95A5] uppercase">Joining Date</label>
+                <label className="text-[10px] font-bold text-[#5E6573] uppercase">Joining Date</label>
                 <input
                   type="date"
                   value={joiningDate}
                   onChange={(e) => setJoiningDate(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-[#1C1D26] border border-white/10 text-xs text-white"
+                  className="w-full px-3 py-2 rounded-xl bg-[#F4F6FB] border border-[#E8ECF2] text-xs text-[#13141B] font-mono focus:outline-none focus:border-[#13141B]"
                 />
               </div>
             </div>
@@ -331,7 +330,7 @@ export default function HrProvisionAccountPage() {
               <button
                 type="submit"
                 disabled={isSubmitting || emailCheckStatus === "duplicate"}
-                className="w-full py-3 rounded-2xl bg-[#D7FC51] hover:bg-[#E9FFA4] text-[#13141B] font-black text-xs transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className="w-full py-3 rounded-xl bg-[#13141B] hover:bg-[#252632] text-white font-bold text-xs transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 <Send className="w-4 h-4" />
                 <span>{isSubmitting ? "Provisioning Corporate Account..." : "Provision Account & Generate Activation Link"}</span>
@@ -344,19 +343,19 @@ export default function HrProvisionAccountPage() {
         <div className="space-y-6">
           
           {/* Activation Dispatch Preview */}
-          <div className="bg-[#13141B] p-6 rounded-3xl border border-white/10 space-y-4 shadow-xl">
-            <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
-              <KeyRound className="w-4 h-4 text-[#D7FC51]" />
+          <div className="bg-white p-6 rounded-3xl border border-[#EBECEF] space-y-4 shadow-xs">
+            <h3 className="text-xs font-bold text-[#13141B] uppercase tracking-wider flex items-center gap-1.5">
+              <KeyRound className="w-4 h-4 text-emerald-600" />
               <span>One-Time Activation Token</span>
             </h3>
 
             {createdRecord ? (
-              <div className="space-y-3 p-4 rounded-2xl bg-[#1C1D26] border border-emerald-500/30">
-                <div className="flex items-center gap-1.5 text-emerald-400 text-xs font-bold">
+              <div className="space-y-3 p-4 rounded-2xl bg-emerald-50/50 border border-emerald-200">
+                <div className="flex items-center gap-1.5 text-emerald-700 text-xs font-bold">
                   <CheckCircle2 className="w-4 h-4" />
                   <span>Account Provisioned Successfully!</span>
                 </div>
-                <div className="text-[11px] text-[#8E95A5] space-y-1 font-mono">
+                <div className="text-[11px] text-[#5E6573] space-y-1 font-mono">
                   <div><strong>Email:</strong> {createdRecord.corporateEmail}</div>
                   <div><strong>Status:</strong> {createdRecord.status}</div>
                   <div><strong>Token:</strong> {createdRecord.activationToken}</div>
@@ -364,32 +363,32 @@ export default function HrProvisionAccountPage() {
 
                 <button
                   onClick={handleCopyInvitation}
-                  className="w-full py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                  className="w-full py-2.5 rounded-xl bg-white hover:bg-[#F4F6FB] text-[#13141B] border border-[#EBECEF] font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
                 >
                   <Copy className="w-3.5 h-3.5" />
                   <span>{copied ? "Copied to Clipboard!" : "Copy Welcome Memo & Link"}</span>
                 </button>
               </div>
             ) : (
-              <div className="p-4 rounded-2xl bg-[#1C1D26] text-center text-xs text-[#8E95A5]">
+              <div className="p-4 rounded-2xl bg-[#FCFCFB] border border-[#EBECEF] text-center text-xs text-[#5E6573]">
                 Complete the provisioning form to generate the encrypted first-login invitation token.
               </div>
             )}
           </div>
 
           {/* Provisioned Roster */}
-          <div className="bg-[#13141B] p-6 rounded-3xl border border-white/10 space-y-3 shadow-xl">
-            <h3 className="text-xs font-black text-white uppercase tracking-wider">
+          <div className="bg-white p-6 rounded-3xl border border-[#EBECEF] space-y-3 shadow-xs">
+            <h3 className="text-xs font-bold text-[#13141B] uppercase tracking-wider">
               Recent Provisioned Staff ({roster.length})
             </h3>
             <div className="space-y-2 max-h-[300px] overflow-y-auto">
               {roster.map((r) => (
-                <div key={r.id} className="p-3 rounded-xl bg-[#1C1D26] border border-white/5 space-y-1">
+                <div key={r.id} className="p-3 rounded-xl bg-[#FCFCFB] border border-[#EBECEF] space-y-1">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-white">{r.employeeName}</span>
-                    <span className="text-[9px] font-mono font-bold text-purple-300 px-2 py-0.5 rounded bg-purple-500/20">{r.status}</span>
+                    <span className="font-bold text-[#13141B]">{r.employeeName}</span>
+                    <span className="text-[9px] font-mono font-bold text-purple-700 px-2 py-0.5 rounded bg-purple-50 border border-purple-200">{r.status}</span>
                   </div>
-                  <span className="text-[10px] text-[#8E95A5] font-mono block truncate">{r.corporateEmail}</span>
+                  <span className="text-[10px] text-[#5E6573] font-mono block truncate">{r.corporateEmail}</span>
                 </div>
               ))}
             </div>

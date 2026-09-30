@@ -7,6 +7,7 @@ import {
   PayrollBatch,
   Candidate, 
   OnboardingRecord,
+  OnboardingChecklist,
  
   StudentRecord, 
   GradeRecord, 
@@ -443,7 +444,7 @@ export async function saveOnboardingRecord(record: Omit<OnboardingRecord, "id" |
   return newRecord;
 }
 
-export async function updateOnboardingChecklist(recordId: string, checklist: OnboardingRecord["checklist"]): Promise<OnboardingRecord | null> {
+export async function updateOnboardingChecklist(recordId: string, checklist: OnboardingChecklist): Promise<OnboardingRecord | null> {
   const all = getStored<OnboardingRecord>(KEYS.ONBOARDINGS, []);
   const idx = all.findIndex((o) => o.id === recordId);
   if (idx < 0) return null;

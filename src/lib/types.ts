@@ -1101,18 +1101,23 @@ export interface OnboardingChecklist {
 
 export interface OnboardingRecord {
   id: string;
-  employeeId: string;
+  employeeId?: string;
   employeeName: string;
   corporateEmail: string;
+  personalEmail?: string;
   department: string;
   designation: string;
+  role?: UserRole;
   joiningDate: string;
-  managerName: string;
-  checklist: OnboardingChecklist;
+  managerName?: string;
+  manager?: string;
+  checklist?: OnboardingChecklist;
   status: StaffAccountStatus;
   activationToken?: string;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
+  tasksCompleted?: number;
+  totalTasks?: number;
 }
 
 export interface PayrollBatch {
