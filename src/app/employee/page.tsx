@@ -45,11 +45,17 @@ import {
   XCircle,
   Clock,
   Check,
-  ChevronRight
+  ChevronRight,
+  Search,
+  UserCheck,
+  GraduationCap,
+  Briefcase,
+  ExternalLink
 } from "lucide-react";
 import { AdminTicket } from "@/app/api/admin/tickets/route";
+import { PlatformUserRecord } from "@/app/api/employee/users/route";
 
-type EmployeeTab = "my_work" | "tickets" | "my_performance" | "my_hr" | "company" | "ai_assistant";
+type EmployeeTab = "my_work" | "registered_users" | "tickets" | "my_performance" | "my_hr" | "company" | "ai_assistant";
 
 export default function EmployeeWorkspacePage() {
   const { user, profile, role, loading: authLoading } = useAuth();
@@ -65,10 +71,14 @@ export default function EmployeeWorkspacePage() {
   const [team, setTeam] = useState<TeamMember[]>([]);
   const [aiInsights, setAiInsights] = useState<AgentInsight[]>([]);
   const [tickets, setTickets] = useState<AdminTicket[]>([]);
+  const [platformUsers, setPlatformUsers] = useState<PlatformUserRecord[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [aiLoading, setAiLoading] = useState(false);
   const [ticketFilter, setTicketFilter] = useState<string>("ALL");
+  const [userRoleFilter, setUserRoleFilter] = useState<string>("ALL");
+  const [userSearchQuery, setUserSearchQuery] = useState<string>("");
+
   const [updatingTicketId, setUpdatingTicketId] = useState<string | null>(null);
   const [resolvingTicketId, setResolvingTicketId] = useState<string | null>(null);
   const [resolutionNotes, setResolutionNotes] = useState<string>("");
@@ -127,7 +137,7 @@ export default function EmployeeWorkspacePage() {
       setDocuments(docData);
       setTeam(teamData);
 
-      // Also load support tickets for issue resolution triage
+      // Support Tickets
       const ticketRes = await fetch("/api/admin/tickets", {
         headers: { "x-user-id": user.uid }
       });
@@ -135,6 +145,17 @@ export default function EmployeeWorkspacePage() {
         const tData = await ticketRes.json();
         if (tData.success) {
           setTickets(tData.tickets || []);
+        }
+      }
+
+      // Platform Registered Users (Signups)
+      const usersRes = await fetch("/api/employee/users", {
+        headers: { "x-user-id": user.uid }
+      });
+      if (usersRes.ok) {
+        const uData = await usersRes.json();
+        if (uData.success) {
+          setPlatformUsers(uData.users || []);
         }
       }
     } catch (err) {
@@ -304,6 +325,18 @@ export default function EmployeeWorkspacePage() {
     return true;
   });
 
+  const filteredPlatformUsers = platformUsers.filter((u) => {
+    const matchesRole = userRoleFilter === "ALL" || u.role === userRoleFilter;
+    const query = userSearchQuery.toLowerCase().trim();
+    const matchesQuery = !query || 
+      u.name.toLowerCase().includes(query) ||
+      u.email.toLowerCase().includes(query) ||
+      (u.username && u.username.toLowerCase().includes(query)) ||
+      (u.college && u.college.toLowerCase().includes(query)) ||
+      (u.target_role && u.target_role.toLowerCase().includes(query));
+    return matchesRole && matchesQuery;
+  });
+
   const openTicketsCount = tickets.filter(t => t.status === "NEW" || t.status === "IN_PROGRESS").length;
 
   return (
@@ -315,17 +348,17 @@ export default function EmployeeWorkspacePage() {
           <div className="flex items-center gap-2">
             <span className="px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-[#13141B] text-white flex items-center gap-1.5 font-mono">
               <CheckSquare className="w-3.5 h-3.5 text-cyan-400" />
-              <span>STAFF WORKPLACE &amp; OPERATIONS</span>
+              <span>EMPLOYEE WORKPLACE &amp; OPERATIONS</span>
             </span>
             <span className="text-xs text-[#5E6573] font-mono">
-              Real DB Telemetry &bull; Active Session
+              Real DB Telemetry &bull; Active Staff Session
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[#13141B] tracking-tight">
-            Employee Operations &amp; Issue Resolution
+            Employee Workspace &amp; Operations Hub
           </h1>
           <p className="text-xs sm:text-sm text-[#5E6573]">
-            Personal task queue, user support ticket triage, quarterly OKRs, and time-off tracking.
+            Personal task queue, website registered users directory, customer issue resolution, and performance deliverables.
           </p>
         </div>
 
@@ -357,7 +390,7 @@ export default function EmployeeWorkspacePage() {
         </div>
       )}
 
-      {/* KPI Stats Row (Real Postgres Data Only) */}
+      {/* KPI Stats Row (Real Postgres Telemetry Only) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-[#EBECEF] shadow-xs">
           <span className="text-xs font-bold text-[#5E6573] uppercase tracking-wider block">Assigned Tasks</span>
@@ -365,6 +398,11 @@ export default function EmployeeWorkspacePage() {
           <span className="text-[11px] text-emerald-600 font-semibold mt-1 block">
             {tasks.filter(t => t.status === "COMPLETED").length} Completed
           </span>
+        </div>
+        <div className="bg-white p-5 rounded-2xl border border-[#EBECEF] shadow-xs">
+          <span className="text-xs font-bold text-[#5E6573] uppercase tracking-wider block">Platform Signups</span>
+          <div className="text-2xl sm:text-3xl font-black text-indigo-700 mt-1">{platformUsers.length}</div>
+          <span className="text-[11px] text-indigo-800 font-semibold mt-1 block">Registered Users</span>
         </div>
         <div className="bg-white p-5 rounded-2xl border border-[#EBECEF] shadow-xs">
           <span className="text-xs font-bold text-[#5E6573] uppercase tracking-wider block">Open Support Tickets</span>
@@ -376,18 +414,14 @@ export default function EmployeeWorkspacePage() {
           <div className="text-2xl sm:text-3xl font-black text-[#13141B] mt-1">{okrs.length}</div>
           <span className="text-[11px] text-[#5E6573] font-semibold mt-1 block">Performance Targets</span>
         </div>
-        <div className="bg-white p-5 rounded-2xl border border-[#EBECEF] shadow-xs">
-          <span className="text-xs font-bold text-[#5E6573] uppercase tracking-wider block">Team Colleagues</span>
-          <div className="text-2xl sm:text-3xl font-black text-[#13141B] mt-1">{team.length}</div>
-          <span className="text-[11px] text-[#5E6573] font-semibold mt-1 block">Internal Directory</span>
-        </div>
       </div>
 
       {/* Main Tab Navigation */}
       <div className="flex border-b border-[#EBECEF] gap-2 overflow-x-auto pb-px">
         {[
           { id: "my_work", label: "My Work & Tasks", icon: CheckSquare, count: tasks.length },
-          { id: "tickets", label: "Support Tickets & Issue Resolution", icon: LifeBuoy, count: openTicketsCount },
+          { id: "registered_users", label: "Website Registered Users", icon: UserCheck, count: platformUsers.length },
+          { id: "tickets", label: "Support Tickets & Resolution", icon: LifeBuoy, count: openTicketsCount },
           { id: "my_performance", label: "OKRs & Goals", icon: Target, count: okrs.length },
           { id: "my_hr", label: "Leaves & Payslips", icon: Calendar, count: leaves.length },
           { id: "company", label: "Team Directory", icon: Users, count: team.length },
@@ -500,7 +534,100 @@ export default function EmployeeWorkspacePage() {
               </div>
             )}
 
-            {/* TAB 2: SUPPORT TICKETS & ISSUE RESOLUTION */}
+            {/* TAB 2: WEBSITE REGISTERED USERS */}
+            {activeTab === "registered_users" && (
+              <div className="space-y-6">
+                <div className="bg-white p-6 rounded-3xl border border-[#EBECEF] shadow-xs space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <h2 className="text-base font-bold text-[#13141B] flex items-center gap-2">
+                        <UserCheck className="w-5 h-5 text-indigo-600" />
+                        <span>Website Registered Users &amp; Signups</span>
+                      </h2>
+                      <p className="text-xs text-[#5E6573] mt-0.5">
+                        Live directory of real users who registered on the website (students, job seekers, and professionals).
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <div className="relative">
+                        <Search className="w-3.5 h-3.5 text-[#8E95A5] absolute left-3 top-3" />
+                        <input
+                          type="text"
+                          value={userSearchQuery}
+                          onChange={(e) => setUserSearchQuery(e.target.value)}
+                          placeholder="Search users by name, email, college..."
+                          className="pl-8 pr-3 py-2 rounded-xl bg-[#F4F6FB] border border-[#E8ECF2] text-xs text-[#13141B] placeholder:text-[#8E95A5] focus:outline-none focus:border-[#13141B]"
+                        />
+                      </div>
+
+                      <select
+                        value={userRoleFilter}
+                        onChange={(e) => setUserRoleFilter(e.target.value)}
+                        className="px-3 py-2 rounded-xl bg-[#F4F6FB] border border-[#E8ECF2] text-xs font-bold text-[#13141B] focus:outline-none"
+                      >
+                        <option value="ALL">All Roles ({platformUsers.length})</option>
+                        <option value="STUDENT">Students</option>
+                        <option value="EMPLOYER">Employers / Recruiters</option>
+                        <option value="PROFESSIONAL">Professionals</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {filteredPlatformUsers.length === 0 ? (
+                    <div className="p-12 text-center border border-dashed border-[#EBECEF] rounded-2xl bg-[#FCFCFB] text-[#5E6573]">
+                      <Users className="w-8 h-8 mx-auto mb-2 text-[#8E95A5]" />
+                      <p className="text-sm font-bold text-[#13141B]">No registered users matching filters</p>
+                      <p className="text-xs text-[#5E6573] mt-1">Users who sign up on the platform will appear in this operational directory.</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {filteredPlatformUsers.map((u) => (
+                        <div
+                          key={u.id}
+                          className="p-5 rounded-2xl bg-[#FCFCFB] border border-[#EBECEF] hover:border-slate-300 transition-all flex flex-col justify-between shadow-2xs space-y-3"
+                        >
+                          <div>
+                            <div className="flex items-start justify-between gap-2 mb-1.5">
+                              <div>
+                                <h3 className="text-sm font-bold text-[#13141B]">{u.name}</h3>
+                                <p className="text-xs text-indigo-700 font-semibold truncate">{u.headline || u.target_role || u.career_stage || "Learner"}</p>
+                              </div>
+                              <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                                u.role === "STUDENT" ? "bg-indigo-50 text-indigo-700 border border-indigo-200" :
+                                u.role === "EMPLOYER" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
+                                "bg-purple-50 text-purple-700 border border-purple-200"
+                              }`}>
+                                {u.role}
+                              </span>
+                            </div>
+
+                            <p className="text-xs text-[#5E6573] font-mono truncate">{u.email}</p>
+                            {u.college && (
+                              <p className="text-[11px] text-[#5E6573] mt-1 flex items-center gap-1 truncate">
+                                <GraduationCap className="w-3.5 h-3.5 text-[#8E95A5] shrink-0" />
+                                <span className="truncate">{u.college} {u.degree ? `(${u.degree})` : ""}</span>
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="pt-2.5 border-t border-[#EBECEF] flex items-center justify-between text-[10px] text-[#5E6573] font-mono">
+                            <span>Signed Up: {new Date(u.created_at).toLocaleDateString()}</span>
+                            <span className={`px-2 py-0.5 rounded font-bold ${
+                              u.status === "ACTIVE" ? "text-emerald-700 bg-emerald-50" : "text-rose-700 bg-rose-50"
+                            }`}>
+                              {u.status}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: SUPPORT TICKETS & ISSUE RESOLUTION */}
             {activeTab === "tickets" && (
               <div className="space-y-6">
                 <div className="bg-white p-6 rounded-3xl border border-[#EBECEF] shadow-xs space-y-4">
@@ -632,7 +759,7 @@ export default function EmployeeWorkspacePage() {
               </div>
             )}
 
-            {/* TAB 3: PERFORMANCE / OKRS */}
+            {/* TAB 4: PERFORMANCE / OKRS */}
             {activeTab === "my_performance" && (
               <div className="space-y-6">
                 <div className="bg-white p-6 rounded-3xl border border-[#EBECEF] shadow-xs space-y-4">
@@ -671,7 +798,7 @@ export default function EmployeeWorkspacePage() {
               </div>
             )}
 
-            {/* TAB 4: LEAVES & PAYROLL */}
+            {/* TAB 5: LEAVES & PAYROLL */}
             {activeTab === "my_hr" && (
               <div className="space-y-6">
                 <div className="bg-white p-6 rounded-3xl border border-[#EBECEF] shadow-xs space-y-4">
@@ -748,13 +875,13 @@ export default function EmployeeWorkspacePage() {
               </div>
             )}
 
-            {/* TAB 5: COMPANY DIRECTORY */}
+            {/* TAB 6: COMPANY DIRECTORY */}
             {activeTab === "company" && (
               <div className="space-y-6">
                 <div className="bg-white p-6 rounded-3xl border border-[#EBECEF] shadow-xs space-y-4">
                   <div>
                     <h2 className="text-base font-bold text-[#13141B]">Team &amp; Colleague Directory</h2>
-                    <p className="text-xs text-[#5E6573]">Colleagues and leadership across EdWorld Organization</p>
+                    <p className="text-xs text-[#5E6573]">Colleagues and internal staff across EdWorld Organization</p>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -775,7 +902,7 @@ export default function EmployeeWorkspacePage() {
               </div>
             )}
 
-            {/* TAB 6: AI WORK COPILOT */}
+            {/* TAB 7: AI WORK COPILOT */}
             {activeTab === "ai_assistant" && (
               <div className="space-y-6">
                 <div className="bg-white p-6 rounded-3xl border border-[#EBECEF] shadow-xs space-y-6">
@@ -859,7 +986,7 @@ export default function EmployeeWorkspacePage() {
                   required
                   value={newTaskTitle}
                   onChange={e => setNewTaskTitle(e.target.value)}
-                  placeholder="e.g. Implement Ticket Resolution Webhook"
+                  placeholder="e.g. Assist Student Onboarding Verification"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-[#F4F6FB] border border-[#E8ECF2] text-xs text-[#13141B] focus:outline-none focus:border-[#13141B]"
                 />
               </div>
