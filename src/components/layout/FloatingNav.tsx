@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import {
@@ -235,19 +236,25 @@ export default function FloatingNav() {
       <div className="fixed top-4 sm:top-5 left-4 sm:left-5 z-40 font-sans">
         <Link
           href={homeHref}
-          className="flex items-center gap-2.5 px-3.5 py-2 bg-white/95 hover:bg-white backdrop-blur-md border border-[#E8ECF2] hover:border-[#D1D5DC] rounded-2xl shadow-xs hover:shadow-md transition-all group"
+          className="flex items-center gap-2.5 px-3.5 py-2 bg-white/95 hover:bg-white backdrop-blur-md border border-zinc-200 hover:border-zinc-300 rounded-2xl shadow-xs hover:shadow-md transition-all group"
           aria-label="Edworld Co. Home"
         >
           {/* Logo Mark */}
-          <div className="w-7 h-7 rounded-xl bg-[#13141B] text-[#00D2B4] flex items-center justify-center font-black text-xs shadow-xs group-hover:scale-105 transition-transform">
-            E
+          <div className="w-7 h-7 rounded-xl bg-zinc-950 p-1 flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform overflow-hidden shrink-0 border border-zinc-800">
+            <Image
+              src="/images/edworld-logo.png"
+              alt="Edworld Logo"
+              width={22}
+              height={22}
+              className="object-contain"
+            />
           </div>
           <div className="flex flex-col">
-            <span className="text-xs font-black text-[#13141B] tracking-tight leading-none">
-              Edworld Co.
+            <span className="text-xs font-black text-zinc-950 tracking-tight leading-none">
+              Edworld <span className="text-[#00B49B]">Co.</span>
             </span>
-            <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wider leading-none mt-0.5">
-              Career OS
+            <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider leading-none mt-0.5">
+              Career &amp; Learning OS
             </span>
           </div>
         </Link>
@@ -289,14 +296,20 @@ export default function FloatingNav() {
               {/* Drawer Header */}
               <div className="p-5 sm:p-6 bg-white border-b border-[#EBECEF] flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-[#13141B] text-[#00D2B4] flex items-center justify-center font-black text-sm shadow-xs">
-                    E
+                  <div className="w-9 h-9 rounded-xl bg-zinc-950 p-1.5 flex items-center justify-center shadow-xs overflow-hidden shrink-0 border border-zinc-800">
+                    <Image
+                      src="/images/edworld-logo.png"
+                      alt="Edworld Logo"
+                      width={24}
+                      height={24}
+                      className="object-contain"
+                    />
                   </div>
                   <div>
-                    <h2 className="text-sm font-extrabold text-[#13141B] leading-none">
-                      Navigation & Tools
+                    <h2 className="text-sm font-extrabold text-zinc-950 leading-none">
+                      Navigation &amp; Tools
                     </h2>
-                    <p className="text-xs text-gray-500 mt-1 leading-none">
+                    <p className="text-xs text-zinc-500 mt-1 leading-none">
                       Edworld Co. Platform Ecosystem
                     </p>
                   </div>

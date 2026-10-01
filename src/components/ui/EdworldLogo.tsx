@@ -34,7 +34,7 @@ export const EdworldLogo: React.FC<EdworldLogoProps> = ({
     <div className={`inline-flex items-center gap-2.5 group select-none ${className}`}>
       {/* Brand Icon Mark */}
       <div
-        className={`relative rounded-2xl bg-[#13141B] overflow-hidden flex items-center justify-center shadow-md border border-white/15 transition-transform group-hover:scale-105 duration-200 p-1 shrink-0 ${dimension.box}`}
+        className={`relative rounded-2xl bg-zinc-950 overflow-hidden flex items-center justify-center shadow-md border border-zinc-200/40 dark:border-white/15 transition-transform group-hover:scale-105 duration-200 p-1 shrink-0 ${dimension.box}`}
       >
         <Image
           src="/images/edworld-logo.png"
@@ -48,11 +48,11 @@ export const EdworldLogo: React.FC<EdworldLogoProps> = ({
 
       {showText && (
         <div className="flex flex-col">
-          <span className={`font-black tracking-tight leading-none ${isDark ? "text-white" : "text-[#13141B]"} ${dimension.font} ${textClassName}`}>
-            Edworld <span className="text-[#D7FC51] font-black">Co.</span>
+          <span className={`font-black tracking-tight leading-none ${isDark ? "text-white" : "text-zinc-950"} ${dimension.font} ${textClassName}`}>
+            Edworld <span className="text-[#00D2B4] font-black">Co.</span>
           </span>
-          <span className={`font-bold ${isDark ? "text-[#8E95A5]" : "text-[#8F9CAE]"} uppercase tracking-wider mt-0.5 ${dimension.sub}`}>
-            Career Readiness
+          <span className={`font-bold ${isDark ? "text-zinc-400" : "text-zinc-500"} uppercase tracking-wider mt-0.5 ${dimension.sub}`}>
+            Career &amp; Learning OS
           </span>
         </div>
       )}

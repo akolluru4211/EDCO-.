@@ -362,9 +362,9 @@ export default function Navbar() {
         </Link>
       )}
 
-      {/* Clean Floating Dark Capsule Header */}
+      {/* Clean Floating Light Glass Header */}
       <header className="sticky top-0 z-40 px-3 sm:px-6 lg:px-8 pt-3 pb-1 no-print">
-        <div className="max-w-[1536px] mx-auto bg-[#13141B] text-white rounded-3xl shadow-xl border border-white/10 px-4 sm:px-6 lg:px-8 py-3 sm:py-3.5">
+        <div className="max-w-[1536px] mx-auto bg-white/90 backdrop-blur-xl text-zinc-950 rounded-3xl shadow-lg shadow-zinc-950/5 border border-zinc-200/80 px-4 sm:px-6 lg:px-8 py-3 sm:py-3.5">
           <div className="flex items-center justify-between gap-4">
             
             {/* Left: Brand Logo */}
@@ -372,7 +372,7 @@ export default function Navbar() {
               href="/" 
               className="flex items-center gap-3 group"
             >
-              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-[#1C1D26] border border-white/15 p-1.5 flex items-center justify-center shadow-md group-hover:scale-105 group-hover:border-[#D7FC51]/50 transition-all overflow-hidden shrink-0">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-zinc-950 border border-zinc-800 p-1.5 flex items-center justify-center shadow-md group-hover:scale-105 group-hover:border-[#00D2B4]/50 transition-all overflow-hidden shrink-0">
                 <Image
                   src="/images/edworld-logo.png"
                   alt="Edworld Logo"
@@ -383,11 +383,11 @@ export default function Navbar() {
                 />
               </div>
               <div className="flex flex-col">
-                <span className="text-lg sm:text-xl font-black tracking-tight text-white font-sans flex items-center gap-0.5 leading-none">
-                  Edworld <span className="text-[#D7FC51] font-black text-xl sm:text-2xl leading-none">{isStaff ? "OS" : "Co."}</span>
+                <span className="text-lg sm:text-xl font-black tracking-tight text-zinc-950 font-sans flex items-center gap-0.5 leading-none">
+                  Edworld <span className="text-[#00B49B] font-black text-xl sm:text-2xl leading-none">{isStaff ? "OS" : "Co."}</span>
                 </span>
-                <span className="text-[9px] sm:text-[11px] font-bold text-[#8E95A5] uppercase tracking-wider mt-1 leading-none">
-                  {isStaff ? "Organization Portal" : "Student & Career OS"}
+                <span className="text-[9px] sm:text-[11px] font-bold text-zinc-500 uppercase tracking-wider mt-1 leading-none">
+                  {isStaff ? "Organization Portal" : "Career & Learning OS"}
                 </span>
               </div>
             </Link>
@@ -397,21 +397,21 @@ export default function Navbar() {
               {user ? (
                 <>
                   {/* Track / Role Pill */}
-                  <div className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider bg-[#D7FC51]/10 text-[#D7FC51] border border-[#D7FC51]/30">
+                  <div className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider bg-zinc-100 text-zinc-800 border border-zinc-200">
                     <span>{isStaff ? (role || "STAFF") : (user?.careerStage || "STUDENT")}</span>
                   </div>
 
                   {/* User Profile Capsule Trigger */}
                   <div 
                     onClick={() => setIsDrawerOpen(true)}
-                    className="flex items-center gap-2.5 bg-[#1C1D26] hover:bg-[#252632] border border-white/10 rounded-2xl py-1.5 px-3 sm:px-3.5 cursor-pointer transition-all shadow-sm group"
+                    className="flex items-center gap-2.5 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 rounded-2xl py-1.5 px-3 sm:px-3.5 cursor-pointer transition-all shadow-xs group"
                     title="Open Platform Features Menu"
                   >
-                    <div className="w-8 h-8 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-tr from-[#D7FC51] via-[#00D2B4] to-[#7B57FF] text-[#13141B] font-black text-xs sm:text-sm flex items-center justify-center shadow-sm">
+                    <div className="w-8 h-8 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-tr from-zinc-950 via-zinc-800 to-zinc-700 text-white font-black text-xs sm:text-sm flex items-center justify-center shadow-xs">
                       {user.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="hidden md:flex flex-col text-left">
-                      <span className="text-xs sm:text-sm font-bold text-white leading-tight">
+                      <span className="text-xs sm:text-sm font-bold text-zinc-900 leading-tight">
                         {user.name.split(" ")[0]}
                       </span>
                     </div>
@@ -421,16 +421,16 @@ export default function Navbar() {
                 <div className="flex items-center gap-2.5">
                   <Link
                     href="/auth/login"
-                    className="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-[#A6ABB9] hover:text-white transition-all"
+                    className="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-zinc-600 hover:text-zinc-950 transition-all"
                   >
                     Sign In
                   </Link>
                   <Link
                     href="/auth/signup"
-                    className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-[#D7FC51] text-[#13141B] hover:bg-[#E9FFA4] transition-all shadow-sm flex items-center gap-1.5"
+                    className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-zinc-950 text-white hover:bg-zinc-800 transition-all shadow-sm flex items-center gap-1.5 group"
                   >
                     <span>Get Started</span>
-                    <span>&rarr;</span>
+                    <span className="group-hover:translate-x-0.5 transition-transform">&rarr;</span>
                   </Link>
                 </div>
               )}
@@ -439,9 +439,9 @@ export default function Navbar() {
               <button
                 onClick={() => setIsDrawerOpen(true)}
                 aria-label="Open Platform Features Menu"
-                className="px-4 py-2 sm:py-2.5 rounded-2xl bg-[#D7FC51] hover:bg-[#E9FFA4] text-[#13141B] font-black text-xs sm:text-sm transition-all shadow-md flex items-center gap-2 cursor-pointer group active:scale-95"
+                className="px-4 py-2 sm:py-2.5 rounded-2xl bg-zinc-950 hover:bg-zinc-800 text-white font-black text-xs sm:text-sm transition-all shadow-md flex items-center gap-2 cursor-pointer group active:scale-95"
               >
-                <Menu className="w-4 h-4 sm:w-5 sm:h-5 text-[#13141B] transition-transform group-hover:scale-110" />
+                <Menu className="w-4 h-4 sm:w-5 sm:h-5 text-white transition-transform group-hover:scale-110" />
                 <span className="font-extrabold tracking-wide">Menu</span>
               </button>
             </div>
@@ -456,18 +456,18 @@ export default function Navbar() {
           {/* Backdrop */}
           <div 
             onClick={() => setIsDrawerOpen(false)}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
+            className="fixed inset-0 bg-zinc-950/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
           />
 
           {/* Drawer Panel */}
           <div className="fixed inset-y-0 right-0 max-w-full flex pl-6 sm:pl-12">
-            <div className="w-screen max-w-lg bg-[#13141B] text-white border-l border-white/10 shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-250 ease-out">
+            <div className="w-screen max-w-lg bg-white text-zinc-950 border-l border-zinc-200 shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-250 ease-out">
               
               {/* Drawer Header */}
-              <div className="p-5 sm:p-6 border-b border-white/10 bg-[#1C1D26] space-y-4">
+              <div className="p-5 sm:p-6 border-b border-zinc-200 bg-zinc-50/80 space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-[#13141B] border border-white/15 p-1 flex items-center justify-center shadow-md overflow-hidden shrink-0">
+                    <div className="w-8 h-8 rounded-xl bg-zinc-950 border border-zinc-800 p-1 flex items-center justify-center shadow-xs overflow-hidden shrink-0">
                       <Image
                         src="/images/edworld-logo.png"
                         alt="Edworld Logo"
@@ -477,10 +477,10 @@ export default function Navbar() {
                       />
                     </div>
                     <div className="flex flex-col">
-                      <span className="font-black text-sm font-sans tracking-tight text-white flex items-center gap-0.5 leading-none">
-                        Edworld <span className="text-[#D7FC51]">Features Menu</span>
+                      <span className="font-black text-sm font-sans tracking-tight text-zinc-950 flex items-center gap-0.5 leading-none">
+                        Edworld <span className="text-[#00B49B]">Features Menu</span>
                       </span>
-                      <span className="text-[8px] font-bold text-[#8E95A5] uppercase tracking-wider mt-0.5 leading-none">
+                      <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-wider mt-0.5 leading-none">
                         All Platform Features &amp; Workspaces
                       </span>
                     </div>
@@ -489,7 +489,7 @@ export default function Navbar() {
                   <button
                     onClick={() => setIsDrawerOpen(false)}
                     aria-label="Close Menu"
-                    className="w-9 h-9 rounded-2xl bg-[#282937] hover:bg-[#343547] text-[#989BAA] hover:text-white flex items-center justify-center transition-all shadow-sm cursor-pointer"
+                    className="w-9 h-9 rounded-2xl bg-zinc-200/70 hover:bg-zinc-200 text-zinc-600 hover:text-zinc-950 flex items-center justify-center transition-all shadow-xs cursor-pointer"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -497,17 +497,17 @@ export default function Navbar() {
 
                 {/* User Snapshot (if authenticated) */}
                 {user && (
-                  <div className="p-3.5 rounded-2xl bg-[#13141B] border border-white/10 flex items-center justify-between gap-3">
+                  <div className="p-3.5 rounded-2xl bg-white border border-zinc-200 flex items-center justify-between gap-3 shadow-xs">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#D7FC51] via-[#00D2B4] to-[#7B57FF] text-[#13141B] font-black text-xs flex items-center justify-center shadow-sm shrink-0">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-zinc-950 via-zinc-800 to-zinc-700 text-white font-black text-xs flex items-center justify-center shadow-xs shrink-0">
                         {user.name.charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0">
-                        <div className="font-bold text-white text-xs sm:text-sm truncate">{user.name}</div>
-                        <div className="text-[10px] text-[#8E95A5] font-mono truncate">{user.email}</div>
+                        <div className="font-bold text-zinc-950 text-xs sm:text-sm truncate">{user.name}</div>
+                        <div className="text-[10px] text-zinc-500 font-mono truncate">{user.email}</div>
                       </div>
                     </div>
-                    <span className="text-[9px] font-black px-2.5 py-1 rounded-full bg-[#D7FC51]/10 text-[#D7FC51] border border-[#D7FC51]/30 shrink-0">
+                    <span className="text-[9px] font-black px-2.5 py-1 rounded-full bg-zinc-100 text-zinc-800 border border-zinc-200 shrink-0">
                       {isStaff ? (role || "STAFF") : (user?.careerStage || "STUDENT")}
                     </span>
                   </div>
@@ -515,18 +515,18 @@ export default function Navbar() {
 
                 {/* Quick Feature Search Bar */}
                 <div className="relative">
-                  <Search className="w-4 h-4 absolute left-3.5 top-3 text-[#8E95A5]" />
+                  <Search className="w-4 h-4 absolute left-3.5 top-3 text-zinc-400" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search any feature (e.g. resume, interview, jobs)..."
-                    className="w-full pl-9 pr-4 py-2 rounded-2xl bg-[#13141B] border border-white/10 text-xs text-white placeholder-[#8E95A5] focus:outline-hidden focus:border-[#D7FC51]/60 transition-all"
+                    className="w-full pl-9 pr-4 py-2 rounded-2xl bg-white border border-zinc-200 text-xs text-zinc-950 placeholder-zinc-400 focus:outline-hidden focus:border-zinc-900 transition-all shadow-xs"
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery("")}
-                      className="absolute right-3 top-2.5 text-[#8E95A5] hover:text-white text-xs"
+                      className="absolute right-3 top-2.5 text-zinc-400 hover:text-zinc-700 text-xs"
                     >
                       Clear
                     </button>
@@ -547,8 +547,8 @@ export default function Navbar() {
                       onClick={() => setActiveCategory(cat.id)}
                       className={
                         activeCategory === cat.id
-                          ? "px-3 py-1 rounded-xl text-[10px] font-black whitespace-nowrap transition-all cursor-pointer bg-[#D7FC51] text-[#13141B] shadow-sm"
-                          : "px-3 py-1 rounded-xl text-[10px] font-extrabold whitespace-nowrap transition-all cursor-pointer bg-[#13141B] text-[#8E95A5] hover:text-white border border-white/5"
+                          ? "px-3 py-1 rounded-xl text-[10px] font-black whitespace-nowrap transition-all cursor-pointer bg-zinc-950 text-white shadow-xs"
+                          : "px-3 py-1 rounded-xl text-[10px] font-extrabold whitespace-nowrap transition-all cursor-pointer bg-white text-zinc-600 hover:text-zinc-950 border border-zinc-200"
                       }
                     >
                       {cat.label}
@@ -560,11 +560,11 @@ export default function Navbar() {
               {/* Scrollable Features Grid */}
               <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-2">
                 {filteredFeatures.length === 0 ? (
-                  <div className="text-center py-12 text-xs text-[#8E95A5] space-y-2">
-                    <p>No features match "{searchQuery}"</p>
+                  <div className="text-center py-12 text-xs text-zinc-500 space-y-2">
+                    <p>No features match &quot;{searchQuery}&quot;</p>
                     <button
                       onClick={() => { setSearchQuery(""); setActiveCategory("all"); }}
-                      className="text-[#D7FC51] underline font-bold"
+                      className="text-zinc-900 underline font-bold"
                     >
                       View all features
                     </button>
@@ -581,23 +581,23 @@ export default function Navbar() {
                         onClick={() => setIsDrawerOpen(false)}
                         className={
                           isActive
-                            ? "group flex items-start justify-between p-3 rounded-2xl text-xs font-bold transition-all border bg-[#282937] text-white border-[#D7FC51]/40 shadow-sm"
-                            : "group flex items-start justify-between p-3 rounded-2xl text-xs font-bold transition-all border bg-[#1C1D26]/60 text-[#8E95A5] border-white/5 hover:bg-[#1C1D26] hover:text-white hover:border-white/15"
+                            ? "group flex items-start justify-between p-3 rounded-2xl text-xs font-bold transition-all border bg-zinc-100 text-zinc-950 border-zinc-300 shadow-xs"
+                            : "group flex items-start justify-between p-3 rounded-2xl text-xs font-bold transition-all border bg-white text-zinc-600 border-zinc-100 hover:bg-zinc-50 hover:text-zinc-950 hover:border-zinc-200"
                         }
                       >
                         <div className="flex items-start gap-3 min-w-0">
                           <div className={
                             isActive 
-                              ? "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors bg-[#13141B] text-[#D7FC51]" 
-                              : "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors bg-[#13141B] text-[#8E95A5] group-hover:text-white"
+                              ? "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors bg-zinc-950 text-white" 
+                              : "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors bg-zinc-100 text-zinc-600 group-hover:text-zinc-950"
                           }>
                             <Icon className="w-4 h-4" />
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-white font-bold">{feat.label}</span>
+                              <span className="text-zinc-950 font-bold">{feat.label}</span>
                               {feat.badge && (
-                                <span className="px-1.5 py-0.2 rounded-md bg-[#D7FC51]/10 text-[#D7FC51] text-[9px] font-black uppercase">
+                                <span className="px-1.5 py-0.5 rounded-md bg-zinc-100 text-zinc-800 text-[9px] font-black uppercase border border-zinc-200">
                                   {feat.badge}
                                 </span>
                               )}
@@ -605,8 +605,8 @@ export default function Navbar() {
                             {feat.desc && (
                               <p className={
                                 isActive 
-                                  ? "text-[10px] font-normal mt-0.5 leading-snug line-clamp-1 text-slate-300" 
-                                  : "text-[10px] font-normal mt-0.5 leading-snug line-clamp-1 text-[#767E94] group-hover:text-[#989BAA]"
+                                  ? "text-[10px] font-normal mt-0.5 leading-snug line-clamp-1 text-zinc-700" 
+                                  : "text-[10px] font-normal mt-0.5 leading-snug line-clamp-1 text-zinc-400 group-hover:text-zinc-600"
                               }>
                                 {feat.desc}
                               </p>
@@ -616,8 +616,8 @@ export default function Navbar() {
 
                         <ChevronRight className={
                           isActive 
-                            ? "w-4 h-4 shrink-0 mt-2 transition-transform group-hover:translate-x-0.5 text-[#D7FC51]" 
-                            : "w-4 h-4 shrink-0 mt-2 transition-transform group-hover:translate-x-0.5 text-[#8E95A5]"
+                            ? "w-4 h-4 shrink-0 mt-2 transition-transform group-hover:translate-x-0.5 text-zinc-900" 
+                            : "w-4 h-4 shrink-0 mt-2 transition-transform group-hover:translate-x-0.5 text-zinc-400"
                         } />
                       </Link>
                     );
@@ -626,14 +626,14 @@ export default function Navbar() {
               </div>
 
               {/* Drawer Footer */}
-              <div className="p-5 border-t border-white/10 bg-[#1C1D26]">
+              <div className="p-5 border-t border-zinc-200 bg-zinc-50/80">
                 {user ? (
                   <div className="space-y-2.5">
                     <div className="flex items-center justify-between text-xs">
                       <Link
                         href="/profile"
                         onClick={() => setIsDrawerOpen(false)}
-                        className="flex items-center gap-1.5 font-bold text-[#8E95A5] hover:text-white"
+                        className="flex items-center gap-1.5 font-bold text-zinc-600 hover:text-zinc-950"
                       >
                         <Settings className="w-3.5 h-3.5" />
                         <span>Profile &amp; Settings</span>
@@ -641,7 +641,7 @@ export default function Navbar() {
                       <Link
                         href="/billing"
                         onClick={() => setIsDrawerOpen(false)}
-                        className="flex items-center gap-1.5 font-bold text-[#D7FC51] hover:underline"
+                        className="flex items-center gap-1.5 font-bold text-zinc-950 hover:underline"
                       >
                         <CreditCard className="w-3.5 h-3.5" />
                         <span>Plans &amp; Upgrade</span>
@@ -653,7 +653,7 @@ export default function Navbar() {
                         logout();
                         setIsDrawerOpen(false);
                       }}
-                      className="w-full py-2.5 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95"
+                      className="w-full py-2.5 rounded-2xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-95"
                     >
                       <LogOut className="w-4 h-4" />
                       <span>Sign Out from Workspace</span>
@@ -663,17 +663,17 @@ export default function Navbar() {
                   <div className="flex gap-2">
                     <Button
                       href="/auth/login"
-                      variant="primary"
+                      variant="secondary"
                       size="sm"
-                      className="flex-1 justify-center bg-[#D7FC51] text-[#13141B] hover:bg-[#E9FFA4] rounded-2xl font-black"
+                      className="flex-1 justify-center rounded-2xl font-black text-xs"
                     >
                       <span>Sign In</span>
                     </Button>
                     <Button
                       href="/auth/signup"
-                      variant="secondary"
+                      variant="primary"
                       size="sm"
-                      className="flex-1 justify-center rounded-2xl font-black"
+                      className="flex-1 justify-center bg-zinc-950 text-white hover:bg-zinc-800 rounded-2xl font-black text-xs"
                     >
                       <span>Get Started</span>
                     </Button>
