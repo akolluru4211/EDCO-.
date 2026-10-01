@@ -45,6 +45,7 @@ import AnimatedCounter from "@/components/ui/AnimatedCounter";
 import SpotlightCard from "@/components/ui/SpotlightCard";
 import PerformanceIntelligenceWidget from "@/components/dashboard/PerformanceIntelligenceWidget";
 import MyCareerPlanWidget from "@/components/dashboard/MyCareerPlanWidget";
+import PersonalizedTimetableWidget from "@/components/dashboard/PersonalizedTimetableWidget";
 import EdIdBadge from "@/components/ui/EdIdBadge";
 
 export default function DashboardPage() {
@@ -531,10 +532,13 @@ export default function DashboardPage() {
 
             </div>
 
-            {/* MAIN WORKSPACE COLUMN (8 Cols): Career Plan, Continue Learning, Recommended Modules & Intelligence */}
+            {/* MAIN WORKSPACE COLUMN (8 Cols): Personalized Timetable, Career Plan, Continue Learning, Recommended Modules & Intelligence */}
             <div className="lg:col-span-8 space-y-6 sm:space-y-8">
               
-              {/* CAREER LEARNING OS: Integrated My Career Plan & Daily Timetable */}
+              {/* PERSONALIZED STUDY TIMETABLE (Calibrated to CGPA, Target Role & Available Time) */}
+              <PersonalizedTimetableWidget />
+
+              {/* CAREER LEARNING OS: Integrated My Career Plan & Skill Milestones */}
               <MyCareerPlanWidget
                 userId={user?.uid}
                 userName={user?.name || profile?.name || "Learner"}

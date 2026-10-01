@@ -5,7 +5,8 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { CURRENT_TOS_VERSION, CURRENT_PRIVACY_VERSION } from "@/lib/types";
 import ReconsentModal from "@/components/legal/ReconsentModal";
-import AppSidebar from "@/components/layout/AppSidebar";
+import FloatingNav from "@/components/layout/FloatingNav";
+import MyraChatbot from "@/components/ai/MyraChatbot";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -51,7 +52,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   if (isAppWorkspace) {
     return (
-      <div className="min-h-screen flex flex-col lg:flex-row bg-[#FCFCFB] text-[#13141B] font-sans antialiased selection:bg-[#00D2B4]/20 selection:text-[#0A5245]">
+      <div className="min-h-screen flex flex-col bg-[#FCFCFB] text-[#13141B] font-sans antialiased selection:bg-[#00D2B4]/20 selection:text-[#0A5245]">
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2.5 focus:bg-[#13141B] focus:text-[#00D2B4] focus:rounded-xl focus:shadow-xl focus:font-bold focus:text-xs"
@@ -59,11 +60,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           Skip to main content
         </a>
 
-        {/* Persistent Application Sidebar */}
-        <AppSidebar />
+        {/* Floating Top-Left Brand Logo & Floating Top-Right Navigation Menu Hub */}
+        <FloatingNav />
 
-        {/* Main Application Content Area */}
-        <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
+        {/* Main Full-Width Application Content Area */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden pt-16 sm:pt-18">
           <main id="main-content" tabIndex={-1} className="flex-1 w-full max-w-full outline-none">
             {children}
           </main>
@@ -73,6 +74,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           isOpen={showReconsent}
           onAccept={handleReconsentAccept}
         />
+
+        {/* Floating AI Educational Mentor & Doubt Solver */}
+        <MyraChatbot />
       </div>
     );
   }
@@ -86,6 +90,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         Skip to main content
       </a>
 
+      {/* Floating Top-Left Brand Logo & Floating Top-Right Navigation Menu Hub */}
+      <FloatingNav />
+
       <main id="main-content" tabIndex={-1} className="flex-1 w-full max-w-full outline-none">
         {children}
       </main>
@@ -94,6 +101,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         isOpen={showReconsent}
         onAccept={handleReconsentAccept}
       />
+
+      {/* Floating AI Educational Mentor & Doubt Solver */}
+      <MyraChatbot />
     </div>
   );
 }

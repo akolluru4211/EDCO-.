@@ -12,6 +12,7 @@ import { doc, setDoc } from "firebase/firestore";
 import ResumeBuilderForm from "@/components/resume/ResumeBuilderForm";
 import ResumePreview from "@/components/resume/ResumePreview";
 import JDMatchModal from "@/components/resume/JDMatchModal";
+import MyraJobMatcherModal from "@/components/resume/MyraJobMatcherModal";
 import PdfExportButton from "@/components/resume/PdfExportButton";
 import { 
   ArrowLeft, 
@@ -22,7 +23,8 @@ import {
   Lock,
   ArrowRight,
   Info,
-  X
+  X,
+  Briefcase
 } from "lucide-react";
 import AuthGuard from "@/components/auth/AuthGuard";
 import { getResumeProfileDefaults } from "@/lib/services/user-profile";
@@ -42,6 +44,7 @@ export default function ResumesDirectEditorPage() {
   const [resume, setResume] = useState<Resume | null>(null);
   const [activeTemplate, setActiveTemplate] = useState<ResumeTemplateId>("classic");
   const [isJDModalOpen, setIsJDModalOpen] = useState(false);
+  const [isMyraJobModalOpen, setIsMyraJobModalOpen] = useState(false);
   const [mobileTab, setMobileTab] = useState<"edit" | "preview">("edit");
   const [savedStatus, setSavedStatus] = useState<string>("Saved");
   const [showPreFillBanner, setShowPreFillBanner] = useState(isNewQuery);
@@ -304,6 +307,15 @@ export default function ResumesDirectEditorPage() {
                 ))}
               </div>
 
+              {/* Myra Smart Job Matcher Button */}
+              <button
+                onClick={() => setIsMyraJobModalOpen(true)}
+                className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-[#00D2B4] hover:bg-[#00BF9F] text-[#13141B] text-xs sm:text-sm font-black uppercase tracking-wider flex items-center gap-2 shadow-md transition-all hover:scale-105"
+              >
+                <Briefcase className="w-4 h-4 text-[#13141B]" />
+                <span>Match Jobs with Myra</span>
+              </button>
+
               {/* AI JD-Match Button */}
               <button
                 onClick={() => setIsJDModalOpen(true)}
@@ -415,6 +427,19 @@ export default function ResumesDirectEditorPage() {
           onClose={() => setIsJDModalOpen(false)}
           resumeContent={resume.content}
           resumeId={resume.id}
+        />
+
+        {/* Myra Smart Job Matcher Modal */}
+        <MyraJobMatcherModal
+          isOpen={isMyraJobModalOpen}
+          onClose={() => setIsMyraJobModalOpen(false)}
+          resumeSkills={[
+            ...(resume.content.skills?.technical || []),
+            ...(resume.content.skills?.tools || []),
+            ...(resume.content.skills?.soft || [])
+          ]}
+          targetRole={resume.title || "Software Engineer"}
+          targetSector={(user as any)?.targetSector || "AI & Software Engineering"}
         />
       </div>
     </AuthGuard>

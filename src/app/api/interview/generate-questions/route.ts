@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
     const {
       jobDescription = "",
+      sector = "",
       category = "Software Engineering",
       effectiveLevel = 0,
       userId = "learner-user",
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
     } = body;
 
     const firstName = candidateName ? candidateName.trim().split(" ")[0] : "";
-    const effectiveRole = targetRole || category || "Software Engineer";
+    const effectiveRole = targetRole || (sector ? `${sector} Specialist` : category) || "Software Engineer";
     const levelLabel = effectiveLevel === 2 ? "Senior" : effectiveLevel === 1 ? "Mid-Level" : "Junior/Entry";
 
     let resumeTitle = "";
@@ -117,6 +118,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const sectorContext = sector ? `Target Sector/Industry: ${sector}\n` : "";
+    const combinedContext = `${sectorContext}${rawResumeText || ""}\nJob Description (JD):\n${jobDescription || "Standard Role"}`.trim();
+
     // 3. Call Universal AI Engine (Claude 3.5/3.7 Sonnet -> Gemini 2.5 Flash -> OpenAI -> Deterministic)
     const aiResult = await UniversalAI.generateResumeInterviewQuestions({
       targetRole: effectiveRole,
@@ -127,7 +131,7 @@ export async function POST(req: NextRequest) {
       skills: extractedSkills,
       projects: extractedProjects,
       workExperience: extractedExperience,
-      rawResumeText: rawResumeText || jobDescription,
+      rawResumeText: combinedContext,
     });
 
     const formattedQuestions: GeneratedQuestion[] = aiResult.questions.map((q: InterviewQuestionItem, idx: number) => {

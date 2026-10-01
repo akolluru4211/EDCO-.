@@ -80,6 +80,7 @@ export default function ActiveInterviewStudioPage() {
 
   // State
   const [targetRole, setTargetRole] = useState(categoryName);
+  const [selectedSector, setSelectedSector] = useState<string>("Software & Full-Stack");
   const [jobDescriptionInput, setJobDescriptionInput] = useState("");
   const [savedResumes, setSavedResumes] = useState<SavedResume[]>([]);
   const [selectedResumeId, setSelectedResumeId] = useState<string>("none");
@@ -141,6 +142,7 @@ export default function ActiveInterviewStudioPage() {
       const payload: any = {
         category: categoryName,
         targetRole: targetRole || categoryName,
+        sector: selectedSector,
         effectiveLevel,
         candidateName,
         userId: user?.uid,
@@ -350,15 +352,73 @@ export default function ActiveInterviewStudioPage() {
               </div>
             </div>
 
-            {/* Step 1: Job Description (Primary Default) & Target Role */}
+            {/* Myra AI Lead Interviewer Banner */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-[#13141B] text-white flex items-center justify-between gap-4 border border-white/10 shadow-lg">
+              <div className="flex items-center gap-3.5">
+                <div className="relative w-12 h-12 rounded-2xl overflow-hidden bg-emerald-500/20 border border-[#00D2B4]/40 shrink-0">
+                  <img
+                    src="/images/teddy-interviewer.png"
+                    alt="Myra AI Interviewer"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-sm text-white">Myra • Lead AI Interviewer</h3>
+                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-[#00D2B4]/20 text-[#00D2B4] border border-[#00D2B4]/30">
+                      Live Audio &amp; Video
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-300 mt-0.5">
+                    Myra will conduct your interview in full-screen locked mode, speak questions aloud, and provide an upgrade roadmap.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 1: Sector & Target Job Description */}
             <div className="space-y-4 pt-2">
+              
+              {/* Sector Selection */}
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-[#13141B] uppercase tracking-wider flex items-center gap-1.5">
+                  <Cpu className="w-3.5 h-3.5 text-[#00D2B4]" />
+                  <span>Target Industry Sector</span>
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {[
+                    "Software & Full-Stack",
+                    "Backend & Systems",
+                    "AI, ML & Data Science",
+                    "Cloud & DevOps",
+                    "Fintech & Banking",
+                    "Healthcare Tech",
+                    "CyberSecurity",
+                    "Product Management",
+                  ].map((sec) => (
+                    <button
+                      key={sec}
+                      type="button"
+                      onClick={() => setSelectedSector(sec)}
+                      className={`p-2.5 rounded-xl text-xs font-bold border transition-all text-left truncate ${
+                        selectedSector === sec
+                          ? "bg-[#13141B] text-white border-[#13141B] shadow-2xs"
+                          : "bg-[#FCFCFB] text-gray-700 border-[#EBECEF] hover:bg-slate-50"
+                      }`}
+                    >
+                      {sec}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="block text-xs font-bold text-[#13141B] uppercase tracking-wider flex items-center gap-1.5">
                     <Briefcase className="w-3.5 h-3.5 text-[#00D2B4]" />
-                    <span>Step 1: Paste Target Job Description (Primary)</span>
+                    <span>Paste Target Job Description (Optional / Recommended)</span>
                   </label>
-                  <span className="text-[10px] font-mono text-[#5E6573]">Recommended</span>
+                  <span className="text-[10px] font-mono text-[#5E6573]">Calibrates Questions</span>
                 </div>
                 <textarea
                   rows={4}

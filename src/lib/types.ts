@@ -771,10 +771,14 @@ export interface Conversation {
 
 export interface DirectMessage {
   id: string;
-  conversationId: string;
+  conversationId?: string;
   senderId: string;
-  senderName: string;
-  text: string;
+  receiverId?: string;
+  senderName?: string;
+  senderAvatar?: string;
+  text?: string;
+  message?: string;
+  isRead?: boolean;
   createdAt: string;
 }
 
@@ -821,6 +825,27 @@ export interface PublicUserProfile {
   location?: string;
   isLocationVisible?: boolean;
   skills?: string[];
+  cgpa?: number | string;
+  certifications?: Array<{
+    id: string;
+    name: string;
+    issuer: string;
+    issueDate: string;
+    url?: string;
+  }>;
+  courses?: Array<{
+    id: string;
+    title: string;
+    institution?: string;
+    completionDate?: string;
+    grade?: string;
+  }>;
+  timetable?: Array<{
+    id: string;
+    timeOfDay: string;
+    focus: string;
+    duration: string;
+  }>;
   projects?: Array<{
     id: string;
     title: string;
