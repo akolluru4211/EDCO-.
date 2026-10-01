@@ -14,15 +14,21 @@ import {
   RotateCcw, 
   ChevronDown, 
   Minimize2, 
-  Maximize2,
-  HelpCircle,
-  Lightbulb,
-  ArrowUpRight,
-  Loader2,
-  Globe,
-  Briefcase,
-  Layers,
-  Search
+  Maximize2, 
+  HelpCircle, 
+  Lightbulb, 
+  ArrowUpRight, 
+  Loader2, 
+  Globe, 
+  Briefcase, 
+  Layers, 
+  Search,
+  Brain,
+  Zap,
+  Flame,
+  CheckCircle2,
+  Trash2,
+  ChevronRight
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
@@ -35,7 +41,14 @@ interface ChatMessage {
   sourceTitle?: string;
 }
 
-const QUICK_STARTERS = [
+interface CognitiveMemoryState {
+  totalInteractions: number;
+  frequentTopics: Array<{ topic: string; queryCount: number; estimatedMastery?: string }>;
+  searchedTechnologies: Array<{ tech: string; searchCount: number }>;
+  strugglePoints: Array<{ concept: string; severity?: string; advice?: string }>;
+}
+
+const DEFAULT_STARTERS = [
   { label: "🎯 Match Jobs to My Resume", prompt: "Can you analyze my resume background and recommend the best matching jobs and missing keywords?" },
   { label: "🎙️ Practice Mock Interview", prompt: "I want to practice a STAR mock interview for a Full-Stack Software Engineer role. What should I prepare?" },
   { label: "🌐 Search Latest AI & Cloud Trends", prompt: "Search the latest 2026 tech stack requirements for modern AI and Full-Stack cloud engineering." },
@@ -46,11 +59,19 @@ const QUICK_STARTERS = [
 export default function MyraChatbot() {
   const { user, profile } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const [isMemoryOpen, setIsMemoryOpen] = useState(false);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [toolState, setToolState] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [hasUnread, setHasUnread] = useState(false);
+  const [memoryState, setMemoryState] = useState<CognitiveMemoryState>({
+    totalInteractions: 0,
+    frequentTopics: [],
+    searchedTechnologies: [],
+    strugglePoints: [],
+  });
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -60,11 +81,28 @@ export default function MyraChatbot() {
     const initialGreeting: ChatMessage = {
       id: "initial-welcome",
       role: "assistant",
-      content: `Hello **${studentName}**! 👋 I'm **Myra**, your dedicated AI Academic Mentor & Personal Career Companion at Edworld Co.\n\nI have access to live web browsing, repository analysis, resume-to-job matching, and our 3D mock interview studio.\n\nHow can I help you level up your skills, solve doubts, or prep for interviews today?`,
+      content: `Hello **${studentName}**! 👋 I'm **Myra**, your dedicated AI Academic Mentor & Personal Career Companion at Edworld Co.\n\nI learn from everything you ask, search, and practice. I'm equipped with live web browsing, repository reach, resume-to-job matching, and 3D mock interview drills.\n\nWhat would you like to master or explore today?`,
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
     setMessages([initialGreeting]);
-  }, [user?.name, profile?.name]);
+
+    // Load initial user learning memory if logged in
+    if (user?.uid) {
+      fetch(`/api/ai/myra?userId=${user.uid}`)
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.memory) {
+            setMemoryState({
+              totalInteractions: d.memory.totalInteractions || 0,
+              frequentTopics: d.memory.frequentTopics || [],
+              searchedTechnologies: d.memory.searchedTechnologies || [],
+              strugglePoints: d.memory.strugglePoints || [],
+            });
+          }
+        })
+        .catch(() => {});
+    }
+  }, [user?.name, user?.uid, profile?.name]);
 
   useEffect(() => {
     if (isOpen) {
@@ -122,6 +160,9 @@ export default function MyraChatbot() {
         interests: profile?.interests || [],
         dailyStudyHours: 2,
         institution: profile?.institution || "University Partner",
+        frequentTopics: memoryState.frequentTopics,
+        searchedTechnologies: memoryState.searchedTechnologies,
+        strugglePoints: memoryState.strugglePoints,
       };
 
       const historyPayload = messages.slice(-6).map((m) => ({
@@ -134,6 +175,7 @@ export default function MyraChatbot() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: textToSend.trim(),
+          userId: user?.uid,
           profile: profileContext,
           history: historyPayload,
         }),
@@ -150,8 +192,16 @@ export default function MyraChatbot() {
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
-      if (!isOpen) {
-        setHasUnread(true);
+      if (!isOpen) setHasUnread(true);
+
+      // Sync updated cognitive memory if returned
+      if (data.memory) {
+        setMemoryState({
+          totalInteractions: data.memory.totalInteractions || memoryState.totalInteractions + 1,
+          frequentTopics: data.memory.frequentTopics || memoryState.frequentTopics,
+          searchedTechnologies: data.memory.searchedTechnologies || memoryState.searchedTechnologies,
+          strugglePoints: data.memory.strugglePoints || memoryState.strugglePoints,
+        });
       }
     } catch (err) {
       console.error("Myra chatbot fetch error:", err);
@@ -179,6 +229,41 @@ export default function MyraChatbot() {
       },
     ]);
   };
+
+  const handleResetMemory = async () => {
+    if (!user?.uid) return;
+    try {
+      await fetch(`/api/ai/myra?userId=${user.uid}&action=reset`);
+      setMemoryState({
+        totalInteractions: 0,
+        frequentTopics: [],
+        searchedTechnologies: [],
+        strugglePoints: [],
+      });
+      setIsMemoryOpen(false);
+    } catch (e) {
+      console.warn("Reset memory note:", e);
+    }
+  };
+
+  // Generate dynamic starter prompts based on what student recently struggled with or searched
+  const dynamicStarters = memoryState.strugglePoints.length > 0
+    ? [
+        {
+          label: `⚡ Practice ${memoryState.strugglePoints[0].concept} Drill`,
+          prompt: `Can you give me a step-by-step intuitive breakdown and practice problem for ${memoryState.strugglePoints[0].concept}?`,
+        },
+        ...DEFAULT_STARTERS.slice(0, 4),
+      ]
+    : memoryState.searchedTechnologies.length > 0
+    ? [
+        {
+          label: `🔍 Deep Dive ${memoryState.searchedTechnologies[0].tech} Interview Questions`,
+          prompt: `What are the top senior engineering interview questions asked about ${memoryState.searchedTechnologies[0].tech}?`,
+        },
+        ...DEFAULT_STARTERS.slice(0, 4),
+      ]
+    : DEFAULT_STARTERS;
 
   // Simple Markdown text renderer for bold, bullet points, and links
   const renderFormattedContent = (content: string) => {
@@ -248,7 +333,7 @@ export default function MyraChatbot() {
 
       {/* Floating Chat Modal */}
       {isOpen && (
-        <div className="w-[360px] sm:w-[420px] h-[600px] max-h-[85vh] bg-slate-950 text-slate-100 rounded-3xl shadow-2xl border border-slate-800 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200">
+        <div className="relative w-[360px] sm:w-[430px] h-[620px] max-h-[85vh] bg-slate-950 text-slate-100 rounded-3xl shadow-2xl border border-slate-800 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200">
           
           {/* Header */}
           <div className="bg-slate-900 px-4 py-3.5 flex items-center justify-between border-b border-slate-800">
@@ -266,17 +351,31 @@ export default function MyraChatbot() {
                 <div className="flex items-center gap-1.5">
                   <h3 className="font-bold text-sm text-white leading-none">Myra</h3>
                   <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-[#00D2B4]/20 text-[#00D2B4] border border-[#00D2B4]/30">
-                    Personal AI Companion
+                    Adaptive Companion
                   </span>
                 </div>
                 <p className="text-[10px] text-slate-400 mt-1 flex items-center gap-1 leading-none">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span>
-                  Live Web &bull; Mock Prep &bull; Doubt Solver
+                  Live Web &bull; Behavioral Memory
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-1 text-slate-400">
+              {/* Myra Memory Toggle Button */}
+              <button
+                onClick={() => setIsMemoryOpen(!isMemoryOpen)}
+                title="View what Myra learned about you"
+                className={`px-2.5 py-1 rounded-xl text-[10px] font-bold border flex items-center gap-1 transition-all ${
+                  isMemoryOpen 
+                    ? "bg-[#00D2B4]/20 text-[#00D2B4] border-[#00D2B4]/40"
+                    : "bg-slate-800/80 text-slate-300 border-slate-700 hover:text-white"
+                }`}
+              >
+                <Brain className="w-3 h-3 text-[#00D2B4]" />
+                <span className="hidden sm:inline">Memory</span>
+              </button>
+
               <button
                 onClick={handleClearChat}
                 title="Clear conversation"
@@ -306,8 +405,79 @@ export default function MyraChatbot() {
                 </span>
               </div>
               <span className="text-[10px] bg-[#00D2B4]/10 text-[#00D2B4] border border-[#00D2B4]/30 font-semibold px-2 py-0.5 rounded-full shrink-0">
-                Personalized
+                {memoryState.totalInteractions > 0 ? `${memoryState.totalInteractions} Insights Learned` : "Learning Active"}
               </span>
+            </div>
+          )}
+
+          {/* MYRA COGNITIVE MEMORY INSPECTOR DRAWER */}
+          {isMemoryOpen && (
+            <div className="p-4 bg-slate-900 border-b border-slate-800 space-y-3 animate-in slide-in-from-top-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="font-extrabold text-[#00D2B4] uppercase tracking-wider text-[10px] flex items-center gap-1.5">
+                  <Brain className="w-3.5 h-3.5" /> What Myra Learned About You
+                </span>
+                <button
+                  onClick={handleResetMemory}
+                  className="text-[10px] text-rose-400 hover:text-rose-300 flex items-center gap-1 font-bold"
+                  title="Reset Myra's memory"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  <span>Reset Memory</span>
+                </button>
+              </div>
+
+              {/* Frequent Topics */}
+              {memoryState.frequentTopics.length > 0 && (
+                <div className="space-y-1">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase">Frequently Explored Concepts:</span>
+                  <div className="flex flex-wrap gap-1">
+                    {memoryState.frequentTopics.map((t, idx) => (
+                      <span key={idx} className="text-[10px] font-mono bg-slate-950 border border-slate-800 px-2 py-0.5 rounded text-slate-300">
+                        {t.topic} ({t.queryCount}x)
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Searched Tech */}
+              {memoryState.searchedTechnologies.length > 0 && (
+                <div className="space-y-1">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase">Searched Tech Stacks:</span>
+                  <div className="flex flex-wrap gap-1">
+                    {memoryState.searchedTechnologies.map((t, idx) => (
+                      <span key={idx} className="text-[10px] font-mono text-[#00D2B4] bg-[#00D2B4]/10 border border-[#00D2B4]/30 px-2 py-0.5 rounded">
+                        {t.tech} ({t.searchCount}x)
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Growth Areas */}
+              {memoryState.strugglePoints.length > 0 && (
+                <div className="space-y-1 pt-1 border-t border-slate-800">
+                  <span className="text-[10px] text-amber-400 font-bold uppercase flex items-center gap-1">
+                    <Flame className="w-3 h-3" /> Recommended Practice Area:
+                  </span>
+                  <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-2">
+                    <span className="text-[11px] text-slate-200 truncate">{memoryState.strugglePoints[0].concept}</span>
+                    <button
+                      onClick={() => handleSend(`Can you give me a 5-minute practice drill on ${memoryState.strugglePoints[0].concept}?`)}
+                      className="text-[10px] font-bold text-[#00D2B4] hover:underline shrink-0"
+                    >
+                      Start Drill &rarr;
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {memoryState.frequentTopics.length === 0 && memoryState.searchedTechnologies.length === 0 && (
+                <p className="text-[11px] text-slate-400 italic">
+                  Ask doubts, search technologies, or practice mock interviews. Myra will continuously extract concepts to personalize your sessions.
+                </p>
+              )}
             </div>
           )}
 
@@ -388,10 +558,10 @@ export default function MyraChatbot() {
           <div className="p-2.5 bg-slate-900/90 border-t border-slate-800">
             <div className="flex items-center gap-1.5 mb-1.5 text-[10px] text-slate-400 font-semibold px-1">
               <Lightbulb className="w-3 h-3 text-[#00D2B4]" />
-              <span>Suggested Multi-Tool Prompts</span>
+              <span>Personalized Adaptive Prompts</span>
             </div>
             <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-              {QUICK_STARTERS.map((chip, idx) => (
+              {dynamicStarters.map((chip, idx) => (
                 <button
                   key={idx}
                   onClick={() => handleSend(chip.prompt)}

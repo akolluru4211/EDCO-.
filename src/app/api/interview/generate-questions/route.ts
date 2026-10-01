@@ -103,8 +103,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 2. Fetch User's Historical Communication Profile for adaptive coaching
+    // 2. Fetch User's Historical Communication Profile & Learned Cognitive Memory
     let userCommProfile: any = null;
+    let learnedMemoryContext = "";
     if (userId && userId !== "guest") {
       try {
         const { data: profileData } = await supabase
@@ -113,13 +114,29 @@ export async function POST(req: NextRequest) {
           .eq("user_id", userId)
           .maybeSingle();
         userCommProfile = profileData;
+
+        // Fetch cognitive learning profile (topics asked, searched, and struggle areas)
+        const { data: learningData } = await supabase
+          .from("user_ai_learning_profiles")
+          .select("cognitive_memory")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        if (learningData && learningData.cognitive_memory) {
+          const mem = learningData.cognitive_memory;
+          const struggles = mem.strugglePoints?.map((s: any) => s.concept).join(", ");
+          const searched = mem.searchedTechnologies?.map((t: any) => t.tech).join(", ");
+          if (struggles || searched) {
+            learnedMemoryContext = `\nLearned Student Growth Areas (Test these concepts carefully): ${struggles || "None"}\nRecent Technologies Explored by Student: ${searched || "None"}`;
+          }
+        }
       } catch (err) {
-        console.warn("[Fetch Comm Profile Note]:", err);
+        console.warn("[Fetch Comm/Learning Profile Note]:", err);
       }
     }
 
     const sectorContext = sector ? `Target Sector/Industry: ${sector}\n` : "";
-    const combinedContext = `${sectorContext}${rawResumeText || ""}\nJob Description (JD):\n${jobDescription || "Standard Role"}`.trim();
+    const combinedContext = `${sectorContext}${rawResumeText || ""}\nJob Description (JD):\n${jobDescription || "Standard Role"}${learnedMemoryContext}`.trim();
 
     // 3. Call Universal AI Engine (Claude 3.5/3.7 Sonnet -> Gemini 2.5 Flash -> OpenAI -> Deterministic)
     const aiResult = await UniversalAI.generateResumeInterviewQuestions({

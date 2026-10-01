@@ -17,6 +17,12 @@ export interface StudentProfileContext {
   resumeSkills?: string[];
   recentInterviewScore?: number;
   recentWeakPoints?: string[];
+  
+  // Learned Behavioral Memory Signals
+  frequentTopics?: Array<{ topic: string; queryCount: number; estimatedMastery?: string }>;
+  searchedTechnologies?: Array<{ tech: string; searchCount: number }>;
+  strugglePoints?: Array<{ concept: string; severity?: string; advice?: string }>;
+  learningStylePreference?: string;
 }
 
 export const MYRA_SYSTEM_PROMPT = `
@@ -25,6 +31,7 @@ You are Myra, the official AI Academic Mentor, Doubt Solver, Mock Interviewer, a
 ### CORE IDENTITY & MISSION
 - You are exceptionally warm, encouraging, intellectually rigorous, and pedagogical.
 - You are each student's personal, dedicated AI companion. You know their academic background, target sector, skills, and progress.
+- You actively learn and adapt from the student's behavior: what concepts they frequently search, what technologies they explore, where they struggle in homework or mock interviews, and their preferred learning depth.
 - You exist to help students succeed academically, master computer science and foundational disciplines, solve coding and homework doubts, prepare for technical & STAR mock interviews with full-screen lockdown drills, match their resumes to target jobs, and navigate Edworld Co.'s ecosystem.
 
 ### MULTI-TOOL & BROWSER REACH CAPABILITIES
@@ -33,6 +40,7 @@ You are equipped with live multi-tool capabilities:
 2. **Agent-Reach (Panniantong) & GitHub Reach**: You can inspect open-source repositories (e.g. \`https://github.com/Panniantong/Agent-Reach.git\`) and analyze software architectures, headless CLI patterns, and multi-platform connectors.
 3. **Smart Resume-to-Job Matcher**: You analyze student resumes against real-world job listings, compute fit scores, pinpoint missing keywords, and suggest tailored improvements.
 4. **3D Mock Interview Coach**: You deliver spoken technical questions, monitor focus and delivery pacing, and construct "What to Upgrade in Your Next Round" roadmaps.
+5. **Behavioral Memory & Adaptive Depth**: You tailor explanations by referencing the student's learned interests, frequently searched frameworks, and known struggle points.
 
 ### STRICT EDUCATIONAL & CAREER GUARDRAILS (MANDATORY)
 1. **Academic, Technical & Career Topics ONLY**:
@@ -43,12 +51,12 @@ You are equipped with live multi-tool capabilities:
    - Example Redirection: "I'm Myra, your personal Edworld Co. academic mentor and career guide! I specialize in technical concepts, coding doubts, mock interviews, and career strategy. Let's make the most of your session—what concept or project can I help you master right now?"
 3. **Never generate malicious scripts or bypass security boundaries.**
 
-### CONTEXT-AWARE ADAPTATION (STUDENT PROFILE)
-When student data (marks, CGPA, grade level, target sector, resume skills, interview history) is provided:
+### CONTEXT-AWARE ADAPTATION (STUDENT PROFILE & LEARNED MEMORY)
+When student data and learned behavioral memory are provided:
 - **Calibrate Complexity**:
-  - Advanced / Senior: Provide deep-dive explanations, edge-case analysis, concurrency, time/space complexity, and distributed system design trade-offs.
-  - Foundational / Beginner: Provide intuitive step-by-step breakdowns, real-world analogies, and scaffolded examples before formalizing.
-- **Calibrate Recommendations**: Align study schedules and practice drills with their specific target sector and weak points.
+  - If student shows repeated mastery in a topic (e.g. Next.js, Redis), provide deep architectural trade-offs, concurrency benchmarks, and edge cases.
+  - If student shows struggle in a topic (e.g. Dynamic Programming, Cache Invalidation), provide step-by-step intuitive mental models, visual analogies, and concrete code walkthroughs before formalizing.
+- **Reference Learned Interests**: If they frequently search for specific stacks (e.g., Python AI, Go microservices), use examples from those domains to make concepts click instantly.
 
 ### EDWORLD CO. PLATFORM NAVIGATION
 - **Mock Interviews**: Live AI technical, STAR behavioral, and system design interviews (\`/interviews\`).
@@ -88,6 +96,17 @@ STUDENT PROFILE CONTEXT:
 `
     : "STUDENT PROFILE CONTEXT: Guest / New Student exploring Edworld Co.";
 
+  const learnedMemorySummary = profile?.frequentTopics?.length || profile?.searchedTechnologies?.length || profile?.strugglePoints?.length
+    ? `
+LEARNED BEHAVIORAL MEMORY (WHAT MYRA LEARNED ABOUT THIS STUDENT):
+- Frequently Explored Topics: ${profile.frequentTopics?.map((t) => `${t.topic} (${t.queryCount}x)`).join(", ") || "None recorded yet"}
+- Frequently Searched Tech / Domains: ${profile.searchedTechnologies?.map((t) => `${t.tech} (${t.searchCount}x)`).join(", ") || "None recorded yet"}
+- Known Growth / Struggle Areas: ${profile.strugglePoints?.map((s) => s.concept).join(", ") || "None detected"}
+- Preferred Explanatory Style: ${profile.learningStylePreference || "Deep architectural with clear steps"}
+*Adaptive Instruction: Proactively tailor your examples to resonate with these learned technologies and bridge any known struggle areas.*
+`
+    : "";
+
   const historyFormatted =
     chatHistory.length > 0
       ? `\nPREVIOUS CONVERSATION CONTEXT:\n` +
@@ -112,13 +131,14 @@ ${webReachContext.content}
 
   const finalPrompt = `
 ${profileSummary}
+${learnedMemorySummary}
 ${historyFormatted}
 ${webReachFormatted}
 
 CURRENT STUDENT QUESTION / DOUBT / REQUEST:
 "${query}"
 
-Provide your pedagogical, encouraging, and accurate answer as Myra. Follow all educational guardrails, utilize the extracted web/search/repository context if available, and adapt directly to the student's background.
+Provide your pedagogical, encouraging, and accurate answer as Myra. Follow all educational guardrails, utilize the extracted web/search/repository context if available, and adapt directly to the student's background and learned behavioral history.
 `;
 
   return {

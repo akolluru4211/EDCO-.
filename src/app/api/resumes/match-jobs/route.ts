@@ -22,12 +22,29 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const {
+      userId = "",
       skills = [],
       targetRole = "Software Engineer",
       sector = "AI & Software Engineering",
       experienceSummary = "",
       projects = [],
     } = body;
+
+    // Fetch user's cognitive memory for searched technologies
+    let learnedTechs: string[] = [];
+    if (userId) {
+      try {
+        const { data: learningData } = await supabase
+          .from("user_ai_learning_profiles")
+          .select("cognitive_memory")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        if (learningData && learningData.cognitive_memory) {
+          learnedTechs = (learningData.cognitive_memory.searchedTechnologies || []).map((t: any) => t.tech.toLowerCase());
+        }
+      } catch (e) {}
+    }
 
     // 1. Fetch available jobs from Supabase
     let jobListings: any[] = [];
@@ -102,21 +119,28 @@ export async function POST(req: NextRequest) {
       const jobSkills: string[] = job.skills_required || ["TypeScript", "React", "Node.js"];
       const overlapping: string[] = [];
       const missing: string[] = [];
+      let learnedBonus = 0;
 
       jobSkills.forEach((js) => {
+        const jsLower = js.toLowerCase();
         const found = candidateSkillsLower.some(
-          (cs: string) => cs.includes(js.toLowerCase()) || js.toLowerCase().includes(cs)
+          (cs: string) => cs.includes(jsLower) || jsLower.includes(cs)
         );
         if (found) {
           overlapping.push(js);
         } else {
           missing.push(js);
         }
+
+        // Check if student has been actively researching/searching this technology
+        if (learnedTechs.some((lt) => lt.includes(jsLower) || jsLower.includes(lt))) {
+          learnedBonus += 3;
+        }
       });
 
-      // Compute base score
+      // Compute base score with learned interest weighting
       const skillMatchRatio = jobSkills.length > 0 ? overlapping.length / jobSkills.length : 0.7;
-      const baseScore = Math.round(55 + skillMatchRatio * 40);
+      const baseScore = Math.round(55 + skillMatchRatio * 38 + Math.min(6, learnedBonus));
       const finalScore = Math.min(98, Math.max(65, baseScore));
 
       const verdict =
