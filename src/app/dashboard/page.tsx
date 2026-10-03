@@ -34,7 +34,9 @@ import {
   Compass,
   ArrowUpRight,
   Clock,
-  Check
+  Check,
+  Sliders,
+  Cake
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import GrowthRing from "@/components/ui/GrowthRing";
@@ -46,6 +48,14 @@ import SpotlightCard from "@/components/ui/SpotlightCard";
 import PerformanceIntelligenceWidget from "@/components/dashboard/PerformanceIntelligenceWidget";
 import MyCareerPlanWidget from "@/components/dashboard/MyCareerPlanWidget";
 import PersonalizedTimetableWidget from "@/components/dashboard/PersonalizedTimetableWidget";
+import ConnectionBirthdaysWidget from "@/components/dashboard/ConnectionBirthdaysWidget";
+import ReceivedBirthdayWishesCard from "@/components/networking/ReceivedBirthdayWishesCard";
+import CustomizeDashboardModal from "@/components/dashboard/CustomizeDashboardModal";
+import { 
+  resolveDashboardLayout, 
+  DashboardLayoutPreference,
+  DashboardSectionConfig 
+} from "@/lib/dashboard/dashboard-layout-engine";
 import EdIdBadge from "@/components/ui/EdIdBadge";
 
 export default function DashboardPage() {
@@ -84,6 +94,25 @@ export default function DashboardPage() {
     avgScore: 0,
     recentAttempts: []
   });
+
+  // Dashboard Layout Customization & Smart Defaults
+  const [customLayout, setCustomLayout] = useState<DashboardLayoutPreference | null>(
+    (profile as any)?.dashboard_layout_preference || null
+  );
+  const [isCustomizeModalOpen, setIsCustomizeModalOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    if ((profile as any)?.dashboard_layout_preference) {
+      setCustomLayout((profile as any).dashboard_layout_preference);
+    }
+  }, [profile]);
+
+  const { orderedSections, hiddenIds } = resolveDashboardLayout(
+    careerStage,
+    profile?.targetRole,
+    profile?.interests?.map((i: any) => (typeof i === "string" ? i : i?.name || "")),
+    customLayout
+  );
 
   useEffect(() => {
     if (!user) return;
@@ -283,7 +312,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* TRACK SWITCHER */}
+          {/* TRACK SWITCHER & CUSTOMIZE */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-2.5 rounded-2xl border border-[#EBECEF] shadow-xs">
             <div className="flex items-center gap-2 pl-2">
               <span className="text-[10px] font-extrabold uppercase tracking-wider bg-[#13141B] text-white px-2.5 py-1 rounded-lg shadow-2xs">
@@ -294,7 +323,7 @@ export default function DashboardPage() {
               </span>
             </div>
 
-            <div className="flex items-center gap-1.5 overflow-x-auto touch-scroll-x pb-0.5 sm:pb-0">
+            <div className="flex items-center gap-2 overflow-x-auto touch-scroll-x pb-0.5 sm:pb-0">
               <button
                 onClick={() => handleStageChange("college")}
                 className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
@@ -317,6 +346,15 @@ export default function DashboardPage() {
                 <Building2 className="w-4 h-4 text-[#00D2B4]" />
                 <span>Working Professional</span>
               </button>
+
+              <button
+                onClick={() => setIsCustomizeModalOpen(true)}
+                className="px-3 py-2 rounded-xl text-xs font-bold text-[#5E6573] hover:text-[#13141B] hover:bg-slate-100 border border-[#EBECEF] flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap"
+                title="Customize Dashboard Layout"
+              >
+                <Sliders className="w-3.5 h-3.5 text-[#00D2B4]" />
+                <span className="hidden sm:inline">Customize</span>
+              </button>
             </div>
           </div>
 
@@ -329,7 +367,7 @@ export default function DashboardPage() {
           {/* MAIN BALANCED BENTO GRID: LEFT TOOL HUB (4 Cols) + WORKSPACE (8 Cols) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
             
-            {/* LEFT COLUMN: Quick Action Hub, Daily Sprint, Digital ID & Skill Telemetry */}
+            {/* LEFT COLUMN: Quick Action Hub, Daily Sprint, Connection Birthdays, Digital ID & Skill Telemetry */}
             <div className="lg:col-span-4 space-y-6">
               
               {/* 1. Quick Launch Actions Station */}
@@ -419,334 +457,367 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* 2. Today's Daily Target & Aptitude Sprint Capsule */}
-              <div className="bg-white rounded-2xl p-5 sm:p-6 border border-[#EBECEF] shadow-xs space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Brain className="w-4 h-4 text-[#00D2B4]" />
-                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#13141B]">
-                      Daily Practice Sprint
-                    </h3>
-                  </div>
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-[#00D2B4]/10 text-[#0A5245] border border-[#00D2B4]/20">
-                    +50 XP
-                  </span>
-                </div>
+              {/* 2. Connection Birthdays Widget */}
+              {!hiddenIds.includes("connection_birthdays") && (
+                <ConnectionBirthdaysWidget userId={user?.uid} />
+              )}
 
-                <div className="p-4 rounded-xl bg-[#FCFCFB] border border-[#EBECEF] space-y-3">
+              {/* 3. Today's Daily Target & Aptitude Sprint Capsule */}
+              {!hiddenIds.includes("daily_practice_sprint") && (
+                <div className="bg-white rounded-2xl p-5 sm:p-6 border border-[#EBECEF] shadow-xs space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-[#13141B]">10 Speed Questions</span>
-                    <span className="text-[11px] font-mono text-[#5E6573] flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-amber-500" />
-                      10 Mins
+                    <div className="flex items-center gap-2">
+                      <Brain className="w-4 h-4 text-[#00D2B4]" />
+                      <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#13141B]">
+                        Daily Practice Sprint
+                      </h3>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-[#00D2B4]/10 text-[#0A5245] border border-[#00D2B4]/20">
+                      +50 XP
                     </span>
                   </div>
-                  <p className="text-xs text-[#5E6573] font-medium leading-relaxed">
-                    Benchmark quant, logic, and verbal reflexes calibrated to top tech hiring bars.
-                  </p>
-                  <Link
-                    href="/aptitude"
-                    className="w-full py-2 px-3 rounded-xl bg-[#13141B] hover:bg-black text-white text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-2xs"
-                  >
-                    <span>Launch Sprint</span>
-                    <ArrowRight className="w-3.5 h-3.5 text-[#00D2B4]" />
-                  </Link>
+
+                  <div className="p-4 rounded-xl bg-[#FCFCFB] border border-[#EBECEF] space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-[#13141B]">10 Speed Questions</span>
+                      <span className="text-[11px] font-mono text-[#5E6573] flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-amber-500" />
+                        10 Mins
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#5E6573] font-medium leading-relaxed">
+                      Benchmark quant, logic, and verbal reflexes calibrated to top tech hiring bars.
+                    </p>
+                    <Link
+                      href="/aptitude"
+                      className="w-full py-2 px-3 rounded-xl bg-[#13141B] hover:bg-black text-white text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-2xs"
+                    >
+                      <span>Launch Sprint</span>
+                      <ArrowRight className="w-3.5 h-3.5 text-[#00D2B4]" />
+                    </Link>
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* 3. Verified Digital ID & Public Profile Badge */}
-              <div className="bg-white rounded-2xl p-5 sm:p-6 border border-[#EBECEF] shadow-xs space-y-4">
-                <div className="flex items-center justify-between border-b border-[#EBECEF] pb-3">
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-[#00D2B4]" />
-                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#13141B]">
-                      Verified Identity
-                    </h3>
-                  </div>
-                  <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 font-bold">
-                    Active
-                  </span>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-[#5E6573] font-medium">Digital ID:</span>
-                    <EdIdBadge userId={user?.uid || ""} customId={(profile as any)?.edworldId || (profile as any)?.edId} size="sm" variant="pill" />
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-[#5E6573] font-medium">Role:</span>
-                    <span className="font-bold text-[#13141B]">{profile?.targetRole || "Engineering"}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-[#5E6573] font-medium">Public Status:</span>
-                    <span className="font-bold text-[#0A5245]">{profile?.isPublic ? "Visible" : "Private"}</span>
-                  </div>
-
-                  <Link
-                    href={`/u/${user?.name?.toLowerCase().replace(/\s+/g, "_") || user?.uid || "profile"}`}
-                    className="block text-center py-2 px-3 rounded-xl border border-[#EBECEF] hover:bg-slate-50 text-[#13141B] text-xs font-bold transition-colors"
-                  >
-                    View Public Portfolio &rarr;
-                  </Link>
-                </div>
-              </div>
-
-              {/* 4. Skill Telemetry & Effective Level Calibration */}
-              <div className="bg-white rounded-2xl p-5 sm:p-6 border border-[#EBECEF] shadow-xs space-y-4">
-                <div className="flex items-center justify-between border-b border-[#EBECEF] pb-3">
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#0A5245]">
-                      Telemetry
+              {/* 4. Verified Digital ID & Public Profile Badge */}
+              {!hiddenIds.includes("verified_identity") && (
+                <div className="bg-white rounded-2xl p-5 sm:p-6 border border-[#EBECEF] shadow-xs space-y-4">
+                  <div className="flex items-center justify-between border-b border-[#EBECEF] pb-3">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-[#00D2B4]" />
+                      <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#13141B]">
+                        Verified Identity
+                      </h3>
+                    </div>
+                    <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 font-bold">
+                      Active
                     </span>
-                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#13141B]">
-                      Skill Calibration
-                    </h3>
                   </div>
-                  <span className="text-[10px] font-mono text-[#5E6573]">Verified Levels</span>
-                </div>
 
-                <div className="grid grid-cols-3 gap-2 items-center justify-items-center py-2">
-                  <GrowthRing
-                    level={0}
-                    progress={100}
-                    size={76}
-                    strokeWidth={6}
-                    label="Concepts"
-                  />
-                  <GrowthRing
-                    level={1}
-                    progress={completedDrillsCount > 0 ? 80 : 25}
-                    size={84}
-                    strokeWidth={7}
-                    label="Core Level"
-                  />
-                  <GrowthRing
-                    level={2}
-                    progress={completedDrillsCount > 3 ? 50 : 0}
-                    size={76}
-                    strokeWidth={6}
-                    label="Benchmark"
-                  />
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-[#5E6573] font-medium">Digital ID:</span>
+                      <EdIdBadge userId={user?.uid || ""} customId={(profile as any)?.edworldId || (profile as any)?.edId} size="sm" variant="pill" />
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-[#5E6573] font-medium">Role:</span>
+                      <span className="font-bold text-[#13141B]">{profile?.targetRole || "Engineering"}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-[#5E6573] font-medium">Public Status:</span>
+                      <span className="font-bold text-[#0A5245]">{profile?.isPublic ? "Visible" : "Private"}</span>
+                    </div>
+
+                    <Link
+                      href={`/u/${user?.name?.toLowerCase().replace(/\s+/g, "_") || user?.uid || "profile"}`}
+                      className="block text-center py-2 px-3 rounded-xl border border-[#EBECEF] hover:bg-slate-50 text-[#13141B] text-xs font-bold transition-colors"
+                    >
+                      View Public Portfolio &rarr;
+                    </Link>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* 5. Skill Telemetry & Effective Level Calibration */}
+              {!hiddenIds.includes("skill_calibration") && (
+                <div className="bg-white rounded-2xl p-5 sm:p-6 border border-[#EBECEF] shadow-xs space-y-4">
+                  <div className="flex items-center justify-between border-b border-[#EBECEF] pb-3">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#0A5245]">
+                        Telemetry
+                      </span>
+                      <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#13141B]">
+                        Skill Calibration
+                      </h3>
+                    </div>
+                    <span className="text-[10px] font-mono text-[#5E6573]">Verified Levels</span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 items-center justify-items-center py-2">
+                    <GrowthRing
+                      level={0}
+                      progress={100}
+                      size={76}
+                      strokeWidth={6}
+                      label="Concepts"
+                    />
+                    <GrowthRing
+                      level={1}
+                      progress={completedDrillsCount > 0 ? 80 : 25}
+                      size={84}
+                      strokeWidth={7}
+                      label="Core Level"
+                    />
+                    <GrowthRing
+                      level={2}
+                      progress={completedDrillsCount > 3 ? 50 : 0}
+                      size={76}
+                      strokeWidth={6}
+                      label="Benchmark"
+                    />
+                  </div>
+                </div>
+              )}
 
             </div>
 
-            {/* MAIN WORKSPACE COLUMN (8 Cols): Personalized Timetable, Career Plan, Continue Learning, Recommended Modules & Intelligence */}
+            {/* MAIN WORKSPACE COLUMN (8 Cols): Ordered & Customized Sections */}
             <div className="lg:col-span-8 space-y-6 sm:space-y-8">
               
-              {/* PERSONALIZED STUDY TIMETABLE (Calibrated to CGPA, Target Role & Available Time) */}
-              <PersonalizedTimetableWidget />
+              {/* Private Received Birthday Wishes Card (Auto-hides when 0) */}
+              <ReceivedBirthdayWishesCard userId={user?.uid} />
 
-              {/* CAREER LEARNING OS: Integrated My Career Plan & Skill Milestones */}
-              <MyCareerPlanWidget
-                userId={user?.uid}
-                userName={user?.name || profile?.name || "Learner"}
-              />
+              {/* Dynamically Render Workspace Sections According to Resolved Layout Order */}
+              {orderedSections
+                .filter((section) => !hiddenIds.includes(section.id))
+                .map((section) => {
+                  switch (section.id) {
+                    case "personalized_timetable":
+                      return <PersonalizedTimetableWidget key="personalized_timetable" />;
 
-              {/* 1. Continue Learning Hero Card */}
-              <div className="space-y-3">
-                <h2 className="text-base sm:text-lg font-extrabold font-sans text-[#13141B]">Continue Learning</h2>
-                
-                <div className="rounded-2xl p-5 sm:p-7 bg-white border border-[#EBECEF] shadow-xs relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5 z-10 w-full md:w-auto">
-                    <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-[#13141B] text-white flex items-center justify-center shrink-0 shadow-2xs">
-                      <Brain className="w-7 h-7 text-[#00D2B4]" />
-                    </div>
+                    case "my_career_plan":
+                      return (
+                        <MyCareerPlanWidget
+                          key="my_career_plan"
+                          userId={user?.uid}
+                          userName={user?.name || profile?.name || "Learner"}
+                        />
+                      );
 
-                    <div className="space-y-1.5 flex-1">
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-[#5E6573]">
-                        <Layers className="w-3.5 h-3.5 text-[#00D2B4]" />
-                        <span>{latestSession ? "Recent Session" : "Starter Module"}</span>
-                      </div>
-                      <h3 className="text-base sm:text-lg font-extrabold font-sans text-[#13141B] tracking-tight leading-snug">
-                        {latestSession 
-                          ? `${(latestSession.category || "General").toUpperCase()} Mock Interview Evaluation`
-                          : "STAR Behavioral & System Design Drill I"
-                        }
-                      </h3>
-                      <div className="space-y-1.5 pt-1">
-                        <span className="text-xs text-[#5E6573] font-medium">
-                          {latestSession 
-                            ? `Evaluation Score: ${latestSession.score ?? 0}% Complete`
-                            : "0% Completed • Ready to begin"
-                          }
-                        </span>
-                        <div className="w-full sm:w-64 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-[#13141B] rounded-full transition-all duration-700 ease-out" 
-                            style={{ width: `${latestSession ? (latestSession.score ?? 0) : 0}%` }}
-                          />
+                    case "continue_learning":
+                      return (
+                        <div key="continue_learning" className="space-y-3">
+                          <h2 className="text-base sm:text-lg font-extrabold font-sans text-[#13141B]">Continue Learning</h2>
+                          
+                          <div className="rounded-2xl p-5 sm:p-7 bg-white border border-[#EBECEF] shadow-xs relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5 z-10 w-full md:w-auto">
+                              <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-[#13141B] text-white flex items-center justify-center shrink-0 shadow-2xs">
+                                <Brain className="w-7 h-7 text-[#00D2B4]" />
+                              </div>
+
+                              <div className="space-y-1.5 flex-1">
+                                <div className="flex items-center gap-1.5 text-xs font-bold text-[#5E6573]">
+                                  <Layers className="w-3.5 h-3.5 text-[#00D2B4]" />
+                                  <span>{latestSession ? "Recent Session" : "Starter Module"}</span>
+                                </div>
+                                <h3 className="text-base sm:text-lg font-extrabold font-sans text-[#13141B] tracking-tight leading-snug">
+                                  {latestSession 
+                                    ? `${(latestSession.category || "General").toUpperCase()} Mock Interview Evaluation`
+                                    : "STAR Behavioral & System Design Drill I"
+                                  }
+                                </h3>
+                                <div className="space-y-1.5 pt-1">
+                                  <span className="text-xs text-[#5E6573] font-medium">
+                                    {latestSession 
+                                      ? `Evaluation Score: ${latestSession.score ?? 0}% Complete`
+                                      : "0% Completed • Ready to begin"
+                                    }
+                                  </span>
+                                  <div className="w-full sm:w-64 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                    <div 
+                                      className="h-full bg-[#13141B] rounded-full transition-all duration-700 ease-out" 
+                                      style={{ width: `${latestSession ? (latestSession.score ?? 0) : 0}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center sm:flex-col lg:flex-row gap-2 z-10 w-full md:w-auto justify-end">
+                              <Link
+                                href="/interviews"
+                                className="px-5 py-2.5 rounded-xl bg-[#13141B] hover:bg-black text-white text-xs font-bold shadow-2xs transition-colors text-center w-full md:w-auto"
+                              >
+                                {latestSession ? "Practice Next Drill" : "Start Learning"}
+                              </Link>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  </div>
+                      );
 
-                  <div className="flex items-center sm:flex-col lg:flex-row gap-2 z-10 w-full md:w-auto justify-end">
-                    <Link
-                      href="/interviews"
-                      className="px-5 py-2.5 rounded-xl bg-[#13141B] hover:bg-black text-white text-xs font-bold shadow-2xs transition-colors text-center w-full md:w-auto"
-                    >
-                      {latestSession ? "Practice Next Drill" : "Start Learning"}
-                    </Link>
-                  </div>
-                </div>
-              </div>
+                    case "recommended_curriculum":
+                      return (
+                        <div key="recommended_curriculum" className="space-y-4">
+                          <div className="flex items-center justify-between flex-wrap gap-2">
+                            <h2 className="text-base sm:text-lg font-extrabold font-sans text-[#13141B]">Recommended Curriculum</h2>
+                            
+                            <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-[#EBECEF] shadow-2xs overflow-x-auto touch-scroll-x max-w-full">
+                              {(["All", "Beginner", "Intermediate", "Advanced"] as const).map((diff) => (
+                                <button
+                                  key={diff}
+                                  onClick={() => setSelectedDifficulty(diff)}
+                                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer whitespace-nowrap ${
+                                    selectedDifficulty === diff
+                                      ? "bg-[#13141B] text-white shadow-2xs"
+                                      : "text-[#5E6573] hover:text-[#13141B]"
+                                  }`}
+                                >
+                                  {diff}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
 
-              {/* 2. Recommended For You Section */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <h2 className="text-base sm:text-lg font-extrabold font-sans text-[#13141B]">Recommended Curriculum</h2>
-                  
-                  <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-[#EBECEF] shadow-2xs overflow-x-auto touch-scroll-x max-w-full">
-                    {(["All", "Beginner", "Intermediate", "Advanced"] as const).map((diff) => (
-                      <button
-                        key={diff}
-                        onClick={() => setSelectedDifficulty(diff)}
-                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer whitespace-nowrap ${
-                          selectedDifficulty === diff
-                            ? "bg-[#13141B] text-white shadow-2xs"
-                            : "text-[#5E6573] hover:text-[#13141B]"
-                        }`}
-                      >
-                        {diff}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {filteredModules.map((mod) => (
+                              <Link
+                                key={mod.id}
+                                href={mod.href}
+                                className="p-4 sm:p-5 rounded-2xl bg-white border border-[#EBECEF] hover:border-[#D1D5DC] shadow-xs transition-all flex items-center justify-between group"
+                              >
+                                <div className="space-y-2 z-10 max-w-[70%]">
+                                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#5E6573]">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[#00D2B4]" />
+                                    <span>{mod.type}</span>
+                                  </div>
+                                  <h3 className="text-xs sm:text-sm font-extrabold text-[#13141B] leading-snug group-hover:text-[#00D2B4] transition-colors">
+                                    {mod.title}
+                                  </h3>
+                                  <div className="flex items-center gap-2">
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${mod.badgeColor}`}>
+                                      {mod.difficulty}
+                                    </span>
+                                    <span className="text-[11px] text-[#5E6573]">
+                                      • {mod.duration}
+                                    </span>
+                                  </div>
+                                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {filteredModules.map((mod) => (
-                    <Link
-                      key={mod.id}
-                      href={mod.href}
-                      className="p-4 sm:p-5 rounded-2xl bg-white border border-[#EBECEF] hover:border-[#D1D5DC] shadow-xs transition-all flex items-center justify-between group"
-                    >
-                      <div className="space-y-2 z-10 max-w-[70%]">
-                        <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#5E6573]">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#00D2B4]" />
-                          <span>{mod.type}</span>
+                                <div className="shrink-0">
+                                  {mod.illustration}
+                                </div>
+                              </Link>
+                            ))}
+                          </div>
                         </div>
-                        <h3 className="text-xs sm:text-sm font-extrabold text-[#13141B] leading-snug group-hover:text-[#00D2B4] transition-colors">
-                          {mod.title}
-                        </h3>
-                        <div className="flex items-center gap-2">
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${mod.badgeColor}`}>
-                            {mod.difficulty}
-                          </span>
-                          <span className="text-[11px] text-[#5E6573]">
-                            • {mod.duration}
-                          </span>
-                        </div>
-                      </div>
+                      );
 
-                      <div className="shrink-0">
-                        {mod.illustration}
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
+                    case "score_readiness_matrix":
+                      return (
+                        <section key="score_readiness_matrix" className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-xl bg-[#13141B] text-[#00D2B4] flex items-center justify-center font-bold shadow-2xs">
+                                <BarChart3 className="w-4 h-4" />
+                              </div>
+                              <div>
+                                <h2 className="text-sm sm:text-base font-extrabold text-[#13141B]">Score &amp; Readiness Matrix</h2>
+                                <p className="text-xs text-[#5E6573]">Telemetry across interview, aptitude, and resume engines</p>
+                              </div>
+                            </div>
+                            <Link
+                              href="/aptitude"
+                              className="px-3.5 py-1.5 rounded-xl bg-[#13141B] hover:bg-black text-white font-bold text-xs flex items-center gap-1.5 transition-colors shadow-2xs"
+                            >
+                              <Brain className="w-3.5 h-3.5 text-[#00D2B4]" />
+                              <span>Daily Sprint</span>
+                            </Link>
+                          </div>
 
-              {/* 3. Activity & Score Intelligence Section */}
-              <section className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-xl bg-[#13141B] text-[#00D2B4] flex items-center justify-center font-bold shadow-2xs">
-                      <BarChart3 className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h2 className="text-sm sm:text-base font-extrabold text-[#13141B]">Score &amp; Readiness Matrix</h2>
-                      <p className="text-xs text-[#5E6573]">Telemetry across interview, aptitude, and resume engines</p>
-                    </div>
-                  </div>
-                  <Link
-                    href="/aptitude"
-                    className="px-3.5 py-1.5 rounded-xl bg-[#13141B] hover:bg-black text-white font-bold text-xs flex items-center gap-1.5 transition-colors shadow-2xs"
-                  >
-                    <Brain className="w-3.5 h-3.5 text-[#00D2B4]" />
-                    <span>Daily Sprint</span>
-                  </Link>
-                </div>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {/* Mock Interview Score Card */}
+                            <div className="p-5 rounded-2xl bg-white border border-[#EBECEF] shadow-xs space-y-3.5">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-extrabold text-[#5E6573] uppercase tracking-wider">Interview Mastery</span>
+                                <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${latestSession ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-slate-100 text-[#5E6573]"}`}>
+                                  {latestSession ? "Evaluated" : "Not Started"}
+                                </span>
+                              </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Mock Interview Score Card */}
-                  <div className="p-5 rounded-2xl bg-white border border-[#EBECEF] shadow-xs space-y-3.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-extrabold text-[#5E6573] uppercase tracking-wider">Interview Mastery</span>
-                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${latestSession ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-slate-100 text-[#5E6573]"}`}>
-                        {latestSession ? "Evaluated" : "Not Started"}
-                      </span>
-                    </div>
+                              <div className="flex items-baseline gap-2">
+                                <span className="text-2xl font-extrabold font-mono text-[#13141B]">
+                                  {latestSession ? (latestSession.score ?? 0) : "—"}
+                                </span>
+                                <span className="text-xs text-[#5E6573]">
+                                  {latestSession ? "/ 100 Score" : "No interview taken"}
+                                </span>
+                              </div>
 
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-2xl font-extrabold font-mono text-[#13141B]">
-                        {latestSession ? (latestSession.score ?? 0) : "—"}
-                      </span>
-                      <span className="text-xs text-[#5E6573]">
-                        {latestSession ? "/ 100 Score" : "No interview taken"}
-                      </span>
-                    </div>
+                              <Link
+                                href="/interviews"
+                                className="block text-center py-2 rounded-xl bg-[#FCFCFB] hover:bg-slate-50 border border-[#EBECEF] text-xs font-bold text-[#13141B] transition-colors"
+                              >
+                                {latestSession ? "View Report →" : "Start Interview →"}
+                              </Link>
+                            </div>
 
-                    <Link
-                      href="/interviews"
-                      className="block text-center py-2 rounded-xl bg-[#FCFCFB] hover:bg-slate-50 border border-[#EBECEF] text-xs font-bold text-[#13141B] transition-colors"
-                    >
-                      {latestSession ? "View Report →" : "Start Interview →"}
-                    </Link>
-                  </div>
+                            {/* Daily Aptitude Performance Card */}
+                            <div className="p-5 rounded-2xl bg-white border border-[#EBECEF] shadow-xs space-y-3.5">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-extrabold text-[#5E6573] uppercase tracking-wider">Aptitude Agility</span>
+                                <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold">
+                                  Daily
+                                </span>
+                              </div>
 
-                  {/* Daily Aptitude Performance Card */}
-                  <div className="p-5 rounded-2xl bg-white border border-[#EBECEF] shadow-xs space-y-3.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-extrabold text-[#5E6573] uppercase tracking-wider">Aptitude Agility</span>
-                      <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold">
-                        Daily
-                      </span>
-                    </div>
+                              <div className="flex items-baseline gap-2">
+                                <span className="text-2xl font-extrabold font-mono text-[#13141B]">
+                                  {aptitudeStats.totalAttempts > 0 ? `${aptitudeStats.avgScore}%` : "—"}
+                                </span>
+                                <span className="text-xs text-[#5E6573]">
+                                  {aptitudeStats.totalAttempts > 0 ? "Accuracy" : "No sprints taken"}
+                                </span>
+                              </div>
 
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-2xl font-extrabold font-mono text-[#13141B]">
-                        {aptitudeStats.totalAttempts > 0 ? `${aptitudeStats.avgScore}%` : "—"}
-                      </span>
-                      <span className="text-xs text-[#5E6573]">
-                        {aptitudeStats.totalAttempts > 0 ? "Accuracy" : "No sprints taken"}
-                      </span>
-                    </div>
+                              <Link
+                                href="/aptitude"
+                                className="block text-center py-2 rounded-xl bg-[#FCFCFB] hover:bg-slate-50 border border-[#EBECEF] text-xs font-bold text-[#13141B] transition-colors"
+                              >
+                                {aptitudeStats.totalAttempts > 0 ? "Take Today's Sprint →" : "Start Aptitude Sprint →"}
+                              </Link>
+                            </div>
 
-                    <Link
-                      href="/aptitude"
-                      className="block text-center py-2 rounded-xl bg-[#FCFCFB] hover:bg-slate-50 border border-[#EBECEF] text-xs font-bold text-[#13141B] transition-colors"
-                    >
-                      {aptitudeStats.totalAttempts > 0 ? "Take Today's Sprint →" : "Start Aptitude Sprint →"}
-                    </Link>
-                  </div>
+                            {/* Resume & ATS Readiness Card */}
+                            <div className="p-5 rounded-2xl bg-white border border-[#EBECEF] shadow-xs space-y-3.5">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-extrabold text-[#5E6573] uppercase tracking-wider">ATS Readiness</span>
+                                <span className="px-2 py-0.5 rounded-md bg-[#00D2B4]/10 text-[#0A5245] border border-[#00D2B4]/20 text-[10px] font-bold">
+                                  AI Tailored
+                                </span>
+                              </div>
 
-                  {/* Resume & ATS Readiness Card */}
-                  <div className="p-5 rounded-2xl bg-white border border-[#EBECEF] shadow-xs space-y-3.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-extrabold text-[#5E6573] uppercase tracking-wider">ATS Readiness</span>
-                      <span className="px-2 py-0.5 rounded-md bg-[#00D2B4]/10 text-[#0A5245] border border-[#00D2B4]/20 text-[10px] font-bold">
-                        AI Tailored
-                      </span>
-                    </div>
+                              <div className="flex items-baseline gap-2">
+                                <span className="text-2xl font-extrabold text-[#13141B]">
+                                  {profile?.targetRole ? "Ready" : "Draft"}
+                                </span>
+                                <span className="text-xs text-[#5E6573]">ATS Alignment</span>
+                              </div>
 
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-2xl font-extrabold text-[#13141B]">
-                        {profile?.targetRole ? "Ready" : "Draft"}
-                      </span>
-                      <span className="text-xs text-[#5E6573]">ATS Alignment</span>
-                    </div>
+                              <Link
+                                href="/resumes"
+                                className="block text-center py-2 rounded-xl bg-[#FCFCFB] hover:bg-slate-50 border border-[#EBECEF] text-xs font-bold text-[#13141B] transition-colors"
+                              >
+                                Open Resume Maker →
+                              </Link>
+                            </div>
+                          </div>
+                        </section>
+                      );
 
-                    <Link
-                      href="/resumes"
-                      className="block text-center py-2 rounded-xl bg-[#FCFCFB] hover:bg-slate-50 border border-[#EBECEF] text-xs font-bold text-[#13141B] transition-colors"
-                    >
-                      Open Resume Maker →
-                    </Link>
-                  </div>
-                </div>
-              </section>
+                    default:
+                      return null;
+                  }
+                })}
 
               {/* Gamification HUD */}
               <GamificationHUD />
@@ -754,6 +825,25 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* Layout Customization Modal */}
+        {user && (
+          <CustomizeDashboardModal
+            isOpen={isCustomizeModalOpen}
+            onClose={() => setIsCustomizeModalOpen(false)}
+            userId={user.uid}
+            currentOrder={orderedSections}
+            currentHidden={hiddenIds}
+            onLayoutSaved={(newPref: DashboardLayoutPreference) => {
+              setCustomLayout(newPref);
+              setIsCustomizeModalOpen(false);
+            }}
+            onResetToDefaults={() => {
+              setCustomLayout(null);
+              setIsCustomizeModalOpen(false);
+            }}
+          />
+        )}
       </div>
     </AuthGuard>
   );

@@ -30,7 +30,9 @@ export async function POST(req: NextRequest) {
       targetRole,
       gradeLevel,
       careerStage,
-      certifications
+      certifications,
+      showBirthdayToConnections,
+      show_birthday_to_connections
     } = body;
 
     const { displayName, firstName: cleanFirst, lastName: cleanLast } = normalizeDisplayName(
@@ -59,6 +61,8 @@ export async function POST(req: NextRequest) {
     if (primaryGoal !== undefined) profilePayload.primary_goal = primaryGoal;
     if (interests !== undefined) profilePayload.interests = interests;
     if (isPublic !== undefined) profilePayload.is_public = Boolean(isPublic);
+    if (showBirthdayToConnections !== undefined) profilePayload.show_birthday_to_connections = Boolean(showBirthdayToConnections);
+    if (show_birthday_to_connections !== undefined) profilePayload.show_birthday_to_connections = Boolean(show_birthday_to_connections);
     if (isMentor !== undefined) profilePayload.is_mentor = Boolean(isMentor);
     if (mentorTags !== undefined) profilePayload.mentor_tags = mentorTags;
     if (targetRole !== undefined) profilePayload.target_role = targetRole;

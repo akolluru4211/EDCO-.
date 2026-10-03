@@ -52,6 +52,7 @@ export default function ProfilePage() {
   const [college, setCollege] = useState(profile?.institution || (profile as any)?.college || "");
   const [company, setCompany] = useState(profile?.current_company || (profile as any)?.company || "");
   const [isPublic, setIsPublic] = useState<boolean>(profile?.isPublic !== false);
+  const [showBirthdayToConnections, setShowBirthdayToConnections] = useState<boolean>(Boolean((profile as any)?.show_birthday_to_connections));
   const [saveState, setSaveState] = useState<"idle" | "saving" | "success" | "error">("idle");
   const [saveErrorMessage, setSaveErrorMessage] = useState<string | null>(null);
 
@@ -66,6 +67,7 @@ export default function ProfilePage() {
       if (profile.institution || (profile as any).college) setCollege(profile.institution || (profile as any).college);
       if (profile.current_company || (profile as any).company) setCompany(profile.current_company || (profile as any).company);
       if (profile.isPublic !== undefined) setIsPublic(profile.isPublic);
+      if ((profile as any).show_birthday_to_connections !== undefined) setShowBirthdayToConnections(Boolean((profile as any).show_birthday_to_connections));
     } else if (user) {
       if (user.name) setName(user.name);
     }
@@ -242,7 +244,8 @@ export default function ProfilePage() {
           phone,
           headline,
           bio,
-          isPublic
+          isPublic,
+          showBirthdayToConnections
         })
       });
 
@@ -606,6 +609,25 @@ export default function ProfilePage() {
                         type="checkbox"
                         checked={isPublic}
                         onChange={(e) => setIsPublic(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-10 h-5 bg-stone-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600" />
+                    </label>
+                  </div>
+
+                  {/* Connection Birthday Visibility Toggle */}
+                  <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80 flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-bold text-stone-900 block">Show Birthday to Accepted Connections</span>
+                      <span className="text-[11px] text-stone-500">
+                        Displays an upcoming birthday reminder (Month &amp; Day only) within 7 days to your connections. Your birth year and age are never shared.
+                      </span>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={showBirthdayToConnections}
+                        onChange={(e) => setShowBirthdayToConnections(e.target.checked)}
                         className="sr-only peer"
                       />
                       <div className="w-10 h-5 bg-stone-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600" />
