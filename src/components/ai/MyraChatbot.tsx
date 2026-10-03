@@ -28,7 +28,9 @@ import {
   Flame,
   CheckCircle2,
   Trash2,
-  ChevronRight
+  ChevronRight,
+  Copy,
+  Check
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
@@ -78,10 +80,11 @@ export default function MyraChatbot() {
   // Initialize greeting with context awareness
   useEffect(() => {
     const studentName = profile?.name || user?.name || "Student";
+    const targetRole = profile?.targetRole || "Software Engineer";
     const initialGreeting: ChatMessage = {
       id: "initial-welcome",
       role: "assistant",
-      content: `Hello **${studentName}**! 👋 I'm **Myra**, your dedicated AI Academic Mentor & Personal Career Companion at Edworld Co.\n\nI learn from everything you ask, search, and practice. I'm equipped with live web browsing, repository reach, resume-to-job matching, and 3D mock interview drills.\n\nWhat would you like to master or explore today?`,
+      content: `Hello **${studentName}**! 👋 I'm **Myra**, your personal AI mentor and career companion for **${targetRole}**.\n\nI learn from everything you ask, search, and practice. I'm trained across all EdWorld Co. tools (3D Mock Interviews, STAR behavioral drills, ATS Resume Matcher, EdFix, and Aptitude) alongside deep Computer Science and System Design.\n\nWhat concept, interview drill, or code doubt can we conquer together today?`,
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
     setMessages([initialGreeting]);
@@ -246,14 +249,30 @@ export default function MyraChatbot() {
     }
   };
 
-  // Generate dynamic starter prompts based on what student recently struggled with or searched
+  // Generate dynamic starter prompts based on user's target role, struggle points, or searched technologies
+  const targetRole = profile?.targetRole || "Software Engineer";
   const dynamicStarters = memoryState.strugglePoints.length > 0
     ? [
         {
           label: `⚡ Practice ${memoryState.strugglePoints[0].concept} Drill`,
           prompt: `Can you give me a step-by-step intuitive breakdown and practice problem for ${memoryState.strugglePoints[0].concept}?`,
         },
-        ...DEFAULT_STARTERS.slice(0, 4),
+        {
+          label: `🎙️ ${targetRole} Mock Interview`,
+          prompt: `I want to practice a STAR behavioral and technical mock interview for a ${targetRole} role. What should I prepare?`,
+        },
+        {
+          label: `🎯 Audit Resume for ${targetRole}`,
+          prompt: `Can you analyze my resume background and recommend the best matching keywords and metrics for a ${targetRole}?`,
+        },
+        {
+          label: `📐 System Design: Caching & Latency`,
+          prompt: `Can you explain how Redis distributed caching prevents database latency spikes under high concurrent traffic?`,
+        },
+        {
+          label: `💻 Explain Agent-Reach Architecture`,
+          prompt: `Can you explain what Agent-Reach (https://github.com/Panniantong/Agent-Reach.git) is and how it enables 0-cost platform access?`,
+        },
       ]
     : memoryState.searchedTechnologies.length > 0
     ? [
@@ -261,41 +280,177 @@ export default function MyraChatbot() {
           label: `🔍 Deep Dive ${memoryState.searchedTechnologies[0].tech} Interview Questions`,
           prompt: `What are the top senior engineering interview questions asked about ${memoryState.searchedTechnologies[0].tech}?`,
         },
-        ...DEFAULT_STARTERS.slice(0, 4),
+        {
+          label: `🎙️ ${targetRole} Mock Interview`,
+          prompt: `I want to practice a STAR behavioral and technical mock interview for a ${targetRole} role. What should I prepare?`,
+        },
+        {
+          label: `🎯 Match Resume for ${targetRole}`,
+          prompt: `Can you analyze my resume background and recommend the best matching keywords and metrics for a ${targetRole}?`,
+        },
+        {
+          label: `⚡ Quick Aptitude Sprint`,
+          prompt: `Give me 3 high-yield speed math and quantitative aptitude questions with 30-second shortcut techniques.`,
+        },
+        {
+          label: `💻 Explain Agent-Reach Architecture`,
+          prompt: `Can you explain what Agent-Reach (https://github.com/Panniantong/Agent-Reach.git) is and how it enables 0-cost platform access?`,
+        },
       ]
-    : DEFAULT_STARTERS;
+    : [
+        {
+          label: `🎯 Calibrate Resume for ${targetRole}`,
+          prompt: `Can you analyze my resume background and recommend the best matching keywords and metrics for a ${targetRole}?`,
+        },
+        {
+          label: `🎙️ Practice ${targetRole} Mock Interview`,
+          prompt: `I want to practice a high-bar STAR mock interview for a ${targetRole} role. What should I prepare?`,
+        },
+        {
+          label: `📐 System Design: Distributed Caching`,
+          prompt: `Can you explain how Redis distributed caching prevents database latency spikes under high concurrent traffic?`,
+        },
+        {
+          label: `⚡ Quick Aptitude Speed Sprint`,
+          prompt: `Give me 3 high-yield speed math and quantitative aptitude questions with 30-second shortcut techniques.`,
+        },
+        {
+          label: `💻 Explain Agent-Reach Architecture`,
+          prompt: `Can you explain what Agent-Reach (https://github.com/Panniantong/Agent-Reach.git) is and how it enables 0-cost platform access?`,
+        },
+      ];
 
-  // Simple Markdown text renderer for bold, bullet points, and links
+  const [copiedSnippetIndex, setCopiedSnippetIndex] = useState<number | null>(null);
+
+  const handleCopyCode = (code: string, idx: number) => {
+    navigator.clipboard.writeText(code);
+    setCopiedSnippetIndex(idx);
+    setTimeout(() => setCopiedSnippetIndex(null), 2000);
+  };
+
+  // Enhanced Markdown text renderer for bold, code blocks, section headers, and in-app action pills
   const renderFormattedContent = (content: string) => {
-    const parts = content.split(/(\[[^\]]+\]\([^)]+\)|\*\*.*?\*\*|\n)/g);
-    
-    return parts.map((part, index) => {
-      if (!part) return null;
-      
-      const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
-      if (linkMatch) {
-        const [, label, href] = linkMatch;
+    // 1. Split code blocks (```lang ... ```)
+    const codeBlockRegex = /```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g;
+    const segments: Array<{ type: "code" | "text"; content: string; lang?: string }> = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = codeBlockRegex.exec(content)) !== null) {
+      if (match.index > lastIndex) {
+        segments.push({ type: "text", content: content.slice(lastIndex, match.index) });
+      }
+      segments.push({ type: "code", lang: match[1] || "code", content: match[2].trim() });
+      lastIndex = match.index + match[0].length;
+    }
+
+    if (lastIndex < content.length) {
+      segments.push({ type: "text", content: content.slice(lastIndex) });
+    }
+
+    return segments.map((seg, sIdx) => {
+      if (seg.type === "code") {
         return (
-          <Link
-            key={index}
-            href={href}
-            className="text-emerald-700 dark:text-[#00D2B4] underline font-semibold hover:opacity-80 inline-flex items-center gap-0.5"
-          >
-            {label}
-            <ArrowUpRight className="w-3 h-3 inline" />
-          </Link>
+          <div key={`code-${sIdx}`} className="my-2.5 rounded-xl bg-zinc-950 text-zinc-100 overflow-hidden border border-zinc-800 shadow-md">
+            <div className="flex items-center justify-between px-3 py-1.5 bg-zinc-900 border-b border-zinc-800 text-[10px] font-mono text-zinc-400">
+              <span className="uppercase">{seg.lang || "code"}</span>
+              <button
+                onClick={() => handleCopyCode(seg.content, sIdx)}
+                className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer"
+                title="Copy code"
+              >
+                {copiedSnippetIndex === sIdx ? (
+                  <>
+                    <Check className="w-3 h-3 text-emerald-400" />
+                    <span className="text-emerald-400 font-bold">Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3 h-3" />
+                    <span>Copy</span>
+                  </>
+                )}
+              </button>
+            </div>
+            <pre className="p-3 text-[11px] font-mono leading-relaxed overflow-x-auto text-zinc-200">
+              <code>{seg.content}</code>
+            </pre>
+          </div>
         );
       }
 
-      if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
-        return <strong key={index} className="font-bold text-[#13141B] dark:text-white">{part.slice(2, -2)}</strong>;
-      }
+      // Process standard text tokens (headers, links, bold, newlines)
+      const parts = seg.content.split(/(\[[^\]]+\]\([^)]+\)|\*\*.*?\*\*|^### .*?$|^#### .*?$|\n)/gm);
 
-      if (part === "\n") {
-        return <br key={index} />;
-      }
+      return (
+        <span key={`text-${sIdx}`}>
+          {parts.map((part, pIdx) => {
+            if (!part) return null;
 
-      return <span key={index}>{part}</span>;
+            // Section Headers (### or ####)
+            if (part.startsWith("### ")) {
+              return (
+                <span key={pIdx} className="block font-bold text-zinc-950 text-xs sm:text-sm mt-3 mb-1">
+                  {part.replace(/^###\s+/, "")}
+                </span>
+              );
+            }
+            if (part.startsWith("#### ")) {
+              return (
+                <span key={pIdx} className="block font-bold text-zinc-800 text-xs mt-2 mb-0.5">
+                  {part.replace(/^####\s+/, "")}
+                </span>
+              );
+            }
+
+            // Links (In-app route button vs external web reach)
+            const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+            if (linkMatch) {
+              const [, label, href] = linkMatch;
+              const isInAppRoute = href.startsWith("/");
+
+              if (isInAppRoute) {
+                return (
+                  <Link
+                    key={pIdx}
+                    href={href}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 my-0.5 rounded-lg bg-zinc-900 hover:bg-black text-white text-[10px] font-bold shadow-2xs transition-all hover:scale-[1.02] active:scale-[0.98] mr-1.5 align-middle"
+                  >
+                    <span className="text-[#00D2B4]">✦</span>
+                    <span>{label}</span>
+                    <ArrowUpRight className="w-2.5 h-2.5 text-zinc-400" />
+                  </Link>
+                );
+              }
+
+              return (
+                <Link
+                  key={pIdx}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-emerald-700 underline font-semibold hover:opacity-80 inline-flex items-center gap-0.5"
+                >
+                  {label}
+                  <ArrowUpRight className="w-3 h-3 inline" />
+                </Link>
+              );
+            }
+
+            // Bold text
+            if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
+              return <strong key={pIdx} className="font-bold text-zinc-950">{part.slice(2, -2)}</strong>;
+            }
+
+            // Newlines
+            if (part === "\n") {
+              return <br key={pIdx} />;
+            }
+
+            return <span key={pIdx}>{part}</span>;
+          })}
+        </span>
+      );
     });
   };
 
@@ -395,17 +550,17 @@ export default function MyraChatbot() {
             </div>
           </div>
 
-          {/* Student Profile Context Ribbon */}
+          {/* Student Profile Context & Calibration Ribbon */}
           {user && (
-            <div className="bg-zinc-100/80 border-b border-zinc-200 px-4 py-2 flex items-center justify-between text-[11px] text-zinc-700">
+            <div className="bg-zinc-100/90 border-b border-zinc-200 px-4 py-2 flex items-center justify-between text-[11px] text-zinc-700">
               <div className="flex items-center gap-1.5 font-medium truncate">
-                <GraduationCap className="w-3.5 h-3.5 text-zinc-900 shrink-0" />
+                <Brain className="w-3.5 h-3.5 text-[#00B49B] shrink-0" />
                 <span className="truncate">
-                  {profile?.gradeLevel || user?.gradeLevel || "Student"} &bull; {profile?.targetRole || "Software Engineer"}
+                  Calibrated for <strong className="text-zinc-950 font-bold">{profile?.name || user?.name || "Student"}</strong> &bull; {targetRole}
                 </span>
               </div>
               <span className="text-[10px] bg-white text-zinc-800 border border-zinc-200 font-semibold px-2 py-0.5 rounded-full shrink-0 shadow-2xs">
-                {memoryState.totalInteractions > 0 ? `${memoryState.totalInteractions} Insights Learned` : "Learning Active"}
+                {memoryState.totalInteractions > 0 ? `${memoryState.totalInteractions} Learned Signals` : "Cognitive AI Active"}
               </span>
             </div>
           )}

@@ -44,7 +44,9 @@ const KNOWN_TECH_KEYWORDS = [
   "postgresql", "mongodb", "kafka", "graphql", "tailwind", "fastapi", "django",
   "pytorch", "tensorflow", "vector search", "system design", "microservices",
   "concurrency", "distributed systems", "ci/cd", "rest api", "websockets",
-  "dynamic programming", "graph algorithms", "binary trees", "star method", "cache invalidation"
+  "dynamic programming", "graph algorithms", "binary trees", "star method", "cache invalidation",
+  "agent-reach", "ats resume", "quant aptitude", "binary search", "sql", "prisma", "zustand",
+  "load balancing", "rate limiting", "cap theorem", "sharding", "two pointers", "sliding window"
 ];
 
 /**
