@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { UniversalAI } from "@/lib/ai/universal-ai";
+import { MyraOrchestrator } from "@/lib/ai/myra-orchestration";
 import { rateLimit, getClientIp } from "@/lib/rate-limiter";
 
 export async function POST(req: NextRequest) {
@@ -57,13 +57,24 @@ export async function POST(req: NextRequest) {
 
     const userMessage = "TARGET ROLE: " + targetRole + "\n\nJOB DESCRIPTION:\n" + jobDescription + "\n\nCURRENT RESUME CONTENT:\n" + JSON.stringify(resumeContent, null, 2);
 
-    const aiResponse = await UniversalAI.complete({
-      systemPrompt,
+    const aiResponse = await MyraOrchestrator.execute({
+      featureContext: "resume_tailor",
+      userId: body.userId,
+      systemPromptOverride: systemPrompt,
       prompt: userMessage,
       temperature: 0.3,
       maxTokens: 3000,
-      responseFormat: "json"
+      responseFormat: "json",
+      metadata: { targetRole, bulletCount: (resumeContent.experience || []).length },
     });
+
+    if (aiResponse.data) {
+      return NextResponse.json({
+        success: true,
+        data: aiResponse.data,
+        modelUsed: aiResponse.modelUsed,
+      });
+    }
 
     let cleaned = aiResponse.text.trim();
     if (cleaned.startsWith("```json")) {
@@ -77,7 +88,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         data: parsed,
-        modelUsed: aiResponse.model,
+        modelUsed: aiResponse.modelUsed,
       });
     } catch (parseErr) {
       return NextResponse.json({
@@ -93,7 +104,7 @@ export async function POST(req: NextRequest) {
           },
           bulletSuggestions: []
         },
-        modelUsed: aiResponse.model,
+        modelUsed: aiResponse.modelUsed,
       });
     }
   } catch (err: any) {

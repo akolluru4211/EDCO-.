@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { awardPoints } from "@/lib/gamification-service";
 import { analyzeSpokenLanguage, syncUserCommunicationProfile } from "@/lib/interview/language-analysis-service";
 import { UniversalAI } from "@/lib/ai/universal-ai";
+import { MyraOrchestrator } from "@/lib/ai/myra-orchestration";
 
 export const dynamic = "force-dynamic";
 
@@ -188,6 +189,17 @@ export async function POST(req: NextRequest) {
 
       // Sync long-term user communication profile
       await syncUserCommunicationProfile(userId, langAnalysis);
+
+      // Log interaction in myra_interactions table
+      await supabase.from("myra_interactions").insert({
+        user_id: userId,
+        feature_context: "interview_score",
+        input_summary: `Question: ${questionText.slice(0, 100)}, Transcript: ${transcript.slice(0, 150)}`,
+        output_summary: `Overall Score: ${overallScore}/100, Structure: ${aiEvaluation.structureScore}`,
+        model_version: aiEvaluation.modelUsed || MyraOrchestrator.getModelVersion(),
+        status: "success",
+        metadata: { overallScore, category, sessionId },
+      });
     } catch (saveErr) {
       console.warn("[Save Interview Session Supabase Note]:", saveErr);
     }

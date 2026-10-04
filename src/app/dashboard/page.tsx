@@ -49,6 +49,7 @@ import PerformanceIntelligenceWidget from "@/components/dashboard/PerformanceInt
 import MyCareerPlanWidget from "@/components/dashboard/MyCareerPlanWidget";
 import PersonalizedTimetableWidget from "@/components/dashboard/PersonalizedTimetableWidget";
 import ConnectionBirthdaysWidget from "@/components/dashboard/ConnectionBirthdaysWidget";
+import MyraProactiveSuggestionCard from "@/components/dashboard/MyraProactiveSuggestionCard";
 import ReceivedBirthdayWishesCard from "@/components/networking/ReceivedBirthdayWishesCard";
 import CustomizeDashboardModal from "@/components/dashboard/CustomizeDashboardModal";
 import { 
@@ -311,6 +312,9 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
+
+          {/* Daily Contextual Focus Suggestion from Myra (Career Track, Single, Dismissible) */}
+          <MyraProactiveSuggestionCard />
 
           {/* TRACK SWITCHER & CUSTOMIZE */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-2.5 rounded-2xl border border-[#EBECEF] shadow-xs">

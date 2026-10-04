@@ -260,11 +260,28 @@ export default function FloatingNav() {
         </Link>
       </div>
 
-      {/* 2. FLOATING TOP-RIGHT MENU BUTTON */}
-      <div className="fixed top-4 sm:top-5 right-4 sm:right-5 z-40 font-sans">
+      {/* 2. FLOATING TOP-RIGHT ACTIONS (Ask Myra & Menu) */}
+      <div className="fixed top-4 sm:top-5 right-4 sm:right-5 z-40 font-sans flex items-center gap-2">
+        {/* Ask Myra Pill Button (Career Track Only) */}
+        {user && user.ageBand !== "13-15" && user.ageBand !== "16-18" && (
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof window !== "undefined") {
+                window.dispatchEvent(new CustomEvent("open-myra-copilot"));
+              }
+            }}
+            className="flex items-center gap-1.5 px-3 py-2 bg-white/95 hover:bg-white backdrop-blur-md border border-neutral-200 hover:border-black rounded-2xl shadow-xs hover:shadow-md transition-all text-xs font-bold text-black group cursor-pointer"
+            aria-label="Ask Myra AI Copilot"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-[#00B49B] group-hover:rotate-12 transition-transform" />
+            <span className="hidden sm:inline">Ask Myra</span>
+          </button>
+        )}
+
         <button
           onClick={() => setIsOpen(true)}
-          className="flex items-center gap-2.5 px-3.5 py-2 bg-white/95 hover:bg-white backdrop-blur-md border border-[#E8ECF2] hover:border-[#D1D5DC] rounded-2xl shadow-xs hover:shadow-md transition-all group focus:outline-none focus:ring-2 focus:ring-[#00D2B4]/40"
+          className="flex items-center gap-2.5 px-3.5 py-2 bg-white/95 hover:bg-white backdrop-blur-md border border-neutral-200 hover:border-black rounded-2xl shadow-xs hover:shadow-md transition-all group focus:outline-none focus:ring-2 focus:ring-black/20"
           aria-label="Open Navigation Menu"
         >
           <div className="flex items-center gap-1.5 text-xs font-bold text-[#13141B]">

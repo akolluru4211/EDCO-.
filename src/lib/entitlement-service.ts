@@ -1,6 +1,6 @@
 import { supabase } from "./supabase";
 
-export type EntitlementAction = "create_resume" | "start_mock_interview" | "apply_to_job" | "mentor_messaging";
+export type EntitlementAction = "create_resume" | "start_mock_interview" | "apply_to_job" | "mentor_messaging" | "ask_myra";
 
 export interface EntitlementCheckResult {
   allowed: boolean;
@@ -113,6 +113,33 @@ export async function checkEntitlement(
         status: currentStatus,
         reason: "Direct 1:1 mentor messaging requires an active Career Pro subscription."
       };
+    }
+
+    case "ask_myra": {
+      // Free plan gets up to 25 interactions per day
+      const todayStart = new Date();
+      todayStart.setUTCHours(0, 0, 0, 0);
+
+      const { count } = await supabase
+        .from("myra_interactions")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("feature_context", "ask_myra")
+        .gte("created_at", todayStart.toISOString());
+
+      const queryCount = count || 0;
+      const freeLimit = 25;
+      if (queryCount >= freeLimit) {
+        return {
+          allowed: false,
+          plan: currentPlan,
+          status: currentStatus,
+          currentCount: queryCount,
+          limit: freeLimit,
+          reason: `You've reached your daily limit of ${freeLimit} queries with Myra on the Free plan — upgrade to Pro for unlimited AI guidance.`
+        };
+      }
+      return { allowed: true, plan: currentPlan, status: currentStatus, currentCount: queryCount, limit: freeLimit };
     }
 
     default:

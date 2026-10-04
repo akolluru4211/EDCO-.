@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { sendEmailNotification } from "@/lib/email-service";
 import { renderBrandedEmailHtml } from "@/lib/email-templates";
+import { MyraOrchestrator } from "@/lib/ai/myra-orchestration";
 
 export const dynamic = "force-dynamic";
 
@@ -150,6 +151,21 @@ async function handleBirthdayCron(req: NextRequest) {
           });
         } catch (dbErr) {
           console.warn("[Myra Birthday Log Warning]:", dbErr);
+        }
+
+        // Authoritative audit logging in myra_interactions table
+        try {
+          await supabase.from("myra_interactions").insert({
+            user_id: user.id,
+            feature_context: "birthday_wish",
+            input_summary: `System birthday trigger for ${firstName} (Year ${currentYear})`,
+            output_summary: `Dispatched branded birthday greeting email & in-app notification`,
+            model_version: MyraOrchestrator.getModelVersion(),
+            status: "success",
+            metadata: { year: currentYear, email: user.email },
+          });
+        } catch (myraLogErr) {
+          console.warn("[Myra Birthday Interaction Log Note]:", myraLogErr);
         }
 
         dispatchCount++;

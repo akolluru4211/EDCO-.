@@ -20,7 +20,7 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-[100dvh] w-full bg-[#FCFCFB] text-[#13141B] selection:bg-[#00D2B4]/20 selection:text-[#0A5245]">
+    <main className="min-h-[100dvh] w-full bg-white text-black selection:bg-neutral-950 selection:text-white font-sans">
       
       {/* Premium, Modern, Editorial EdWorld Landing Page */}
       <ModernEdworldLanding />

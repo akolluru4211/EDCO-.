@@ -107,6 +107,15 @@ export default function MyraChatbot() {
     }
   }, [user?.name, user?.uid, profile?.name]);
 
+  // Listen for open-myra-copilot trigger from header or anywhere on platform
+  useEffect(() => {
+    const handleOpenCopilot = () => {
+      setIsOpen(true);
+    };
+    window.addEventListener("open-myra-copilot", handleOpenCopilot);
+    return () => window.removeEventListener("open-myra-copilot", handleOpenCopilot);
+  }, []);
+
   useEffect(() => {
     if (isOpen) {
       setHasUnread(false);
@@ -453,6 +462,11 @@ export default function MyraChatbot() {
       );
     });
   };
+
+  // Strict Minor Protection (Career Track Only per Part E)
+  if (user?.ageBand === "13-15" || user?.ageBand === "16-18") {
+    return null;
+  }
 
   return (
     <div className="fixed bottom-6 right-6 z-50 font-sans">

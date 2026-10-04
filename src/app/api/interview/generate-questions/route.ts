@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { UniversalAI, InterviewQuestionItem } from "@/lib/ai/universal-ai";
+import { MyraOrchestrator } from "@/lib/ai/myra-orchestration";
 
 export const dynamic = "force-dynamic";
 
@@ -169,6 +170,23 @@ export async function POST(req: NextRequest) {
         adaptiveFocus: q.adaptiveFocus || (userCommProfile?.primary_weakness ? `Targeting: ${userCommProfile.primary_weakness}` : undefined),
       };
     });
+
+    // Log to myra_interactions for audit and telemetry
+    if (userId && userId !== "guest" && userId !== "learner-user") {
+      try {
+        await supabase.from("myra_interactions").insert({
+          user_id: userId,
+          feature_context: "interview_generate",
+          input_summary: `Role: ${effectiveRole}, Category: ${category}, Level: ${levelLabel}`,
+          output_summary: `Generated ${formattedQuestions.length} calibrated mock questions.`,
+          model_version: aiResult.modelUsed || MyraOrchestrator.getModelVersion(),
+          status: "success",
+          metadata: { questionCount: formattedQuestions.length, resumeConnected: aiResult.resumeConnected },
+        });
+      } catch (logErr) {
+        console.warn("[Myra Question Log Warning]:", logErr);
+      }
+    }
 
     return NextResponse.json({
       success: true,

@@ -52,10 +52,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   if (isAppWorkspace) {
     return (
-      <div className="min-h-screen flex flex-col bg-[#FCFCFB] text-[#13141B] font-sans antialiased selection:bg-[#00D2B4]/20 selection:text-[#0A5245]">
+      <div className="min-h-screen flex flex-col bg-white text-black font-sans antialiased selection:bg-neutral-950 selection:text-white">
         <a
           href="#main-content"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2.5 focus:bg-[#13141B] focus:text-[#00D2B4] focus:rounded-xl focus:shadow-xl focus:font-bold focus:text-xs"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2.5 focus:bg-black focus:text-white focus:rounded-xl focus:shadow-xl focus:font-bold focus:text-xs"
         >
           Skip to main content
         </a>
@@ -82,10 +82,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col font-sans selection:bg-[#00D2B4]/20 selection:text-[#0A5245] overflow-x-clip bg-[#FCFCFB] text-[#13141B]">
+    <div className="min-h-screen flex flex-col font-sans selection:bg-neutral-950 selection:text-white overflow-x-clip bg-white text-black">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2.5 focus:bg-[#13141B] focus:text-[#00D2B4] focus:rounded-xl focus:shadow-2xl focus:font-bold focus:text-xs focus:ring-2 focus:ring-[#00D2B4]"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2.5 focus:bg-black focus:text-white focus:rounded-xl focus:shadow-2xl focus:font-bold focus:text-xs"
       >
         Skip to main content
       </a>
