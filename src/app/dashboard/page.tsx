@@ -529,7 +529,7 @@ export default function DashboardPage() {
                     </div>
 
                     <Link
-                      href={`/u/${user?.name?.toLowerCase().replace(/\s+/g, "_") || user?.uid || "profile"}`}
+                      href={`/u/${(profile as any)?.username || user?.name?.toLowerCase().replace(/\s+/g, "_") || user?.uid || "profile"}`}
                       className="block text-center py-2 px-3 rounded-xl border border-[#EBECEF] hover:bg-slate-50 text-[#13141B] text-xs font-bold transition-colors"
                     >
                       View Public Portfolio &rarr;

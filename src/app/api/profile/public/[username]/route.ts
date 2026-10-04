@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { validateSession } from "@/lib/otp-service";
 import { apiSuccess, apiError } from "@/lib/api-response";
 
 export const dynamic = "force-dynamic";
@@ -17,16 +18,56 @@ export async function GET(
 
   try {
     const supabase = createClient();
+
+    // 1. Identify current authenticated viewer
     const { data: { user: currentUser } } = await supabase.auth.getUser();
 
-    // 1. Try to find profile by username (case-insensitive)
-    let { data: profile } = await supabase
-      .from("profiles")
-      .select("*")
-      .ilike("username", usernameParam)
-      .maybeSingle();
+    const sessionToken =
+      req.cookies.get("edworld_session")?.value ||
+      req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ||
+      req.headers.get("x-session-token");
 
-    // 2. If not found, try matching by ID / UUID
+    let sessionUserId: string | null = null;
+    if (sessionToken) {
+      try {
+        const sessionResult = validateSession(sessionToken);
+        if (sessionResult?.valid && sessionResult.userId) {
+          sessionUserId = sessionResult.userId;
+        }
+      } catch (err) {
+        // Ignore session decode errors
+      }
+    }
+
+    let profile: any = null;
+
+    // 2. Primary lookup: Call SECURITY DEFINER RPC to bypass RLS and match username, name, or id
+    try {
+      const { data: rpcData, error: rpcError } = await supabase.rpc("get_public_profile", {
+        p_identifier: usernameParam,
+      });
+
+      if (!rpcError && rpcData && rpcData.found) {
+        profile = rpcData;
+      }
+    } catch (rpcErr) {
+      console.warn("[Public Profile RPC Notice]:", rpcErr);
+    }
+
+    // 3. Resilient Fallbacks if RPC did not return a match
+    if (!profile) {
+      // Direct username / name / email match on profiles
+      const { data: directProfile } = await supabase
+        .from("profiles")
+        .select("*")
+        .or(`username.ilike.${usernameParam},name.ilike.${usernameParam},display_name.ilike.${usernameParam},email.ilike.${usernameParam}@%`)
+        .maybeSingle();
+
+      if (directProfile) {
+        profile = directProfile;
+      }
+    }
+
     if (!profile) {
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(usernameParam);
       if (isUuid) {
@@ -39,22 +80,12 @@ export async function GET(
       }
     }
 
-    // 3. Fallback: try matching email prefix (e.g. adarsh_337 from adarsh_337@gmail.com)
-    if (!profile) {
-      const { data: byEmail } = await supabase
-        .from("profiles")
-        .select("*")
-        .ilike("email", `${usernameParam}@%`)
-        .maybeSingle();
-      if (byEmail) profile = byEmail;
-    }
-
-    // 4. Fallback: check users table
+    // Fallback: Check users table
     if (!profile) {
       const { data: userRecord } = await supabase
         .from("users")
         .select("*")
-        .or(`id.eq.${usernameParam},email.ilike.${usernameParam}@%`)
+        .or(`id.eq.${usernameParam},email.ilike.${usernameParam}@%,name.ilike.${usernameParam}`)
         .maybeSingle();
 
       if (userRecord) {
@@ -84,34 +115,49 @@ export async function GET(
     }
 
     const targetUserId = profile.id || profile.user_id;
-    const isOwner = currentUser && (currentUser.id === targetUserId || currentUser.email === profile.email);
+    const isOwner = Boolean(
+      (currentUser && (currentUser.id === targetUserId || currentUser.email === profile.email)) ||
+      (sessionUserId && (sessionUserId === targetUserId || sessionUserId === profile.id || sessionUserId === profile.user_id))
+    );
 
-    // 5. Check visibility (allow owner to always view their own portfolio/profile)
+    // 4. Check visibility (allow owner to always view their own portfolio/profile)
     if (!isOwner && profile.is_public === false) {
       return apiError(
         "FORBIDDEN",
         `The profile for "${usernameParam}" has been set to private by the user.`,
         403,
-        { username: usernameParam, is_private: true },
+        { username: usernameParam, is_private: true, isOwner: false },
         requestId
       );
     }
 
-    // 6. Fetch verified public projects
-    const { data: projects } = await supabase
-      .from("projects")
-      .select("*")
-      .eq("user_id", targetUserId)
-      .order("created_at", { ascending: false });
+    // 5. Fetch verified public projects
+    let projects: any[] = [];
+    if (targetUserId) {
+      try {
+        const { data: pData } = await supabase
+          .from("projects")
+          .select("*")
+          .eq("user_id", targetUserId)
+          .order("created_at", { ascending: false });
+        if (pData) projects = pData;
+      } catch (_) {}
+    }
 
-    // 7. Fetch verified certifications
-    const { data: certs } = await supabase
-      .from("certifications")
-      .select("*")
-      .eq("user_id", targetUserId)
-      .order("created_at", { ascending: false });
+    // 6. Fetch verified certifications
+    let certs: any[] = [];
+    if (targetUserId) {
+      try {
+        const { data: cData } = await supabase
+          .from("certifications")
+          .select("*")
+          .eq("user_id", targetUserId)
+          .order("created_at", { ascending: false });
+        if (cData) certs = cData;
+      } catch (_) {}
+    }
 
-    // 8. Sanitize profile to remove internal/confidential secrets
+    // 7. Sanitize profile payload
     const sanitizedProfile = {
       id: targetUserId,
       userId: targetUserId,
@@ -139,8 +185,8 @@ export async function GET(
       mentorTags: profile.mentor_tags || [],
       ageBand: profile.age_band || "18+",
       isOwner: Boolean(isOwner),
-      projects: projects || [],
-      certifications: certs || profile.certifications || []
+      projects: projects.length > 0 ? projects : (profile.projects || []),
+      certifications: certs.length > 0 ? certs : (profile.certifications || [])
     };
 
     return apiSuccess(sanitizedProfile, 200, requestId);

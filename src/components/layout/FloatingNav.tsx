@@ -161,7 +161,7 @@ export default function FloatingNav() {
           icon: Briefcase,
         },
         {
-          href: user?.name ? `/u/${user.name.toLowerCase().replace(/\s+/g, "_")}` : "/profile",
+          href: (profile as any)?.username ? `/u/${(profile as any).username}` : user?.name ? `/u/${user.name.toLowerCase().replace(/\s+/g, "_")}` : "/profile",
           label: "Public Portfolio",
           description: "Shareable verified digital identity & skills badge",
           icon: ShieldCheck,

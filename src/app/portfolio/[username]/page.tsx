@@ -29,7 +29,7 @@ import {
 
 export default function EnhancedPortfolioPage() {
   const params = useParams();
-  const { user } = useAuth();
+  const { user, profile: authProfile } = useAuth();
   const username = decodeURIComponent((params?.username as string) || "").trim();
 
   const [profile, setProfile] = useState<any | null>(null);
@@ -54,8 +54,61 @@ export default function EnhancedPortfolioPage() {
         if (res.ok && json.success && json.data) {
           setProfile(json.data);
         } else {
-          setErrorStatus(res.status);
-          setErrorMessage(json.error?.message || "User profile not found.");
+          // Self-healing: if logged-in user matches username, recover and auto-publish
+          const isMatchingLoggedInUser = user && (
+            user.name?.toLowerCase().replace(/\s+/g, "_") === username.toLowerCase() ||
+            user.name?.toLowerCase() === username.toLowerCase() ||
+            user.uid === username ||
+            (authProfile as any)?.username?.toLowerCase() === username.toLowerCase() ||
+            user.email?.toLowerCase().startsWith(username.toLowerCase() + "@")
+          );
+
+          if (isMatchingLoggedInUser) {
+            setProfile({
+              id: user.uid,
+              userId: user.uid,
+              name: user.name || (authProfile as any)?.name || "Software Engineer",
+              username: (authProfile as any)?.username || username,
+              headline: (authProfile as any)?.headline || "Full Stack Software Engineer & Platform Builder",
+              bio: (authProfile as any)?.bio || "",
+              avatarUrl: (authProfile as any)?.avatar_url || null,
+              skills: (authProfile as any)?.skills || (authProfile as any)?.interests || [],
+              role: user.role || "MEMBER",
+              careerStage: user.careerStage || "PROFESSIONAL",
+              college: (authProfile as any)?.college || (authProfile as any)?.grade_level || null,
+              degree: (authProfile as any)?.degree || null,
+              branch: (authProfile as any)?.branch || null,
+              graduationYear: (authProfile as any)?.graduation_year || null,
+              company: (authProfile as any)?.company || null,
+              jobTitle: (authProfile as any)?.job_title || (authProfile as any)?.target_role || null,
+              location: (authProfile as any)?.location || null,
+              githubUrl: (authProfile as any)?.github_url || null,
+              linkedinUrl: (authProfile as any)?.linkedin_url || null,
+              leetcodeUrl: (authProfile as any)?.leetcode_url || null,
+              portfolioUrl: (authProfile as any)?.portfolio_url || null,
+              isPublic: true,
+              isMentor: Boolean((authProfile as any)?.is_mentor),
+              mentorTags: (authProfile as any)?.mentor_tags || [],
+              ageBand: user.ageBand || "18+",
+              isOwner: true,
+              projects: [],
+              certifications: []
+            });
+
+            // Auto self-heal in background
+            fetch("/api/profile/update", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                username: (authProfile as any)?.username || username,
+                isPublic: true,
+                name: user.name
+              })
+            }).catch(() => {});
+          } else {
+            setErrorStatus(res.status);
+            setErrorMessage(json.error?.message || "User profile not found.");
+          }
         }
       } catch (err: any) {
         console.error("Portfolio fetch error:", err);
@@ -67,7 +120,7 @@ export default function EnhancedPortfolioPage() {
     };
 
     fetchPortfolio();
-  }, [username]);
+  }, [username, user, authProfile]);
 
   const handleCopyLink = () => {
     if (typeof window !== "undefined") {
@@ -78,16 +131,20 @@ export default function EnhancedPortfolioPage() {
   };
 
   const handleMakePublic = async () => {
-    if (!profile || isUpdatingPublic) return;
+    if (isUpdatingPublic) return;
     setIsUpdatingPublic(true);
     try {
       const res = await fetch("/api/profile/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isPublic: true })
+        body: JSON.stringify({
+          isPublic: true,
+          username: (authProfile as any)?.username || username
+        })
       });
       if (res.ok) {
         setProfile((prev: any) => ({ ...prev, isPublic: true }));
+        setErrorStatus(null);
       }
     } catch (e) {
       console.error("Failed to update visibility:", e);
@@ -123,6 +180,16 @@ export default function EnhancedPortfolioPage() {
             </p>
           </div>
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-2">
+            {user && (
+              <button
+                type="button"
+                onClick={handleMakePublic}
+                disabled={isUpdatingPublic}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50"
+              >
+                {isUpdatingPublic ? "Publishing..." : "Make Portfolio Public"}
+              </button>
+            )}
             <Link
               href="/dashboard"
               className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold transition-all shadow-xs"

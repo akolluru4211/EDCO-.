@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { validateSession } from "@/lib/otp-service";
 import { normalizeDisplayName } from "@/lib/services/user-profile";
 
 export const dynamic = "force-dynamic";
@@ -7,9 +8,27 @@ export const dynamic = "force-dynamic";
 export async function POST(req: NextRequest) {
   try {
     const supabase = createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    let authUser: { id: string; email?: string; user_metadata?: any } | null = null;
 
-    if (authError || !user) {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (user) {
+      authUser = user;
+    } else {
+      const sessionToken = 
+        req.cookies.get("edworld_session")?.value ||
+        req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ||
+        req.headers.get("x-session-token");
+      if (sessionToken) {
+        const { valid, userId } = validateSession(sessionToken);
+        if (valid && userId) {
+          // Fetch existing profile email if possible
+          const { data: p } = await supabase.from("profiles").select("email").eq("id", userId).maybeSingle();
+          authUser = { id: userId, email: p?.email || undefined };
+        }
+      }
+    }
+
+    if (!authUser) {
       return NextResponse.json({ error: "Unauthorized access. Please log in." }, { status: 401 });
     }
 
@@ -74,9 +93,9 @@ export async function POST(req: NextRequest) {
     const { data: updatedProfile, error: profileErr } = await supabase
       .from("profiles")
       .upsert({
-        id: user.id,
-        user_id: user.id,
-        email: user.email,
+        id: authUser.id,
+        user_id: authUser.id,
+        ...(authUser.email ? { email: authUser.email } : {}),
         ...profilePayload,
       })
       .select()
@@ -96,8 +115,8 @@ export async function POST(req: NextRequest) {
     const { error: userErr } = await supabase
       .from("users")
       .upsert({
-        id: user.id,
-        email: user.email,
+        id: authUser.id,
+        ...(authUser.email ? { email: authUser.email } : {}),
         ...userPayload,
       });
 
@@ -105,15 +124,17 @@ export async function POST(req: NextRequest) {
       console.warn("[Profile Update API - Users sync note]:", userErr.message);
     }
 
-    // 3. Update auth user metadata
+    // 3. Update auth user metadata if Supabase auth user
     try {
-      await supabase.auth.updateUser({
-        data: {
-          full_name: displayName || user.user_metadata?.full_name,
-          name: displayName || user.user_metadata?.name,
-          phone: phone !== undefined ? phone : user.user_metadata?.phone,
-        }
-      });
+      if (user) {
+        await supabase.auth.updateUser({
+          data: {
+            full_name: displayName || user.user_metadata?.full_name,
+            name: displayName || user.user_metadata?.name,
+            phone: phone !== undefined ? phone : user.user_metadata?.phone,
+          }
+        });
+      }
     } catch (metaErr) {
       console.warn("[Profile Update API - Auth metadata note]:", metaErr);
     }
@@ -121,11 +142,11 @@ export async function POST(req: NextRequest) {
     // 4. Record Audit Log
     try {
       await supabase.from("audit_logs").insert({
-        actor_id: user.id,
+        actor_id: authUser.id,
         actor_role: updatedProfile?.role || "USER",
         action: "profile.updated",
         target_type: "profile",
-        target_id: user.id,
+        target_id: authUser.id,
         metadata: {
           updated_fields: Object.keys(profilePayload).filter(k => k !== "updated_at"),
           timestamp: nowIso
@@ -138,7 +159,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       profile: {
-        id: user.id,
+        id: authUser.id,
         name: displayName || updatedProfile?.name,
         phone: updatedProfile?.phone,
         headline: updatedProfile?.headline,
