@@ -563,6 +563,10 @@ export interface JobListing {
   moderationNotes?: string;
   salaryRange?: string;
   recommendedMinLevel?: SkillLevel; // Suggested effective level
+  category?: "MNC" | "Startup" | "Education" | string;
+  experienceLevel?: string;
+  externalUrl?: string;
+  sourceNotes?: string;
 }
 
 export interface JobApplication {
