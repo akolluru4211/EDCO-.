@@ -39,6 +39,11 @@
     -moz-osx-font-smoothing: grayscale;
     line-height: 1.55;
   }
+
+  ::selection {
+    background-color: #000000;
+    color: #ffffff;
+  }
 }
 
 /* Crisp Light Custom Scrollbar */

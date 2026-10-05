@@ -236,7 +236,7 @@ export default function FloatingNav() {
       <div className="fixed top-4 sm:top-5 left-4 sm:left-5 z-40 font-sans">
         <Link
           href={homeHref}
-          className="flex items-center gap-2.5 px-3.5 py-2 bg-white/95 hover:bg-white backdrop-blur-md border border-zinc-200 hover:border-zinc-300 rounded-2xl shadow-xs hover:shadow-md transition-all group"
+          className="flex items-center gap-2.5 px-3.5 py-2 bg-white/95 hover:bg-white backdrop-blur-md border border-neutral-200 hover:border-black rounded-2xl shadow-xs hover:shadow-md transition-all group"
           aria-label="Edworld Co. Home"
         >
           {/* Logo Mark */}
@@ -308,12 +308,12 @@ export default function FloatingNav() {
           />
 
           <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-            <div className="w-screen max-w-md bg-[#FCFCFB] shadow-2xl border-l border-[#E8ECF2] flex flex-col animate-in slide-in-from-right duration-300">
+            <div className="w-screen max-w-md bg-white shadow-2xl border-l border-neutral-200 flex flex-col animate-in slide-in-from-right duration-300">
               
               {/* Drawer Header */}
-              <div className="p-5 sm:p-6 bg-white border-b border-[#EBECEF] flex items-center justify-between">
+              <div className="p-5 sm:p-6 bg-white border-b border-neutral-200 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-zinc-950 p-1.5 flex items-center justify-center shadow-xs overflow-hidden shrink-0 border border-zinc-800">
+                  <div className="w-9 h-9 rounded-xl bg-black p-1.5 flex items-center justify-center shadow-xs overflow-hidden shrink-0 border border-neutral-800">
                     <Image
                       src="/images/edworld-logo.png"
                       alt="Edworld Logo"
@@ -323,10 +323,10 @@ export default function FloatingNav() {
                     />
                   </div>
                   <div>
-                    <h2 className="text-sm font-extrabold text-zinc-950 leading-none">
+                    <h2 className="text-sm font-extrabold text-black leading-none">
                       Navigation &amp; Tools
                     </h2>
-                    <p className="text-xs text-zinc-500 mt-1 leading-none">
+                    <p className="text-xs text-neutral-500 mt-1 leading-none">
                       Edworld Co. Platform Ecosystem
                     </p>
                   </div>
@@ -334,7 +334,7 @@ export default function FloatingNav() {
 
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="p-2 rounded-xl text-gray-400 hover:text-[#13141B] hover:bg-[#F4F6FB] transition-colors"
+                  className="p-2 rounded-xl text-neutral-400 hover:text-black hover:bg-neutral-100 transition-colors"
                   aria-label="Close menu"
                 >
                   <X className="w-5 h-5" />
@@ -343,16 +343,16 @@ export default function FloatingNav() {
 
               {/* User Profile Card (if authenticated) */}
               {user && (
-                <div className="p-4 mx-5 mt-4 rounded-2xl bg-white border border-[#EBECEF] shadow-2xs flex items-center justify-between">
+                <div className="p-4 mx-5 mt-4 rounded-2xl bg-neutral-50 border border-neutral-200 hover:border-black transition-colors shadow-2xs flex items-center justify-between">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#13141B] to-slate-800 text-[#00D2B4] flex items-center justify-center font-black text-xs shrink-0 shadow-xs">
+                    <div className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center font-black text-xs shrink-0 shadow-xs">
                       {userInitials}
                     </div>
                     <div className="min-w-0">
-                      <div className="text-xs font-bold text-[#13141B] truncate">
+                      <div className="text-xs font-bold text-black truncate">
                         {user.name || profile?.name || "Student"}
                       </div>
-                      <div className="text-[11px] text-gray-500 truncate">
+                      <div className="text-[11px] text-neutral-500 truncate">
                         {profile?.targetRole || user.email}
                       </div>
                     </div>
@@ -361,7 +361,7 @@ export default function FloatingNav() {
                   <Link
                     href="/profile"
                     onClick={() => setIsOpen(false)}
-                    className="p-2 rounded-xl bg-[#F4F6FB] hover:bg-slate-100 text-gray-700 text-xs font-bold transition-colors"
+                    className="p-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-black text-xs font-bold transition-colors"
                     title="Edit Profile"
                   >
                     <User className="w-4 h-4" />
@@ -372,13 +372,13 @@ export default function FloatingNav() {
               {/* Quick Filter Search */}
               <div className="px-5 pt-4 pb-2">
                 <div className="relative">
-                  <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search tools & features..."
-                    className="w-full pl-9 pr-3.5 py-2 text-xs bg-white border border-[#E8ECF2] rounded-xl text-[#13141B] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00D2B4]/40 transition-all"
+                    className="w-full pl-9 pr-3.5 py-2 text-xs bg-neutral-50 border border-neutral-200 rounded-xl text-black placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-black transition-all"
                   />
                 </div>
               </div>
@@ -403,15 +403,15 @@ export default function FloatingNav() {
                             onClick={() => setIsOpen(false)}
                             className={`flex items-start gap-3 p-3 rounded-xl border transition-all ${
                               isActive
-                                ? "bg-white border-emerald-300 shadow-xs text-emerald-900"
-                                : "bg-white/70 hover:bg-white border-[#EBECEF] hover:border-[#D1D5DC] text-[#13141B] hover:shadow-2xs"
+                                ? "bg-black border-black text-white shadow-xs"
+                                : "bg-white hover:bg-neutral-50 border-neutral-200 hover:border-black text-black hover:shadow-2xs"
                             }`}
                           >
                             <div
                               className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
                                 isActive
-                                  ? "bg-emerald-50 text-emerald-700"
-                                  : "bg-[#F4F6FB] text-gray-700"
+                                  ? "bg-neutral-900 text-white"
+                                  : "bg-neutral-100 text-neutral-800"
                               }`}
                             >
                               <Icon className="w-4 h-4" />
@@ -425,19 +425,21 @@ export default function FloatingNav() {
                                 {item.badge && (
                                   <span
                                     className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border leading-none ${
-                                      item.badgeColor || "bg-gray-100 text-gray-700 border-gray-200"
+                                      isActive
+                                        ? "bg-neutral-800 text-white border-neutral-700"
+                                        : item.badgeColor || "bg-neutral-100 text-neutral-700 border-neutral-200"
                                     }`}
                                   >
                                     {item.badge}
                                   </span>
                                 )}
                               </div>
-                              <p className="text-[11px] text-gray-500 mt-1 leading-snug truncate">
+                              <p className={`text-[11px] mt-1 leading-snug truncate ${isActive ? "text-neutral-300" : "text-neutral-500"}`}>
                                 {item.description}
                               </p>
                             </div>
 
-                            <ChevronRight className="w-3.5 h-3.5 text-gray-300 self-center shrink-0" />
+                            <ChevronRight className={`w-3.5 h-3.5 self-center shrink-0 ${isActive ? "text-neutral-400" : "text-neutral-300"}`} />
                           </Link>
                         );
                       })}
@@ -447,28 +449,28 @@ export default function FloatingNav() {
               </div>
 
               {/* Drawer Footer / Account Controls */}
-              <div className="p-5 bg-white border-t border-[#EBECEF] space-y-3">
-                <div className="flex items-center justify-between text-xs text-gray-600">
+              <div className="p-5 bg-white border-t border-neutral-200 space-y-3">
+                <div className="flex items-center justify-between text-xs text-neutral-600">
                   <Link
                     href="/billing"
                     onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-1.5 hover:text-[#13141B] font-semibold"
+                    className="flex items-center gap-1.5 hover:text-black font-semibold"
                   >
-                    <CreditCard className="w-3.5 h-3.5 text-gray-500" />
+                    <CreditCard className="w-3.5 h-3.5 text-neutral-500" />
                     <span>Billing &amp; Pro</span>
                   </Link>
 
                   <Link
                     href="/privacy"
                     onClick={() => setIsOpen(false)}
-                    className="hover:text-[#13141B] text-gray-500 text-[11px]"
+                    className="hover:text-black text-neutral-500 text-[11px]"
                   >
                     Privacy
                   </Link>
                   <Link
                     href="/terms"
                     onClick={() => setIsOpen(false)}
-                    className="hover:text-[#13141B] text-gray-500 text-[11px]"
+                    className="hover:text-black text-neutral-500 text-[11px]"
                   >
                     Terms
                   </Link>
@@ -477,7 +479,7 @@ export default function FloatingNav() {
                 {user ? (
                   <button
                     onClick={handleSignOut}
-                    className="w-full py-2 px-3 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 text-xs font-bold flex items-center justify-center gap-2 transition-colors"
+                    className="w-full py-2 px-3 rounded-xl bg-neutral-100 hover:bg-neutral-200 border border-neutral-200 text-black text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer"
                   >
                     <LogOut className="w-3.5 h-3.5" />
                     <span>Sign Out</span>
@@ -486,7 +488,7 @@ export default function FloatingNav() {
                   <Link
                     href="/login"
                     onClick={() => setIsOpen(false)}
-                    className="w-full py-2 px-3 rounded-xl bg-[#13141B] hover:bg-black text-white text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-xs"
+                    className="w-full py-2 px-3 rounded-xl bg-black hover:bg-neutral-800 text-white text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer"
                   >
                     <span>Sign In to Edworld Co.</span>
                   </Link>
