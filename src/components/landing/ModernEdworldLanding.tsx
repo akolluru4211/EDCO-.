@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { 
   ArrowRight, 
   Sparkles, 
@@ -15,8 +14,6 @@ import {
   Menu,
   X,
   Layers,
-  Radio,
-  Play,
   ChevronDown,
   ShieldCheck,
   CheckCircle2,
@@ -31,10 +28,9 @@ import BackToTop from "@/components/ui/BackToTop";
 import ScrollProgress from "@/components/ui/ScrollProgress";
 import CookieConsentBanner from "@/components/ui/CookieConsentBanner";
 import FloatingContactButton from "@/components/ui/FloatingContactButton";
-import MyraWelcomeModal from "@/components/ai/MyraWelcomeModal";
+import Footer from "@/components/layout/Footer";
 
 export default function ModernEdworldLanding() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
   const faqs = [
@@ -64,14 +60,6 @@ export default function ModernEdworldLanding() {
     }
   ];
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && mobileMenuOpen) setMobileMenuOpen(false);
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [mobileMenuOpen]);
-
   const scrollToFeatures = (e: React.MouseEvent) => {
     e.preventDefault();
     const element = document.getElementById("features-section");
@@ -85,311 +73,72 @@ export default function ModernEdworldLanding() {
       
       <ScrollProgress />
       
-      {/* Cheerful Voice Welcome Modal with Myra Avatar */}
-      <MyraWelcomeModal />
-
-      {/* 1. MINIMALIST FLOATING HEADER */}
-      <header className="sticky top-0 z-40 w-full backdrop-blur-xl bg-white/95 border-b border-neutral-200 transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          
-          {/* Brand Logo & Name */}
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-2xl bg-black border border-neutral-800 p-1.5 flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform overflow-hidden shrink-0">
-              <Image
-                src="/images/edworld-logo.png"
-                alt="Edworld Logo"
-                width={30}
-                height={30}
-                className="object-contain"
-                priority
-              />
-            </div>
-            <div>
-              <span className="text-lg font-black text-black tracking-tight flex items-center gap-1.5 leading-none">
-                EdWorld <span className="text-neutral-500 font-mono text-xs uppercase px-2 py-0.5 rounded-full bg-neutral-100 border border-neutral-200">CO.</span>
-              </span>
-              <p className="text-[10px] text-neutral-500 font-mono hidden sm:block mt-0.5">Career Intelligence Platform</p>
-            </div>
-          </Link>
-
-          {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-1 bg-neutral-50 p-1.5 rounded-full border border-neutral-200 text-xs font-bold text-neutral-700">
-            <Link href="/interviews" className="px-4 py-2 rounded-full hover:text-black hover:bg-white transition-all flex items-center gap-1.5 hover:shadow-xs">
-              <Video className="w-3.5 h-3.5 text-black" />
-              <span>3D Mock Interviews</span>
-            </Link>
-            <Link href="/resumes" className="px-4 py-2 rounded-full hover:text-black hover:bg-white transition-all flex items-center gap-1.5 hover:shadow-xs">
-              <FileText className="w-3.5 h-3.5 text-black" />
-              <span>ATS Resume Studio</span>
-            </Link>
-            <Link href="/edfix" className="px-4 py-2 rounded-full hover:text-black hover:bg-white transition-all flex items-center gap-1.5 hover:shadow-xs">
-              <Code2 className="w-3.5 h-3.5 text-black" />
-              <span>EdFix Lab</span>
-            </Link>
-            <Link href="/network" className="px-4 py-2 rounded-full hover:text-black hover:bg-white transition-all flex items-center gap-1.5 hover:shadow-xs">
-              <Users className="w-3.5 h-3.5 text-black" />
-              <span>Verified Network</span>
-            </Link>
-            <Link href="/jobs" className="px-4 py-2 rounded-full hover:text-black hover:bg-white transition-all flex items-center gap-1.5 hover:shadow-xs">
-              <Briefcase className="w-3.5 h-3.5 text-black" />
-              <span>Opportunities</span>
-            </Link>
-          </nav>
-
-          {/* Right Action CTAs */}
-          <div className="hidden sm:flex items-center gap-3">
-            <Link
-              href="/auth/login"
-              className="text-xs font-bold text-neutral-600 hover:text-black px-4 py-2.5 rounded-xl hover:bg-neutral-100 transition-colors"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/auth/signup"
-              className="px-5 py-2.5 rounded-2xl bg-black hover:bg-neutral-800 text-white font-black text-xs shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-95 transition-all flex items-center gap-2 group cursor-pointer"
-            >
-              <span>Get Started Free</span>
-              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform text-white" />
-            </Link>
-          </div>
-
-          {/* Mobile Hamburger Toggle */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2.5 rounded-xl bg-neutral-100 border border-neutral-200 text-neutral-800 hover:text-black"
-            aria-label="Toggle Navigation Menu"
-          >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
-        </div>
-
-        {/* Mobile Dropdown Menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-white border-b border-neutral-200 px-4 py-6 space-y-3 animate-in slide-in-from-top duration-200 shadow-xl">
-            <Link
-              href="/interviews"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center justify-between p-3 rounded-2xl bg-neutral-50 border border-neutral-200 text-sm font-bold text-black"
-            >
-              <div className="flex items-center gap-2.5">
-                <Video className="w-4 h-4 text-black" />
-                <span>3D Mock Interviews</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-neutral-400" />
-            </Link>
-            <Link
-              href="/resumes"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center justify-between p-3 rounded-2xl bg-neutral-50 border border-neutral-200 text-sm font-bold text-black"
-            >
-              <div className="flex items-center gap-2.5">
-                <FileText className="w-4 h-4 text-black" />
-                <span>Resume &amp; Job Matcher</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-neutral-400" />
-            </Link>
-            <Link
-              href="/edfix"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center justify-between p-3 rounded-2xl bg-neutral-50 border border-neutral-200 text-sm font-bold text-black"
-            >
-              <div className="flex items-center gap-2.5">
-                <Code2 className="w-4 h-4 text-black" />
-                <span>EdFix Lab</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-neutral-400" />
-            </Link>
-            <Link
-              href="/network"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center justify-between p-3 rounded-2xl bg-neutral-50 border border-neutral-200 text-sm font-bold text-black"
-            >
-              <div className="flex items-center gap-2.5">
-                <Users className="w-4 h-4 text-black" />
-                <span>Verified Network</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-neutral-400" />
-            </Link>
-            <Link
-              href="/jobs"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center justify-between p-3 rounded-2xl bg-neutral-50 border border-neutral-200 text-sm font-bold text-black"
-            >
-              <div className="flex items-center gap-2.5">
-                <Briefcase className="w-4 h-4 text-black" />
-                <span>Opportunities &amp; Jobs</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-neutral-400" />
-            </Link>
-
-            <div className="pt-3 flex flex-col gap-2">
-              <Link
-                href="/auth/signup"
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full py-3 rounded-xl bg-black text-white font-black text-center text-xs shadow-md"
-              >
-                Create Free Account
-              </Link>
-              <Link
-                href="/auth/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full py-3 rounded-xl bg-neutral-100 text-neutral-800 font-bold text-center text-xs border border-neutral-200"
-              >
-                Sign In
-              </Link>
-            </div>
-          </div>
-        )}
-      </header>
-
-      {/* 2. HERO SECTION WITH PROMINENT HIGHLIGHT TEXT IN TOP */}
-      <section className="relative pt-12 pb-20 sm:pt-20 sm:pb-28 px-4 sm:px-6 lg:px-8 overflow-hidden bg-white">
+      {/* 2. CENTERED HERO SECTION: WELCOME TO EDWORLD CLUB */}
+      <section className="relative pt-24 sm:pt-32 pb-20 sm:pb-28 px-4 sm:px-6 lg:px-8 overflow-hidden bg-white">
         
         {/* Subtle Minimalist Grid Pattern */}
         <div className="absolute inset-0 bg-[radial-gradient(#e5e5e5_1px,transparent_1px)] [background-size:28px_28px] opacity-70 pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto relative z-10">
+        <div className="max-w-4xl mx-auto relative z-10 text-center space-y-8">
           
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
-            
-            {/* Left Column: Highlight Text in Top & Value Proposition */}
-            <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-              
-              {/* Top Eyebrow Tag with Clean Contrast Badge */}
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral-100 border border-neutral-200 text-xs font-bold text-black shadow-2xs">
-                <span className="w-2 h-2 rounded-full bg-black animate-ping" />
-                <span className="font-mono uppercase tracking-wider text-[11px] text-black font-extrabold">✦ EDWORLD CO.</span>
-                <span className="text-neutral-400">&bull;</span>
-                <span className="text-neutral-600 font-medium">The Career Intelligence Platform</span>
-              </div>
+          {/* Top Eyebrow Tag: Welcome to EdWorld Club */}
+          <div className="inline-flex items-center gap-2.5 px-5 py-2 rounded-full bg-neutral-100 border border-neutral-200 text-xs sm:text-sm font-bold text-black shadow-xs">
+            <span className="w-2 h-2 rounded-full bg-black animate-ping" />
+            <span className="font-mono uppercase tracking-wider text-[11px] sm:text-xs text-black font-extrabold">✦ EDWORLD CLUB</span>
+            <span className="text-neutral-300">•</span>
+            <span className="text-neutral-700 font-semibold tracking-wide lowercase">meet • connect • play • begin • enjoy</span>
+          </div>
 
-              {/* High-Impact Hero Title with Prominent Highlight Badge */}
-              <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black text-black tracking-tight leading-[1.08] text-balance">
-                Master Tech Interviews. <br className="hidden sm:inline" />
-                Land Your Dream Job. <br />
-                <span className="relative inline-block mt-2 sm:mt-3">
-                  <span className="relative z-10 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-2xl bg-black text-white text-2xl sm:text-4xl lg:text-5xl font-black shadow-xl inline-flex items-center gap-2.5">
-                    <Sparkles className="w-5 h-5 sm:w-7 sm:h-7 text-white inline-block shrink-0" />
-                    <span>Supercharged by Myra AI</span>
-                  </span>
-                </span>
-              </h1>
+          {/* High-Impact Hero Title Centered */}
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black text-black tracking-tight leading-[1.08] text-balance">
+            Welcome to EdWorld Club. <br />
+            <span className="text-neutral-500 font-bold text-xl sm:text-3xl lg:text-4xl block mt-3 sm:mt-4">
+              Meet &bull; Connect &bull; Play &bull; Begin &bull; Enjoy
+            </span>
+            <span className="block mt-4 sm:mt-6 text-3xl sm:text-5xl lg:text-6xl text-black font-black">
+              Master Tech Interviews. <br className="hidden sm:inline" />
+              Land Your Dream Job.
+            </span>
+          </h1>
 
-              {/* Subtitle */}
-              <p className="text-sm sm:text-base text-neutral-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal">
-                EdWorld Co. gives engineers and ambitious students a unified career acceleration engine: <strong>3D lockdown mock interviews</strong>, <strong>smart ATS resume-to-job matching</strong>, <strong>hands-on engineering challenges</strong>, and a <strong>personal AI copilot</strong> grounded in your verified progress.
-              </p>
+          {/* Subtitle Centered */}
+          <p className="text-sm sm:text-base text-neutral-600 max-w-2xl mx-auto leading-relaxed font-normal">
+            EdWorld Co. gives engineers and ambitious students a unified career acceleration engine: <strong>3D lockdown mock interviews</strong>, <strong>smart ATS resume-to-job matching</strong>, <strong>hands-on engineering challenges</strong>, and verified peer networking.
+          </p>
 
-              {/* Minimalist CTA Buttons with Hover Elevation */}
-              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
-                <Link
-                  href="/auth/signup"
-                  className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-black hover:bg-neutral-800 text-white font-black text-sm shadow-xl hover:shadow-2xl hover:-translate-y-0.5 active:scale-95 transition-all flex items-center justify-center gap-2.5 group cursor-pointer"
-                >
-                  <span>Start Practicing Free</span>
-                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1.5 text-white" />
-                </Link>
+          {/* Centered Minimalist CTA Buttons with Hover Elevation */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+            <Link
+              href="/auth/signup"
+              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-black hover:bg-neutral-800 text-white font-black text-sm shadow-xl hover:shadow-2xl hover:-translate-y-0.5 active:scale-95 transition-all flex items-center justify-center gap-2.5 group cursor-pointer"
+            >
+              <span>Start Practicing Free</span>
+              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1.5 text-white" />
+            </Link>
 
-                <button
-                  onClick={scrollToFeatures}
-                  className="w-full sm:w-auto px-7 py-4 rounded-2xl bg-white hover:bg-neutral-50 text-black font-bold text-sm border border-neutral-300 hover:border-black shadow-xs hover:shadow-md hover:-translate-y-0.5 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <span>Explore Features</span>
-                  <ChevronDown className="w-4 h-4 text-neutral-500" />
-                </button>
-              </div>
+            <button
+              onClick={scrollToFeatures}
+              className="w-full sm:w-auto px-7 py-4 rounded-2xl bg-white hover:bg-neutral-50 text-black font-bold text-sm border border-neutral-300 hover:border-black shadow-xs hover:shadow-md hover:-translate-y-0.5 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>Explore Features</span>
+              <ChevronDown className="w-4 h-4 text-neutral-500" />
+            </button>
+          </div>
 
-              {/* Trust Metric Badges */}
-              <div className="pt-6 grid grid-cols-3 gap-3 max-w-md mx-auto lg:mx-0 border-t border-neutral-200">
-                <div className="space-y-0.5">
-                  <div className="text-lg sm:text-xl font-black font-mono text-black">100%</div>
-                  <div className="text-[10px] text-neutral-500 font-bold uppercase tracking-wider">Lockdown Anti-Cheat</div>
-                </div>
-                <div className="space-y-0.5">
-                  <div className="text-lg sm:text-xl font-black font-mono text-black">98%</div>
-                  <div className="text-[10px] text-neutral-500 font-bold uppercase tracking-wider">ATS Match Rate</div>
-                </div>
-                <div className="space-y-0.5">
-                  <div className="text-lg sm:text-xl font-black font-mono text-black">0-Cost</div>
-                  <div className="text-[10px] text-neutral-500 font-bold uppercase tracking-wider">Student Starter</div>
-                </div>
-              </div>
-
+          {/* Centered Trust Metric Badges */}
+          <div className="pt-8 grid grid-cols-3 gap-6 max-w-lg mx-auto border-t border-neutral-200">
+            <div className="space-y-0.5">
+              <div className="text-lg sm:text-2xl font-black font-mono text-black">100%</div>
+              <div className="text-[10px] sm:text-xs text-neutral-500 font-bold uppercase tracking-wider">Lockdown Anti-Cheat</div>
             </div>
-
-            {/* Right Column: Interactive Minimalist Myra Copilot Preview Card */}
-            <div className="lg:col-span-5 relative flex justify-center">
-              
-              <div className="relative w-full max-w-md bg-white border border-neutral-200 rounded-3xl p-6 shadow-xl space-y-6">
-                
-                {/* Card Top Pill */}
-                <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
-                  <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-100 border border-neutral-200 text-xs font-bold text-black">
-                    <span className="w-2 h-2 rounded-full bg-black animate-ping" />
-                    <span>Myra AI Platform Copilot</span>
-                  </div>
-                  <span className="text-[10px] font-mono text-neutral-500 font-semibold">Live Telemetry</span>
-                </div>
-
-                {/* 3D Avatar Centerpiece with Clean Border */}
-                <div className="relative flex flex-col items-center">
-                  <div className="relative w-40 h-40 sm:w-48 sm:h-48 rounded-3xl overflow-hidden border border-neutral-300 shadow-lg bg-neutral-100 group">
-                    <Image
-                      src="/images/myra-avatar.png"
-                      alt="Myra AI Companion"
-                      fill
-                      priority
-                      className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
-                    />
-                  </div>
-                  <div className="mt-3 flex items-center gap-1.5 bg-neutral-50 border border-neutral-200 px-3 py-1 rounded-full text-xs font-bold text-black shadow-2xs">
-                    <ShieldCheck className="w-3.5 h-3.5 text-black" />
-                    <span>Myra &bull; Academic Mentor &amp; Interviewer</span>
-                  </div>
-                </div>
-
-                {/* Live Question & Waveform Simulation */}
-                <div className="p-4 rounded-2xl bg-neutral-50 border border-neutral-200 space-y-2 text-xs">
-                  <div className="flex items-center justify-between text-[10px] uppercase font-bold text-neutral-900">
-                    <span className="flex items-center gap-1"><Radio className="w-3 h-3 text-black animate-pulse" /> Spoken Interview Prompt</span>
-                    <span className="text-neutral-500 font-mono">STAR Rubric</span>
-                  </div>
-                  <p className="text-neutral-800 italic font-medium leading-relaxed">
-                    &ldquo;Welcome candidate! Walk me through how you architected Redis caching in your recent project to reduce query latency by 65%.&rdquo;
-                  </p>
-                  
-                  {/* Waveform indicator */}
-                  <div className="flex items-end justify-center gap-1 h-4 pt-1">
-                    <span className="w-1 bg-black rounded-full h-2 animate-[bounce_0.6s_infinite_100ms]" />
-                    <span className="w-1 bg-neutral-600 rounded-full h-4 animate-[bounce_0.6s_infinite_200ms]" />
-                    <span className="w-1 bg-black rounded-full h-2 animate-[bounce_0.6s_infinite_300ms]" />
-                    <span className="w-1 bg-neutral-600 rounded-full h-3 animate-[bounce_0.6s_infinite_150ms]" />
-                    <span className="w-1 bg-black rounded-full h-4 animate-[bounce_0.6s_infinite_250ms]" />
-                  </div>
-                </div>
-
-                {/* Direct Action Launch Bar */}
-                <div className="grid grid-cols-2 gap-2 text-xs font-bold pt-1">
-                  <Link
-                    href="/interviews"
-                    className="p-2.5 rounded-xl bg-black hover:bg-neutral-800 text-center text-white transition-all flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
-                  >
-                    <Play className="w-3.5 h-3.5 text-white" />
-                    <span>Try 3D Interview</span>
-                  </Link>
-                  <Link
-                    href="/resumes"
-                    className="p-2.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-center text-black border border-neutral-200 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-                  >
-                    <Briefcase className="w-3.5 h-3.5 text-black" />
-                    <span>Match Jobs</span>
-                  </Link>
-                </div>
-
-              </div>
-
+            <div className="space-y-0.5">
+              <div className="text-lg sm:text-2xl font-black font-mono text-black">98%</div>
+              <div className="text-[10px] sm:text-xs text-neutral-500 font-bold uppercase tracking-wider">ATS Match Rate</div>
             </div>
-
+            <div className="space-y-0.5">
+              <div className="text-lg sm:text-2xl font-black font-mono text-black">0-Cost</div>
+              <div className="text-[10px] sm:text-xs text-neutral-500 font-bold uppercase tracking-wider">Student Starter</div>
+            </div>
           </div>
 
         </div>
@@ -397,7 +146,7 @@ export default function ModernEdworldLanding() {
       </section>
 
       {/* 3. DOWN BELOW: CORE FEATURES SHOWCASE ("in down show the featuers") */}
-      <section id="features-section" className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 border-t border-neutral-200 bg-neutral-50/60 relative scroll-mt-20">
+      <section id="features-section" className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 border-t border-neutral-200 bg-white relative scroll-mt-20">
         <div className="max-w-7xl mx-auto space-y-14">
           
           {/* Section Header */}
@@ -635,7 +384,7 @@ export default function ModernEdworldLanding() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
           
-          <div className="p-7 rounded-3xl bg-neutral-50 border border-neutral-200 space-y-4 hover:border-black transition-colors">
+          <div className="p-7 rounded-3xl bg-white border border-neutral-200 space-y-4 hover:border-black hover:shadow-lg hover:-translate-y-1 transition-all duration-200">
             <span className="text-3xl font-black font-mono text-black">01</span>
             <h3 className="text-lg font-black text-black">Optimize Your Resume</h3>
             <p className="text-xs text-neutral-600 leading-relaxed font-normal">
@@ -643,7 +392,7 @@ export default function ModernEdworldLanding() {
             </p>
           </div>
 
-          <div className="p-7 rounded-3xl bg-neutral-50 border border-neutral-200 space-y-4 hover:border-black transition-colors">
+          <div className="p-7 rounded-3xl bg-white border border-neutral-200 space-y-4 hover:border-black hover:shadow-lg hover:-translate-y-1 transition-all duration-200">
             <span className="text-3xl font-black font-mono text-black">02</span>
             <h3 className="text-lg font-black text-black">Practice Under Real Pressure</h3>
             <p className="text-xs text-neutral-600 leading-relaxed font-normal">
@@ -651,7 +400,7 @@ export default function ModernEdworldLanding() {
             </p>
           </div>
 
-          <div className="p-7 rounded-3xl bg-neutral-50 border border-neutral-200 space-y-4 hover:border-black transition-colors">
+          <div className="p-7 rounded-3xl bg-white border border-neutral-200 space-y-4 hover:border-black hover:shadow-lg hover:-translate-y-1 transition-all duration-200">
             <span className="text-3xl font-black font-mono text-black">03</span>
             <h3 className="text-lg font-black text-black">Match Openings &amp; Get Hired</h3>
             <p className="text-xs text-neutral-600 leading-relaxed font-normal">
@@ -726,21 +475,9 @@ export default function ModernEdworldLanding() {
         </div>
       </section>
 
-      {/* 7. CLEAN MINIMALIST MONOCHROME FOOTER */}
-      <footer className="border-t border-neutral-200 py-12 px-4 sm:px-6 lg:px-8 text-xs text-neutral-500 bg-white">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2 font-bold text-black">
-            <span>&copy; {new Date().getFullYear()} EdWorld Co. All rights reserved.</span>
-          </div>
-          <div className="flex items-center gap-6 text-neutral-600 font-medium">
-            <Link href="/privacy" className="hover:text-black transition-colors">Privacy Policy</Link>
-            <Link href="/terms" className="hover:text-black transition-colors">Terms of Service</Link>
-            <Link href="/contact" className="hover:text-black transition-colors">Contact Support</Link>
-          </div>
-        </div>
-      </footer>
+      {/* 7. UNIFIED ENTERPRISE COMPLIANCE FOOTER */}
+      <Footer />
 
-      <CookieConsentBanner />
       <BackToTop />
       <FloatingContactButton />
 

@@ -89,27 +89,6 @@ export async function verifyUserRole(
     }
   }
 
-  if (effectiveUserId === "usr_founder_eden") {
-    return {
-      authorized: true,
-      user: {
-        id: "usr_founder_eden",
-        email: "edworld.eden@gmail.com",
-        role: "FOUNDER",
-        isAdmin: true,
-        isFounder: true,
-        isHR: true,
-        isTeacher: false,
-        isSchoolAdmin: false,
-        isCollegeAdmin: false,
-        isPlacementOfficer: false,
-        isEmployee: true,
-        isEmployer: true,
-        ageBand: "18+",
-      }
-    };
-  }
-
   try {
     const { data: userRecord, error } = await supabase
       .from("users")

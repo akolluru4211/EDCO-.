@@ -38,8 +38,26 @@ def health_check():
     return jsonify({
         "status": "healthy",
         "service": "flask-interview-scorer",
+        "version": MODEL_VERSION,
+        "models": {
+            "content": CONTENT_SCORING_MODEL,
+            "fast": FAST_SCORING_MODEL
+        },
         "timestamp": time.time()
     }), 200
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    """Global sanitized error handler preventing PII leakage in logs or responses."""
+    err_type = type(e).__name__
+    err_msg = str(e)
+    sanitized_msg = re.sub(r'(bearer\s+)[a-zA-Z0-9_\-\.]+', r'\1[REDACTED]', err_msg, flags=re.IGNORECASE)
+    logger.error(f"[SCORER_UNHANDLED_EXCEPTION]: {err_type}: {sanitized_msg}")
+    return jsonify({
+        "success": False,
+        "error": "Internal scoring pipeline error",
+        "errorType": err_type
+    }), 500
 
 def run_whisper_transcription(audio_or_video_url: Optional[str], raw_transcript: Optional[str]) -> Dict[str, Any]:
     """

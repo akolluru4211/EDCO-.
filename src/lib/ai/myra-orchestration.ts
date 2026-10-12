@@ -9,6 +9,7 @@ import {
   MyraScopedUserContext 
 } from "@/lib/ai/myra-context-builder";
 import { checkEntitlement } from "@/lib/entitlement-service";
+import { MyraDatasetService } from "@/lib/ai/myra-datasets";
 
 export interface MyraExecutionRequest {
   userId?: string;
@@ -105,10 +106,11 @@ export class MyraOrchestrator {
       }
     }
 
-    // 3. Assemble System Prompt with Injected Scoped Context
+    // 3. Assemble System Prompt with Injected Scoped Context & HF Dataset Grounding
     const contextBlock = userContext ? formatContextPromptBlock(userContext) : "";
+    const datasetGrounding = MyraDatasetService.formatDatasetGroundingPrompt(request.prompt);
     const baseSystemPrompt = request.systemPromptOverride || MYRA_SYSTEM_PROMPT;
-    const finalSystemPrompt = `${baseSystemPrompt}\n${contextBlock}`.trim();
+    const finalSystemPrompt = `${baseSystemPrompt}\n${contextBlock}\n${datasetGrounding}`.trim();
 
     // 4. Content Safety Filter (Basic sanity check)
     const lowerPrompt = request.prompt.toLowerCase();

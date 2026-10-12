@@ -48,7 +48,7 @@ interface FeatureMenuItem {
   shortLabel: string;
   icon: any;
   desc?: string;
-  category: "core" | "career" | "networking" | "org";
+  category: "build" | "practice" | "grow" | "org";
   badge?: string;
   requiresAdult?: boolean;
   staffOnly?: boolean;
@@ -71,9 +71,84 @@ export default function Navbar() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState<number>(0);
 
   const isStaff = Boolean(isEmployee || isHR || isFounder || isCollegeAdmin || isAdmin || isSuperAdmin);
   const isAdult = user?.ageBand === "18+" || user?.careerStage === "PROFESSIONAL";
+
+  // Sync live unread direct messages count
+  useEffect(() => {
+    if (!user?.uid) {
+      setUnreadMessagesCount(0);
+      return;
+    }
+
+    const fetchUnreadCount = async () => {
+      try {
+        const res = await fetch("/api/network/messages?countOnly=true", {
+          headers: { "x-user-id": user.uid },
+        });
+        const data = await res.json();
+        if (data.success && typeof data.unreadCount === "number") {
+          setUnreadMessagesCount(data.unreadCount);
+        }
+      } catch (err) {
+        console.warn("[Navbar] Failed to fetch unread count:", err);
+      }
+    };
+
+    fetchUnreadCount();
+
+    // 1. Supabase Realtime User Channel (Instant broadcast)
+    const userChannel = supabase
+      .channel(`edworld_user_${user.uid}`)
+      .on("broadcast", { event: "new_message" }, () => {
+        fetchUnreadCount();
+      })
+      .on("broadcast", { event: "unread_update" }, (payload: any) => {
+        if (typeof payload?.payload?.count === "number") {
+          setUnreadMessagesCount(payload.payload.count);
+        } else {
+          fetchUnreadCount();
+        }
+      })
+      .subscribe();
+
+    // 2. Supabase Postgres Changes Channel (Database WAL changes)
+    const dbChannel = supabase
+      .channel(`db_messages_${user.uid}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "direct_messages",
+          filter: `receiver_id=eq.${user.uid}`,
+        },
+        () => {
+          fetchUnreadCount();
+        }
+      )
+      .subscribe();
+
+    // 3. Custom DOM Events for instant cross-component updates
+    const handleLocalRead = (e: any) => {
+      if (typeof e.detail?.unreadCount === "number") {
+        setUnreadMessagesCount(e.detail.unreadCount);
+      } else {
+        fetchUnreadCount();
+      }
+    };
+    window.addEventListener("edworld:messages_read", handleLocalRead);
+    window.addEventListener("edworld:message_sent", fetchUnreadCount);
+
+    return () => {
+      supabase.removeChannel(userChannel);
+      supabase.removeChannel(dbChannel);
+      window.removeEventListener("edworld:messages_read", handleLocalRead);
+      window.removeEventListener("edworld:message_sent", fetchUnreadCount);
+    };
+  }, [user?.uid]);
 
   // Do not render navbar on auth routes or landing
   const isAuthPage = pathname === "/auth/login" || pathname === "/auth/signup" || pathname?.startsWith("/auth/");
@@ -105,186 +180,134 @@ export default function Navbar() {
   }, [isDrawerOpen]);
 
   // Comprehensive Feature Registry across the entire EdWorld Platform
+  // Comprehensive Feature Registry across the entire EdWorld Platform (Build, Practice, Grow, Org)
   const ALL_FEATURES: FeatureMenuItem[] = [
-    // 1. Core Learning & Practice OS
-    {
-      href: "/dashboard",
-      label: "EdDashboard",
-      shortLabel: "EdDashboard",
-      icon: LayoutDashboard,
-      desc: "Personalized skills radar, daily streak & priority drills",
-      category: "core",
-      badge: "Core"
-    },
-    {
-      href: "/interviews",
-      label: "EdInterview",
-      shortLabel: "EdInterview",
-      icon: Video,
-      desc: "STAR behavioral & technical questions with Claude AI",
-      category: "core",
-      badge: "AI Powered"
-    },
-    {
-      href: "/interview-experiences",
-      label: "EdArchives",
-      shortLabel: "EdArchives",
-      icon: BookOpen,
-      desc: "Real company round breakdowns & question archives",
-      category: "core",
-      badge: "UGC"
-    },
-    {
-      href: "/interviews/language-training",
-      label: "EdSpeech",
-      shortLabel: "EdSpeech",
-      icon: Sparkles,
-      desc: "Rapid audio drills, grammar, pace & filler word diagnostics",
-      category: "core"
-    },
-    {
-      href: "/aptitude",
-      label: "EdAptitude",
-      shortLabel: "EdAptitude",
-      icon: Brain,
-      desc: "Quantitative, logical reasoning & CS practice with instant scoring",
-      category: "core"
-    },
-    {
-      href: "/edfix",
-      label: "EdFix",
-      shortLabel: "EdFix",
-      icon: Sparkles,
-      desc: "Curated industry & product challenges with verified peer solutions",
-      category: "core",
-      badge: "Active"
-    },
-    {
-      href: "/projects",
-      label: "EdProjects",
-      shortLabel: "EdProjects",
-      icon: Layers,
-      desc: "Showcase builds, GitHub verification & live demos",
-      category: "core"
-    },
-
-    // 2. Career & Placement OS
+    // 1. BUILD (Resume, Projects, Portfolio, Verified Documents)
     {
       href: "/resumes",
-      label: "EdResume",
-      shortLabel: "EdResume",
+      label: "Master Resume Builder",
+      shortLabel: "Resumes",
       icon: FileText,
-      desc: "ATS score optimization, JD match & peer review",
-      category: "career",
+      desc: "ATS score optimization, JD match analysis & keyword tailoring",
+      category: "build",
       badge: "ATS 90+"
     },
     {
-      href: "/jobs",
-      label: "EdJobs",
-      shortLabel: "EdJobs",
-      icon: Briefcase,
-      desc: "Direct employer postings calibrated to your skill profile",
-      category: "career"
-    },
-    {
-      href: "/jobs/applications",
-      label: "EdApplications Tracker",
-      shortLabel: "Applications",
-      icon: FileCheck,
-      desc: "Track interview statuses, feedback & outreach",
-      category: "career"
-    },
-    {
-      href: "/career/skills-gap",
-      label: "EdSkills Gap Planner",
-      shortLabel: "Skills Gap",
-      icon: Target,
-      desc: "Benchmark verified evidence against target role benchmarks",
-      category: "career",
-      requiresAdult: true
-    },
-    {
-      href: "/career/evidence",
-      label: "EdEvidence Verified Evidence",
-      shortLabel: "Evidence",
-      icon: GitBranch,
-      desc: "GitHub, LeetCode & verifiable repository metrics",
-      category: "career",
-      requiresAdult: true
-    },
-    {
-      href: "/career/timeline",
-      label: "EdTimeline Readiness Timeline",
-      shortLabel: "Timeline",
-      icon: Calendar,
-      desc: "Step-by-step milestones to placement readiness",
-      category: "career",
-      requiresAdult: true
-    },
-    {
-      href: "/offers/compare",
-      label: "EdOffer Compare Calculator",
-      shortLabel: "Offer Compare",
-      icon: Scale,
-      desc: "Side-by-side total compensation, ESOP & growth evaluation",
-      category: "career",
-      requiresAdult: true
-    },
-    {
-      href: "/interviews/reflection",
-      label: "EdReflection Post-Interview",
-      shortLabel: "Reflection",
-      icon: Award,
-      desc: "Capture questions asked, performance debrief & actionable fixes",
-      category: "career",
-      requiresAdult: true
+      href: "/projects",
+      label: "Showcase Projects",
+      shortLabel: "Projects",
+      icon: Layers,
+      desc: "Engineering showcase builds, GitHub verification & live demos",
+      category: "build"
     },
     {
       href: "/career/documents",
-      label: "EdDocuments & Certifications",
+      label: "Verified Documents",
       shortLabel: "Documents",
-      icon: FileText,
-      desc: "Offer letters, transcripts & verified certificates",
-      category: "career",
+      icon: FileCheck,
+      desc: "Offer letters, transcripts & verified digital credentials",
+      category: "build",
       requiresAdult: true
+    },
+    {
+      href: "/profile",
+      label: "Public Portfolio & Showcase",
+      shortLabel: "Portfolio",
+      icon: UserIcon,
+      desc: "Verified student badge, skills telemetry & public profile URL",
+      category: "build"
+    },
+
+    // 2. PRACTICE (Mock Interview, Drills, Speech, Leadership, Question Archives)
+    {
+      href: "/interviews",
+      label: "AI Mock Interview Studio",
+      shortLabel: "Interviews",
+      icon: Video,
+      desc: "STAR behavioral & technical questions with Claude & Myra setup",
+      category: "practice",
+      badge: "AI Powered"
+    },
+    {
+      href: "/aptitude",
+      label: "Quantitative & CS Drills",
+      shortLabel: "Drills",
+      icon: Brain,
+      desc: "Speed reasoning, algorithms & quantitative practice with instant scoring",
+      category: "practice"
+    },
+    {
+      href: "/interviews/language-training",
+      label: "Speech & Articulation Drills",
+      shortLabel: "Speech",
+      icon: Sparkles,
+      desc: "Voice delivery, speech pace & filler word diagnostics",
+      category: "practice"
     },
     {
       href: "/leadership-assessment",
-      label: "EdLeadership Assessment",
+      label: "Leadership & Cross-Functional Prep",
       shortLabel: "Leadership",
       icon: Crown,
-      desc: "Situational judgment, delegation & cross-functional readiness",
-      category: "career",
+      desc: "Situational judgment, delegation & management readiness",
+      category: "practice",
       requiresAdult: true
     },
+    {
+      href: "/interview-experiences",
+      label: "Company Question Archives",
+      shortLabel: "Archives",
+      icon: BookOpen,
+      desc: "Real company round breakdowns & verified interview experiences",
+      category: "practice",
+      badge: "UGC"
+    },
 
-    // 3. Networking & Community
+    // 3. GROW (Dashboard, Jobs, Network, Messages, Ambassador)
+    {
+      href: "/dashboard",
+      label: "EdDashboard Hub",
+      shortLabel: "Dashboard",
+      icon: LayoutDashboard,
+      desc: "Personalized skills radar, daily streak & priority focus timetable",
+      category: "grow",
+      badge: "Core"
+    },
+    {
+      href: "/jobs",
+      label: "Verified Job Opportunities",
+      shortLabel: "Jobs",
+      icon: Briefcase,
+      desc: "Direct employer openings calibrated to your skill profile",
+      category: "grow"
+    },
     {
       href: "/network",
-      label: "EdNetwork",
-      shortLabel: "EdNetwork",
+      label: "EdNetwork Verified Community",
+      shortLabel: "Network",
       icon: Users,
-      desc: "Connect with verified peers, engineers & students",
-      category: "networking"
+      desc: "Connect with verified peers, engineers & university members",
+      category: "grow"
     },
     {
-      href: "/colleges",
-      label: "EdAmbassadors Program",
+      href: "/messages",
+      label: "Direct Messages",
+      shortLabel: "Messages",
+      icon: MessageSquare,
+      desc: "1-on-1 direct messaging with real-time WebSocket sync",
+      category: "grow"
+    },
+    {
+      href: "/ambassador",
+      label: "Campus Ambassador Program",
       shortLabel: "Ambassadors",
-      icon: GraduationCap,
+      icon: Award,
       desc: "Represent EdWorld on campus & earn leadership perks",
-      category: "networking"
+      category: "grow",
+      badge: "Apply"
     },
 
-    // 4. Account & Organization
-    {
-      href: "/profile",
-      label: "My Profile & Portfolio",
-      shortLabel: "Profile",
-      icon: UserIcon,
-      desc: "Public profile, showcase URL & account settings",
-      category: "org"
-    },
+    // 4. ORGANIZATION (Staff & Admin only)
     {
       href: "/billing",
       label: "Plans & Subscriptions",
@@ -313,7 +336,7 @@ export default function Navbar() {
     },
     {
       href: "/founder",
-      label: "Founder & Executive Suite",
+      label: "Founder Suite",
       shortLabel: "Founder",
       icon: Building2,
       desc: "Valuation sandbox, burn rate & organizational metrics",
@@ -322,10 +345,19 @@ export default function Navbar() {
     },
     {
       href: "/admin",
-      label: "Platform Admin Console",
-      shortLabel: "Admin",
+      label: "Admin Operations Portal",
+      shortLabel: "Admin OS",
       icon: ShieldCheck,
-      desc: "RBAC user management & security audit trail",
+      desc: "Users, jobs, ambassadors & bulk mailer",
+      category: "org",
+      staffOnly: true
+    },
+    {
+      href: "/admin/security",
+      label: "Security & Compliance Office",
+      shortLabel: "Security",
+      icon: ShieldCheck,
+      desc: "Live database, RLS protection matrix & DPO statutory compliance",
       category: "org",
       staffOnly: true
     }
@@ -392,8 +424,71 @@ export default function Navbar() {
               </div>
             </Link>
 
+            {/* Center: Desktop 4-Pillar Quick Navigation (Build, Practice, Grow, Org) */}
+            <nav className="hidden lg:flex items-center gap-1 bg-zinc-100/90 p-1 rounded-2xl border border-zinc-200/80 shadow-2xs">
+              <Link
+                href="/resumes"
+                className={`px-3.5 py-1.5 rounded-xl text-xs transition-all ${
+                  pathname.startsWith("/resumes") || pathname.startsWith("/projects") || pathname.startsWith("/career")
+                    ? "bg-white text-emerald-950 shadow-xs border border-emerald-900/10 font-black"
+                    : "text-zinc-600 hover:text-zinc-950 hover:bg-white/60 font-bold"
+                }`}
+              >
+                Build
+              </Link>
+              <Link
+                href="/interviews"
+                className={`px-3.5 py-1.5 rounded-xl text-xs transition-all ${
+                  pathname.startsWith("/interviews") || pathname.startsWith("/aptitude") || pathname.startsWith("/leadership")
+                    ? "bg-white text-emerald-950 shadow-xs border border-emerald-900/10 font-black"
+                    : "text-zinc-600 hover:text-zinc-950 hover:bg-white/60 font-bold"
+                }`}
+              >
+                Practice
+              </Link>
+              <Link
+                href="/dashboard"
+                className={`px-3.5 py-1.5 rounded-xl text-xs transition-all ${
+                  pathname.startsWith("/dashboard") || pathname.startsWith("/jobs") || pathname.startsWith("/network") || pathname.startsWith("/messages")
+                    ? "bg-white text-emerald-950 shadow-xs border border-emerald-900/10 font-black"
+                    : "text-zinc-600 hover:text-zinc-950 hover:bg-white/60 font-bold"
+                }`}
+              >
+                Grow
+              </Link>
+              {isStaff && (
+                <Link
+                  href="/admin"
+                  className={`px-3.5 py-1.5 rounded-xl text-xs transition-all ${
+                    pathname.startsWith("/admin") || pathname.startsWith("/employee") || pathname.startsWith("/hr") || pathname.startsWith("/founder")
+                      ? "bg-white text-emerald-950 shadow-xs border border-emerald-900/10 font-black"
+                      : "text-zinc-600 hover:text-zinc-950 hover:bg-white/60 font-bold"
+                  }`}
+                >
+                  Org
+                </Link>
+              )}
+            </nav>
+
             {/* Right: User Badge, Profile Pill & Primary Menu Button */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              {/* Dedicated "Ask Myra" Entry Point */}
+              <button
+                onClick={() => {
+                  window.dispatchEvent(
+                    new CustomEvent("open-myra-copilot", {
+                      detail: { prompt: "", autoSend: false }
+                    })
+                  );
+                }}
+                aria-label="Ask Myra AI Copilot"
+                className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-2xl bg-gradient-to-r from-emerald-700 via-teal-700 to-emerald-800 hover:from-emerald-800 hover:to-teal-900 text-white font-black text-xs transition-all shadow-xs cursor-pointer group active:scale-95 border border-emerald-500/30"
+                title="Ask Myra AI Copilot"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-300 transition-transform group-hover:rotate-12" />
+                <span className="font-extrabold tracking-tight">Ask Myra</span>
+              </button>
+
               {user ? (
                 <>
                   {/* Track / Role Pill */}
@@ -416,6 +511,25 @@ export default function Navbar() {
                       </span>
                     </div>
                   </div>
+
+                  {/* Direct Messages Quick Button with Live Unread Counter */}
+                  <Link
+                    href="/messages"
+                    aria-label="Direct Messages"
+                    className="relative p-2 sm:p-2.5 rounded-2xl bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 text-zinc-700 hover:text-zinc-950 transition-all flex items-center justify-center group shadow-xs cursor-pointer active:scale-95"
+                    title={
+                      unreadMessagesCount > 0
+                        ? `${unreadMessagesCount} unread message${unreadMessagesCount > 1 ? "s" : ""}`
+                        : "Direct Messages"
+                    }
+                  >
+                    <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:scale-110 text-zinc-700 group-hover:text-zinc-950" />
+                    {unreadMessagesCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 min-w-[18px] sm:min-w-[20px] h-[18px] sm:h-5 px-1 rounded-full bg-emerald-600 text-white font-black text-[10px] sm:text-xs flex items-center justify-center shadow-md animate-pulse border-2 border-white">
+                        {unreadMessagesCount > 9 ? "9+" : unreadMessagesCount}
+                      </span>
+                    )}
+                  </Link>
                 </>
               ) : (
                 <div className="flex items-center gap-2.5">
@@ -533,14 +647,14 @@ export default function Navbar() {
                   )}
                 </div>
 
-                {/* Category Filter Pills */}
+                {/* Category Filter Pills (Build, Practice, Grow, Org) */}
                 <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
                   {[
                     { id: "all", label: "All Features" },
-                    { id: "core", label: "Core & Drills" },
-                    { id: "career", label: "Career OS" },
-                    { id: "networking", label: "Networking" },
-                    { id: "org", label: "Org & Settings" },
+                    { id: "build", label: "Build" },
+                    { id: "practice", label: "Practice" },
+                    { id: "grow", label: "Grow" },
+                    ...(isStaff ? [{ id: "org", label: "Org" }] : []),
                   ].map((cat) => (
                     <button
                       key={cat.id}
@@ -596,11 +710,15 @@ export default function Navbar() {
                           <div className="min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="text-zinc-950 font-bold">{feat.label}</span>
-                              {feat.badge && (
+                              {feat.href === "/messages" && unreadMessagesCount > 0 ? (
+                                <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[9px] font-black uppercase tracking-wider animate-pulse">
+                                  {unreadMessagesCount} new
+                                </span>
+                              ) : feat.badge ? (
                                 <span className="px-1.5 py-0.5 rounded-md bg-zinc-100 text-zinc-800 text-[9px] font-black uppercase border border-zinc-200">
                                   {feat.badge}
                                 </span>
-                              )}
+                              ) : null}
                             </div>
                             {feat.desc && (
                               <p className={

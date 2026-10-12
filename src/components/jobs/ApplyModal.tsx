@@ -96,6 +96,8 @@ export default function ApplyModal({
     setIsSubmitting(true);
     try {
       const selectedResume = resumes.find((r) => r.id === selectedResumeId) || resumes[0];
+      const snapshot = selectedResume?.content || DEFAULT_RESUME_CONTENT;
+
       const newApp: JobApplication = {
         id: "app-" + Date.now(),
         jobId: job.id,
@@ -106,15 +108,38 @@ export default function ApplyModal({
         applicantEmail: user?.email || "candidate@example.com",
         resumeId: selectedResume?.id || "resume-1",
         resumeTitle: selectedResume?.title || "Default Resume",
-        resumeSnapshot: selectedResume?.content || DEFAULT_RESUME_CONTENT, // Immutable snapshot
+        resumeSnapshot: snapshot, // Immutable snapshot
         coverNote: coverNote.trim(),
-        status: "applied",
+        status: "submitted",
         appliedAt: new Date().toISOString(),
         statusUpdatedAt: new Date().toISOString(),
         matchScore,
       };
 
-      // Save to localStorage
+      // Call live production API
+      try {
+        const resp = await fetch("/api/jobs/apply", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            jobId: job.id,
+            resumeId: selectedResume?.id,
+            resumeSnapshot: snapshot,
+            coverNote: coverNote.trim(),
+            mockUserId: user?.uid,
+            mockUserEmail: user?.email,
+            mockUserName: user?.name,
+          }),
+        });
+        const json = await resp.json();
+        if (json.application?.id) {
+          newApp.id = json.application.id;
+        }
+      } catch (apiErr) {
+        console.warn("[ApplyModal API Fallback to LocalStorage]:", apiErr);
+      }
+
+      // Save to localStorage as well for offline persistence
       localStorage.setItem("edworld_applications", JSON.stringify([newApp, ...list]));
 
       if (onApplicationSubmitted) {
@@ -127,6 +152,8 @@ export default function ApplyModal({
         setCoverNote("");
         onClose();
       }, 2000);
+    } catch (err: any) {
+      alert(err?.message || "Failed to submit application");
     } finally {
       setIsSubmitting(false);
     }
@@ -212,6 +239,17 @@ export default function ApplyModal({
                       <FileText className="w-4 h-4 text-slate-400" />
                     </label>
                   ))}
+                </div>
+
+                {/* Resume Version Review Reminder */}
+                <div className="mt-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold text-slate-800">
+                    <FileText className="w-3.5 h-3.5 text-brand-600" />
+                    <span>Snapshot Version Review</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 leading-normal">
+                    Submitting creates an immutable snapshot of your selected resume ({resumes.find(r => r.id === selectedResumeId)?.title || "Active Version"}). Review your skills and experiences before confirming.
+                  </p>
                 </div>
               </div>
 

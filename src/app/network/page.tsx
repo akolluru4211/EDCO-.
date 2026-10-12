@@ -54,13 +54,14 @@ export default function NetworkPage() {
 
   // Fetch real network members from database
   const loadNetworkData = useCallback(async (query = "") => {
-    if (!user) return;
     setLoading(true);
     try {
       const url = `/api/network/members?query=${encodeURIComponent(query)}`;
-      const res = await fetch(url, {
-        headers: { "x-user-id": user.uid },
-      });
+      const headers: Record<string, string> = {};
+      if (user?.uid) {
+        headers["x-user-id"] = user.uid;
+      }
+      const res = await fetch(url, { headers });
       const data = await res.json();
 
       if (data.success) {
@@ -93,8 +94,8 @@ export default function NetworkPage() {
   }, [user]);
 
   useEffect(() => {
+    loadNetworkData();
     if (user) {
-      loadNetworkData();
       loadConnections();
     }
   }, [user, loadNetworkData, loadConnections]);
@@ -117,7 +118,11 @@ export default function NetworkPage() {
 
   // Handle Connect Request
   const handleConnect = async (targetUserId: string) => {
-    if (!user || actionInProgress) return;
+    if (!user) {
+      showToast("Please sign in or create an account to connect with peers.", "info");
+      return;
+    }
+    if (actionInProgress) return;
     setActionInProgress(targetUserId);
 
     try {
@@ -135,9 +140,11 @@ export default function NetworkPage() {
 
       const data = await res.json();
       if (data.success) {
-        showToast("Connection request sent! Recipient will be notified via email.");
+        showToast("Connection request sent! Recipient will be notified.");
         await loadConnections();
         await loadNetworkData(searchQuery);
+      } else {
+        showToast(data.error || "Unable to send request.", "info");
       }
     } catch (err) {
       console.error("Connection error:", err);
@@ -503,13 +510,13 @@ export default function NetworkPage() {
                     </button>
 
                     {/* Direct Message (E2E DM) */}
-                    <button
-                      onClick={() => setSelectedDmPeer(member)}
+                    <Link
+                      href={`/messages?peerId=${member.userId}`}
                       className="p-2 rounded-xl bg-white hover:bg-slate-50 border border-[#E8ECF2] text-gray-700 transition-colors"
                       title="Send 1-on-1 Direct Message"
                     >
                       <MessageSquare className="w-4 h-4 text-[#00D2B4]" />
-                    </button>
+                    </Link>
 
                     {/* Connect / Pending Action */}
                     {isPendingReceived ? (

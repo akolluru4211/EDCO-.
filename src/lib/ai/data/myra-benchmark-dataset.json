@@ -1,0 +1,59 @@
+{
+  "generator": "Hugging Face datasets library",
+  "datasets_version": "5.0.2.dev0",
+  "record_count": 4,
+  "updated_at": "2026-10-05T20:15:00Z",
+  "records": [
+    {
+      "id": "ds-001",
+      "category": "system_design",
+      "topic": "Distributed Caching & Invalidation",
+      "question": "How do you handle cache invalidation in a multi-region distributed system without creating thundering herd problems?",
+      "ideal_approach": "Use Cache-Aside with probabilistic early expiration (XFetch algorithm) or lease-based locks. Distribute write-through events asynchronously via Kafka change-data-capture.",
+      "difficulty": "senior",
+      "edge_cases": [
+        "Split-brain partition",
+        "Clock drift on TTL",
+        "Network partition between regions"
+      ]
+    },
+    {
+      "id": "ds-002",
+      "category": "algorithms",
+      "topic": "Monotonic Stack / Next Greater Element",
+      "question": "Given an array of temperatures, compute the number of days to wait until a warmer temperature. Optimize for linear time.",
+      "ideal_approach": "Maintain a monotonically decreasing stack of indices. For each day, pop while current temperature exceeds stack top, calculating index distance in O(N) time and O(N) space.",
+      "difficulty": "mid",
+      "edge_cases": [
+        "Strictly descending temperatures (never warms up)",
+        "Duplicate consecutive temperatures"
+      ]
+    },
+    {
+      "id": "ds-003",
+      "category": "behavioral_star",
+      "topic": "Conflict Resolution & Technical Disagreement",
+      "question": "Describe a time you strongly disagreed with a senior engineer or architect regarding a technical decision. How did you resolve it?",
+      "ideal_approach": "STAR format: Frame the disagreement around user impact and objective benchmarks rather than ego. Produce data/PoC metrics, seek common ground, and commit to the decided path (Disagree and Commit).",
+      "difficulty": "mid",
+      "edge_cases": [
+        "Blaming colleagues",
+        "Unresolved friction",
+        "Lack of quantified metric in Result"
+      ]
+    },
+    {
+      "id": "ds-004",
+      "category": "concurrency",
+      "topic": "Race Conditions & Optimistic Locking",
+      "question": "How do you implement atomic balance transfers between accounts in PostgreSQL without deadlocks under 5,000 req/sec?",
+      "ideal_approach": "Sort account IDs deterministically before acquiring row-level locks (SELECT ... FOR UPDATE) to eliminate circular deadlock conditions, or use version-based optimistic locking with exponential backoff retries.",
+      "difficulty": "senior",
+      "edge_cases": [
+        "Circular lock acquisition order",
+        "Transaction timeout on long retries",
+        "Phantom reads"
+      ]
+    }
+  ]
+}

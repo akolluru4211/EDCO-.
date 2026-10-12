@@ -42,12 +42,12 @@ function authenticateInternalRequest(req: Request, res: Response, next: NextFunc
 // -----------------------------------------------------------------------------
 // Health Probes
 // -----------------------------------------------------------------------------
-app.get("/healthz", (_req: Request, res: Response) => {
-  res.status(200).json({ status: "healthy", timestamp: new Date().toISOString() });
+app.get(["/health", "/healthz"], (_req: Request, res: Response) => {
+  res.status(200).json({ status: "healthy", service: "interview-orchestrator", timestamp: new Date().toISOString() });
 });
 
 app.get("/readyz", (_req: Request, res: Response) => {
-  res.status(200).json({ status: "ready", timestamp: new Date().toISOString() });
+  res.status(200).json({ status: "ready", service: "interview-orchestrator", timestamp: new Date().toISOString() });
 });
 
 // -----------------------------------------------------------------------------
@@ -281,6 +281,19 @@ function calculateLevelNudge(currentLevel: number, overallScore: number) {
     reason: `Consistent score (${overallScore}%). Effective level maintained at Level ${currentLevel}.`,
   };
 }
+
+// Global Sanitized Error Middleware
+app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
+  console.error(`[ORCHESTRATOR_UNHANDLED_EXCEPTION]:`, {
+    message: err?.message || String(err),
+    path: req.path,
+    method: req.method
+  });
+  return res.status(500).json({
+    error: "Internal orchestrator error",
+    handled: true
+  });
+});
 
 app.listen(PORT, () => {
   console.log(`🚀 [Interview Orchestrator] Containerized service listening on port ${PORT}`);

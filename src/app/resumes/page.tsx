@@ -212,6 +212,20 @@ export default function ResumesDirectEditorPage() {
     handleContentChange(resume.content);
   };
 
+  const handleAddKeyword = (kw: string) => {
+    if (!resume) return;
+    const currentTech = resume.content.skills?.technical || [];
+    if (currentTech.some((s) => s.toLowerCase() === kw.toLowerCase())) return;
+    const updatedContent: ResumeContent = {
+      ...resume.content,
+      skills: {
+        ...resume.content.skills,
+        technical: [...currentTech, kw],
+      },
+    };
+    handleContentChange(updatedContent);
+  };
+
   // Junior Track Gating (13-15 years)
   if (isJuniorTrack) {
     return (
@@ -427,6 +441,7 @@ export default function ResumesDirectEditorPage() {
           onClose={() => setIsJDModalOpen(false)}
           resumeContent={resume.content}
           resumeId={resume.id}
+          onAddKeyword={handleAddKeyword}
         />
 
         {/* Myra Smart Job Matcher Modal */}

@@ -1,107 +1,128 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getDbPool } from "@/lib/db-server";
+import { verifyUserRole } from "@/lib/server-role-guard";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
-    const supabase = createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    let isAuthorized = false;
 
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized access." }, { status: 401 });
+    // Check 1: Supabase SSR auth
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        const allowedRoles = ["ADMIN", "SUPER_ADMIN", "FOUNDER", "EXECUTIVE"];
+        if (profile && allowedRoles.includes(profile.role)) {
+          isAuthorized = true;
+        }
+      }
+    } catch {}
+
+    // Check 2: Session token / Cookie auth
+    if (!isAuthorized) {
+      const sessionCookie = req.cookies.get("edworld_session")?.value;
+      const authHeader = req.headers.get("authorization")?.replace("Bearer ", "");
+      const token = sessionCookie || authHeader;
+
+      if (token) {
+        const roleCheck = await verifyUserRole(token, [
+          "ADMIN",
+          "SUPER_ADMIN",
+          "FOUNDER",
+          "EXECUTIVE",
+        ]);
+        if (roleCheck.authorized) {
+          isAuthorized = true;
+        }
+      }
     }
 
-    // Role check: Only ADMIN, SUPER_ADMIN, FOUNDER, EXECUTIVE allowed
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    const allowedRoles = ["ADMIN", "SUPER_ADMIN", "FOUNDER", "EXECUTIVE"];
-    if (!profile || !allowedRoles.includes(profile.role)) {
-      return NextResponse.json({ error: "Forbidden: Platform administrator clearance required." }, { status: 403 });
+    if (!isAuthorized) {
+      return NextResponse.json(
+        { error: "Forbidden: Platform administrator clearance required." },
+        { status: 403 }
+      );
     }
 
-    // 1. Fetch Users
-    const { data: usersData, error: usersErr } = await supabase
-      .from("users")
-      .select("*")
-      .order("created_at", { ascending: false });
+    // Direct Database Query for guaranteed fresh user dossier
+    const pool = getDbPool();
+    const query = `
+      SELECT 
+        COALESCE(u.id, p.id) AS id,
+        COALESCE(p.name, u.name, 'Learner') AS name,
+        COALESCE(u.email, p.email, 'No email') AS email,
+        au.phone,
+        p.dob,
+        COALESCE(p.age_band, u.age_band, '18+') AS age_band,
+        COALESCE(p.grade_level, u.grade, 'College') AS grade,
+        COALESCE(p.career_stage, u.career_stage, 'college') AS career_stage,
+        COALESCE(p.primary_goal, 'Campus Placements & Technical Mastery') AS primary_goal,
+        p.interests,
+        COALESCE(u.is_admin, p.is_admin, false) AS is_admin,
+        COALESCE(u.is_employer, p.is_employer, false) AS is_employer,
+        COALESCE(p.created_at, u.created_at, NOW()) AS created_at
+      FROM public.users u
+      FULL OUTER JOIN public.profiles p ON u.id = p.id
+      LEFT JOIN auth.users au ON au.id = COALESCE(u.id, p.id)
+      ORDER BY COALESCE(u.created_at, p.created_at) DESC;
+    `;
 
-    // 2. Fetch Profiles for contact/phone/interests
-    const { data: profilesData } = await supabase
-      .from("profiles")
-      .select("*");
+    const result = await pool.query(query);
 
-    // 3. Fetch Gamification stats
-    const { data: gamificationData } = await supabase
-      .from("user_gamification")
-      .select("*");
-
-    // 4. Fetch Interviews
-    const { data: interviewData } = await supabase
-      .from("interview_sessions")
-      .select("user_id, overall_score, score");
-
-    // 5. Fetch Quest Completions
-    const { data: questData } = await supabase
-      .from("quest_completions")
-      .select("user_id");
-
-    // 6. Fetch Resumes
-    const { data: resumeData } = await supabase
-      .from("resumes")
-      .select("user_id");
-
-    const profilesMap = new Map((profilesData || []).map(p => [p.id || p.user_id, p]));
-    const gamifyMap = new Map((gamificationData || []).map(g => [g.user_id, g]));
-
-    const usersList = (usersData || profilesData || []).map((u: any) => {
-      const p = profilesMap.get(u.id || u.user_id) || u;
-      const g = gamifyMap.get(u.id || u.user_id);
-
-      const userInterviews = (interviewData || []).filter(i => i.user_id === u.id || i.user_id === u.user_id);
-      const avgScore = userInterviews.length > 0
-        ? Math.round(userInterviews.reduce((sum, curr) => sum + (curr.overall_score || curr.score || 0), 0) / userInterviews.length)
-        : 0;
-
-      const userQuests = (questData || []).filter(q => q.user_id === u.id || q.user_id === u.user_id);
-      const userResumes = (resumeData || []).filter(r => r.user_id === u.id || r.user_id === u.user_id);
+    const usersList = result.rows.map((r: any) => {
+      const rawStage = (r.career_stage || "").toLowerCase();
+      const stage =
+        rawStage === "working_professional" || rawStage === "professional"
+          ? "PROFESSIONAL"
+          : "STUDENT";
 
       return {
-        id: u.id || u.user_id,
-        name: p.display_name || p.name || u.name || "Learner",
-        email: p.email || u.email || "No email",
-        phone: p.phone || u.phone || undefined,
-        age_band: p.age_band || u.age_band || "18+",
-        grade: p.grade_level || u.grade || "College",
-        career_stage: p.career_stage || u.career_stage || undefined,
-        is_admin: Boolean(u.is_admin || p.role === "ADMIN" || p.role === "SUPER_ADMIN"),
-        is_employer: Boolean(u.is_employer || p.role === "EMPLOYER"),
-        is_suspended: Boolean(u.is_suspended || p.status === "SUSPENDED"),
-        created_at: u.created_at || p.created_at || new Date().toISOString(),
-        points: g?.points || 0,
-        current_streak: g?.current_streak || 0,
-        longest_streak: g?.longest_streak || 0,
-        badges_count: g?.badges?.length || 0,
-        badges_list: g?.badges || [],
-        interviews_count: userInterviews.length,
-        avg_interview_score: avgScore,
-        quests_completed: userQuests.length,
-        resumes_count: userResumes.length,
-        interests: p.interests || [],
+        id: r.id,
+        name: r.name,
+        email: r.email,
+        phone: r.phone || undefined,
+        institution: undefined,
+        age_band: r.age_band,
+        grade: r.grade,
+        career_stage: stage,
+        primary_goal: r.primary_goal,
+        onboarding_completed: true,
+        interests: r.interests || [],
+        is_admin: Boolean(r.is_admin),
+        is_employer: Boolean(r.is_employer),
+        is_suspended: false,
+        created_at: r.created_at,
+        points: 0,
+        current_streak: 0,
+        longest_streak: 0,
+        badges_count: 0,
+        badges_list: [],
+        interviews_count: 0,
+        avg_interview_score: 0,
+        quests_completed: 0,
+        resumes_count: 0,
       };
     });
 
     return NextResponse.json({
       success: true,
       users: usersList,
-      totalCount: usersList.length
+      totalCount: usersList.length,
     });
   } catch (err: any) {
-    console.error("[Admin Users API Error]:", err);
-    return NextResponse.json({ error: err.message || "Failed to load users list." }, { status: 500 });
+    console.error("[Admin Users API Direct DB Error]:", err);
+    return NextResponse.json(
+      { error: err.message || "Failed to load users list." },
+      { status: 500 }
+    );
   }
 }

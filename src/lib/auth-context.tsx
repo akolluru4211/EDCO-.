@@ -28,6 +28,12 @@ export function translateAuthError(err: any): string {
 
   const lower = msg.toLowerCase();
 
+  if (lower.includes("no account found") || lower.includes("user_not_found") || lower.includes("not registered")) {
+    return "No account found with this email. Please check for typos or create an account.";
+  }
+  if (lower.includes("incorrect password") || lower.includes("invalid_password")) {
+    return "Incorrect password. Please verify your password or reset it.";
+  }
   if (lower.includes("invalid login credentials") || lower.includes("invalid_grant") || lower.includes("wrong password")) {
     return "Email or password is incorrect. Please check your credentials and try again.";
   }
@@ -419,28 +425,62 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           body: JSON.stringify({ email: cleanEmail, password: pass }),
         });
 
-        if (apiRes.ok) {
-          const apiData = await apiRes.json();
-          if (apiData.success && apiData.user) {
-            setUser(apiData.user);
-            setProfile(apiData.profile);
-            setActiveRole(apiData.role || targetRole);
+        const apiData = await apiRes.json().catch(() => null);
 
-            if (typeof window !== "undefined") {
-              localStorage.setItem("edworld_auth_session", JSON.stringify(apiData.user));
-              localStorage.setItem("edworld_user_profile", JSON.stringify(apiData.profile));
-              localStorage.setItem(`edworld_active_role_${apiData.user.uid}`, apiData.role || targetRole);
-            }
+        if (apiRes.ok && apiData?.success && apiData?.user) {
+          setUser(apiData.user);
+          setProfile(apiData.profile);
+          setActiveRole(apiData.role || targetRole);
 
-            return {
-              role: apiData.role || targetRole,
-              redirectUrl: apiData.redirectUrl || getRedirectForRole(apiData.role || targetRole, apiData.user.careerStage, apiData.onboardingCompleted),
-              careerStage: apiData.user.careerStage,
-              onboardingCompleted: apiData.onboardingCompleted,
-            };
+          if (typeof window !== "undefined") {
+            localStorage.setItem("edworld_auth_session", JSON.stringify(apiData.user));
+            localStorage.setItem("edworld_user_profile", JSON.stringify(apiData.profile));
+            localStorage.setItem(`edworld_active_role_${apiData.user.uid}`, apiData.role || targetRole);
           }
+
+          return {
+            role: apiData.role || targetRole,
+            redirectUrl: apiData.redirectUrl || getRedirectForRole(apiData.role || targetRole, apiData.user.careerStage, apiData.onboardingCompleted),
+            careerStage: apiData.user.careerStage,
+            onboardingCompleted: apiData.onboardingCompleted,
+          };
         }
-      } catch (err) {
+
+        // If server rejected with explicit message (e.g. 404 or 401)
+        if (apiData?.message) {
+          // If user previously had a local account in registry, transparently sync it to Supabase!
+          if (apiData.error === "USER_NOT_FOUND" && typeof window !== "undefined") {
+            try {
+              const registry = JSON.parse(localStorage.getItem("edworld_user_registry") || "{}");
+              const localAcc = registry[cleanEmail];
+              if (localAcc?.appUser) {
+                const signupSync = await fetch("/api/auth/signup", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    email: cleanEmail,
+                    password: pass,
+                    name: localAcc.appUser.name || cleanEmail.split("@")[0],
+                    phone: localAcc.appUser.phone,
+                    careerStage: localAcc.appUser.careerStage,
+                    dob: localAcc.appUser.dob,
+                    gradeLevel: localAcc.appUser.gradeLevel,
+                  }),
+                });
+                const syncData = await signupSync.json().catch(() => null);
+                if (syncData?.success) {
+                  return await loginWithEmail(cleanEmail, pass);
+                }
+              }
+            } catch {}
+          }
+
+          throw new Error(apiData.message);
+        }
+      } catch (err: any) {
+        if (err.message && (err.message.includes("No account found") || err.message.includes("Incorrect password") || err.message.includes("Too many"))) {
+          throw err;
+        }
         console.warn("[Login API attempt notice]:", err);
       }
 
@@ -541,65 +581,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const cleanPhone = phone?.trim() || null;
       const cleanEmail = email.trim().toLowerCase();
       const resolvedStage: CareerStage = careerStage || (ageBand === "18+" ? "PROFESSIONAL" : "STUDENT");
-      const origin = typeof window !== "undefined" ? window.location.origin : "";
 
-      let supabaseUser: any = null;
-      let hasSession = false;
-
-      // 1. Race Supabase Auth with a 3.5s timeout to prevent email server hangs
-      try {
-        const timeoutPromise = new Promise<{ timeout: true }>((resolve) =>
-          setTimeout(() => resolve({ timeout: true }), 3500)
-        );
-
-        const signupPromise = supabase.auth.signUp({
+      // 1. Call server-side atomic signup API (handles auth.users, auth.identities, public.users, public.profiles, public.audit_logs)
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           email: cleanEmail,
           password: pass,
-          options: {
-            emailRedirectTo: `${origin}/onboarding`,
-            data: {
-              full_name: name.trim(),
-              name: name.trim(),
-              dob: defaultDob,
-              phone: cleanPhone,
-              age_band: ageBand,
-              grade_level: gradeLevel || "College",
-              career_stage: resolvedStage,
-            },
-          },
-        });
+          name: name.trim(),
+          dob: defaultDob,
+          gradeLevel: gradeLevel || "College",
+          phone: cleanPhone,
+          careerStage: resolvedStage,
+          primaryGoal: "Build skills and prepare for career opportunities on EdWorld.",
+        }),
+      });
 
-        const raceResult: any = await Promise.race([signupPromise, timeoutPromise]);
-
-        if (raceResult && !raceResult.timeout) {
-          if (raceResult.error) {
-            const errLower = (raceResult.error.message || "").toLowerCase();
-            // If already registered, throw exact error
-            if (errLower.includes("already registered") || errLower.includes("already exists")) {
-              throw raceResult.error;
-            }
-            // If weak password, throw error
-            if (errLower.includes("password")) {
-              throw raceResult.error;
-            }
-            console.warn("[Supabase Auth SignUp Server Notice]:", raceResult.error.message);
-          } else if (raceResult.data?.user) {
-            supabaseUser = raceResult.data.user;
-            hasSession = Boolean(raceResult.data.session);
-          }
-        }
-      } catch (err: any) {
-        const errLower = (err.message || "").toLowerCase();
-        if (errLower.includes("already registered") || errLower.includes("already exists") || errLower.includes("password")) {
-          throw err;
-        }
-        console.warn("[Supabase Auth SignUp Fallback Activated]:", err.message);
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || data.error || "Failed to create account. Please try again.");
       }
 
-      // 2. Generate identity & user profile (Instant)
-      const userId = supabaseUser?.id || `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-      const { displayName: cleanName, firstName, lastName } = normalizeDisplayName(undefined, undefined, name);
+      const userId = data.user.id;
+      const { displayName: cleanName } = normalizeDisplayName(undefined, undefined, name);
 
+      // 2. Establish active GoTrue session with Supabase Client
+      try {
+        await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password: pass,
+        });
+      } catch (signInErr: any) {
+        console.warn("[Post-signup GoTrue session notice]:", signInErr?.message);
+      }
+
+      // 3. Construct unified AppUser & UserProfile
       const appUser: AppUser = {
         uid: userId,
         name: cleanName,
@@ -610,7 +627,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         gradeLevel: gradeLevel || "College",
         careerStage: resolvedStage,
         isEmployer: false,
-        isAdmin: false,
+        isAdmin: data.user.role === "ADMIN" || data.user.role === "FOUNDER",
         createdAt: new Date().toISOString(),
         visualMode: ageBand === "18+" ? "career" : "maximalist",
       };
@@ -632,13 +649,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setUser(appUser);
       setProfile(userProfile);
+      setActiveRole(data.user.role || "CLIENT");
 
-      // 3. Set persistent local session & authentication cookies
+      // 4. Set persistent session tokens and cookies
       if (typeof window !== "undefined") {
         localStorage.setItem("edworld_auth_session", JSON.stringify(appUser));
         localStorage.setItem("edworld_user_profile", JSON.stringify(userProfile));
-        localStorage.setItem(`edworld_active_role_${userId}`, "CLIENT");
-        
+        localStorage.setItem(`edworld_active_role_${userId}`, data.user.role || "CLIENT");
+
         try {
           const registry = JSON.parse(localStorage.getItem("edworld_user_registry") || "{}");
           registry[cleanEmail] = {
@@ -647,51 +665,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             userId,
             appUser,
             userProfile,
-            role: "CLIENT",
+            role: data.user.role || "CLIENT",
             registeredAt: Date.now(),
           };
           localStorage.setItem("edworld_user_registry", JSON.stringify(registry));
         } catch {}
-        
-        const maxAge = 60 * 60 * 24 * 7;
+
+        const maxAge = 60 * 60 * 24 * 30; // 30 days
         document.cookie = `edworld_session=${userId}; path=/; max-age=${maxAge}; SameSite=Lax`;
         document.cookie = `sb-access-token=${userId}; path=/; max-age=${maxAge}; SameSite=Lax`;
         document.cookie = `edworld_auth=true; path=/; max-age=${maxAge}; SameSite=Lax`;
       }
-
-      // 4. Multi-table sync (profiles & users) to guarantee database persistence
-      const profileRecord = {
-        id: userId,
-        user_id: userId,
-        name: cleanName,
-        email: cleanEmail,
-        phone: cleanPhone,
-        dob: defaultDob,
-        age_band: ageBand,
-        career_stage: resolvedStage === "PROFESSIONAL" ? "working_professional" : "college",
-        grade_level: gradeLevel || "College",
-        username: cleanName.toLowerCase().replace(/\s+/g, "_") + "_" + userId.substring(0, 4),
-        primary_goal: userProfile.primaryGoal,
-        is_public: false,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-
-      const userRecord = {
-        id: userId,
-        name: cleanName,
-        email: cleanEmail,
-        age_band: ageBand,
-        grade: gradeLevel || "College",
-        career_stage: resolvedStage === "PROFESSIONAL" ? "working_professional" : "college",
-        is_employer: false,
-        is_admin: false,
-        is_mentor: false,
-        created_at: new Date().toISOString(),
-      };
-
-      supabase.from("profiles").upsert(profileRecord).then(() => {}, (e: any) => console.warn("[Profile Sync Note]:", e));
-      supabase.from("users").upsert(userRecord).then(() => {}, (e: any) => console.warn("[Users Table Sync Note]:", e));
 
       return { needsEmailVerification: false };
     } finally {

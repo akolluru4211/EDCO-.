@@ -84,7 +84,29 @@ function LoginForm() {
           {error && (
             <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-start gap-2.5 animate-in fade-in">
               <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-              <span>{error}</span>
+              <div className="space-y-1.5 flex-1">
+                <div>{error}</div>
+                {error.includes("No account found") && (
+                  <div className="pt-0.5">
+                    <Link
+                      href={`/auth/signup?email=${encodeURIComponent(email)}`}
+                      className="inline-flex items-center gap-1 font-bold text-emerald-700 hover:text-emerald-900 underline underline-offset-2"
+                    >
+                      Create an account now <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  </div>
+                )}
+                {error.includes("Incorrect password") && (
+                  <div className="pt-0.5">
+                    <Link
+                      href={`/auth/forgot-password?email=${encodeURIComponent(email)}`}
+                      className="inline-flex items-center gap-1 font-bold text-indigo-700 hover:text-indigo-900 underline underline-offset-2"
+                    >
+                      Forgot your password? Reset it here <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -142,17 +164,17 @@ function LoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-xl bg-[#13141B] hover:bg-black disabled:opacity-50 text-white font-extrabold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-2xs cursor-pointer mt-2"
+              className="w-full py-3 rounded-xl bg-black hover:bg-neutral-800 disabled:opacity-50 text-white font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-xs cursor-pointer mt-2 active:scale-[0.98]"
             >
               {loading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin text-[#00D2B4]" />
+                  <Loader2 className="w-4 h-4 animate-spin text-white" />
                   <span>Signing in...</span>
                 </>
               ) : (
                 <>
                   <span>Sign In</span>
-                  <ArrowRight className="w-4 h-4 text-[#00D2B4]" />
+                  <ArrowRight className="w-4 h-4 text-white" />
                 </>
               )}
             </button>

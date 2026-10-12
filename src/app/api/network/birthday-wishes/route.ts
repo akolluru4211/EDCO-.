@@ -134,7 +134,7 @@ export async function POST(req: NextRequest) {
     const { data: connection, error: connErr } = await supabase
       .from("connections")
       .select("id, status")
-      .or(`and(requester_id.eq.${senderId},receiver_id.eq.${recipientId}),and(requester_id.eq.${recipientId},receiver_id.eq.${senderId})`)
+      .or(`and(requester_id.eq.${senderId},recipient_id.eq.${recipientId}),and(requester_id.eq.${recipientId},recipient_id.eq.${senderId})`)
       .ilike("status", "accepted")
       .maybeSingle();
 

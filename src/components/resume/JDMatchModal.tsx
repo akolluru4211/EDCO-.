@@ -25,6 +25,7 @@ interface JDMatchModalProps {
   onClose: () => void;
   resumeContent: ResumeContent;
   resumeId?: string;
+  onAddKeyword?: (keyword: string) => void;
 }
 
 export default function JDMatchModal({
@@ -32,6 +33,7 @@ export default function JDMatchModal({
   onClose,
   resumeContent,
   resumeId,
+  onAddKeyword,
 }: JDMatchModalProps) {
   const { profile } = useAuth();
   const [jobDescription, setJobDescription] = useState(
@@ -41,6 +43,8 @@ export default function JDMatchModal({
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<JDAnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [addedKeywords, setAddedKeywords] = useState<Set<string>>(new Set());
+  const [suggestionStatus, setSuggestionStatus] = useState<Record<number, "accepted" | "dismissed">>({});
 
   if (!isOpen) return null;
 
@@ -223,27 +227,54 @@ export default function JDMatchModal({
                   </div>
                 </div>
 
-                {/* Missing Keywords */}
+                {/* Missing Keywords with 1-Click Add Chips */}
                 <div className="p-4 rounded-2xl bg-rose-50/80 border border-rose-200 space-y-2">
-                  <span className="font-bold text-rose-950 flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
-                    <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
-                    Missing JD Keywords ({analysis.missingKeywords?.length || 0})
-                  </span>
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-rose-950 flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
+                      <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
+                      Missing JD Keywords ({analysis.missingKeywords?.length || 0})
+                    </span>
+                    <span className="text-[10px] text-rose-700 font-medium">Click chip to add</span>
+                  </div>
                   <div className="flex flex-wrap gap-1.5 pt-1">
-                    {(analysis.missingKeywords || []).map((kw) => (
-                      <span
-                        key={kw}
-                        className="px-2 py-0.5 rounded-md bg-white border border-rose-300 text-rose-800 text-[11px] font-medium"
-                      >
-                        + {kw}
-                      </span>
-                    ))}
+                    {(analysis.missingKeywords || []).map((kw) => {
+                      const isAdded = addedKeywords.has(kw);
+                      return (
+                        <button
+                          key={kw}
+                          type="button"
+                          onClick={() => {
+                            if (!isAdded) {
+                              setAddedKeywords((prev) => new Set(prev).add(kw));
+                              onAddKeyword?.(kw);
+                            }
+                          }}
+                          className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer active:scale-95 ${
+                            isAdded
+                              ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                              : "bg-white border-rose-300 text-rose-800 hover:bg-rose-100 hover:border-rose-400"
+                          }`}
+                        >
+                          {isAdded ? (
+                            <>
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                              <span>{kw} added</span>
+                            </>
+                          ) : (
+                            <>
+                              <Plus className="w-3 h-3 text-rose-600" />
+                              <span>Add {kw}</span>
+                            </>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
 
-              {/* Level-Adapted Actionable Suggestions */}
-              <div className="space-y-2.5">
+              {/* Level-Adapted Actionable Suggestions with Accept / Reject Cards */}
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider">
                     Level {effectiveLevel} Tailored Improvements
@@ -252,16 +283,66 @@ export default function JDMatchModal({
                     {effectiveLevel === 0 ? "Foundational Focus" : effectiveLevel === 2 ? "Senior Impact Focus" : "Intermediate Scope Focus"}
                   </span>
                 </div>
-                <div className="space-y-2">
-                  {(analysis.improvementSuggestions || []).map((sug, i) => (
-                    <div
-                      key={i}
-                      className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 flex items-start gap-2.5 leading-relaxed"
-                    >
-                      <ArrowRight className="w-3.5 h-3.5 text-brand-600 shrink-0 mt-0.5" />
-                      <span>{sug}</span>
-                    </div>
-                  ))}
+                <div className="space-y-2.5">
+                  {(analysis.improvementSuggestions || []).map((sug, i) => {
+                    const status = suggestionStatus[i];
+                    return (
+                      <div
+                        key={i}
+                        className={`p-3.5 rounded-2xl border text-xs transition-all space-y-2.5 ${
+                          status === "accepted"
+                            ? "bg-emerald-50/80 border-emerald-300 text-emerald-950"
+                            : status === "dismissed"
+                            ? "bg-slate-100 border-slate-200 text-slate-400 opacity-60"
+                            : "bg-slate-50 border-slate-200 text-slate-800"
+                        }`}
+                      >
+                        <div className="flex items-start gap-2.5 leading-relaxed">
+                          <ArrowRight className="w-3.5 h-3.5 text-brand-600 shrink-0 mt-0.5" />
+                          <span className={status === "dismissed" ? "line-through" : ""}>{sug}</span>
+                        </div>
+                        <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-200/50">
+                          {status === "accepted" ? (
+                            <span className="text-[10px] font-bold text-emerald-700 flex items-center gap-1">
+                              <CheckCircle2 className="w-3.5 h-3.5" /> Applied to Resume Plan
+                            </span>
+                          ) : status === "dismissed" ? (
+                            <span className="text-[10px] font-bold text-slate-400">Dismissed</span>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSuggestionStatus((prev) => ({ ...prev, [i]: "accepted" }));
+                                  window.dispatchEvent(
+                                    new CustomEvent("open-myra-copilot", {
+                                      detail: {
+                                        prompt: `Please help me apply this resume improvement recommendation to my master resume: "${sug}"`,
+                                        autoSend: true,
+                                      },
+                                    })
+                                  );
+                                }}
+                                className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+                              >
+                                <CheckCircle2 className="w-3 h-3" />
+                                <span>Apply with Myra</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSuggestionStatus((prev) => ({ ...prev, [i]: "dismissed" }));
+                                }}
+                                className="px-2.5 py-1 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 text-[10px] font-bold transition-all cursor-pointer"
+                              >
+                                <span>Dismiss</span>
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>

@@ -2,702 +2,501 @@
 
 export const dynamic = "force-dynamic";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
-import { supabase } from "@/lib/supabase";
 import { 
   Users, 
-  ArrowLeft, 
   Search, 
-  ShieldCheck, 
-  Lock, 
+  Filter, 
+  Download, 
   CheckCircle2, 
-  XCircle, 
-  AlertCircle, 
-  Sparkles,
-  Trophy,
-  Flame,
-  Award,
-  BookOpen,
-  Mic,
-  FileText,
-  Phone,
-  Mail,
-  Calendar,
-  Eye,
-  Filter,
-  Download,
-  GraduationCap,
-  Briefcase,
-  X,
-  ExternalLink,
-  ChevronRight
+  Clock, 
+  ArrowLeft, 
+  X, 
+  ChevronRight, 
+  Mail, 
+  Phone, 
+  GraduationCap, 
+  Briefcase, 
+  Sparkles, 
+  Target, 
+  Code2, 
+  Layers, 
+  ShieldCheck,
+  Building2,
+  RefreshCw
 } from "lucide-react";
-import Button from "@/components/ui/Button";
-import AccessDeniedPortal from "@/components/ui/AccessDeniedPortal";
 import { downloadUsersAsExcel, downloadUsersAsCsv } from "@/lib/excel-export";
 
-interface UserAdminRecord {
+interface AdminUserDossier {
   id: string;
   name: string;
   email: string;
   phone?: string;
+  institution?: string;
   age_band?: string;
   grade?: string;
-  career_stage?: string;
+  career_stage: string;
+  primary_goal: string;
+  onboarding_completed: boolean;
+  interests?: Array<{
+    id: string;
+    name: string;
+    category?: string;
+    selfLevel?: number;
+    effectiveLevel?: number;
+  }>;
   is_admin: boolean;
   is_employer: boolean;
   is_suspended: boolean;
   created_at: string;
-  // Performance & Gamification aggregates
-  points: number;
-  current_streak: number;
-  longest_streak: number;
-  badges_count: number;
-  badges_list: string[];
-  interviews_count: number;
-  avg_interview_score: number;
-  resumes_count: number;
-  quests_completed: number;
-  quests_count?: number;
-  mentor_status?: string;
-  interests?: any[];
+  points?: number;
+  current_streak?: number;
+  interviews_count?: number;
+  avg_interview_score?: number;
+  resumes_count?: number;
 }
 
-export default function AdminUsersPage() {
-  const { user, role, isAdmin, loading } = useAuth();
-
-  if (user && !isAdmin) {
-    return (
-      <AccessDeniedPortal
-        portalName="Admin User Directory"
-        requiredRole="System Administrator"
-        userRole={role}
-        redirectTo="/dashboard"
-      />
-    );
-  }
-
-  const [usersList, setUsersList] = useState<UserAdminRecord[]>([]);
+export default function AdminUsersDirectoryPage() {
+  const { user } = useAuth();
+  const [users, setUsers] = useState<AdminUserDossier[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [trackFilter, setTrackFilter] = useState<string>("all");
-  const [roleFilter, setRoleFilter] = useState<string>("all");
-  const [fetching, setFetching] = useState(true);
-  const [actionMessage, setActionMessage] = useState<string | null>(null);
-  const [selectedStudent, setSelectedStudent] = useState<UserAdminRecord | null>(null);
+  const [stageFilter, setStageFilter] = useState("all");
+  const [onboardingFilter, setOnboardingFilter] = useState("all");
+  const [selectedUser, setSelectedUser] = useState<AdminUserDossier | null>(null);
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/users");
+      const data = await res.json();
+      if (data.success && Array.isArray(data.users)) {
+        setUsers(data.users);
+      }
+    } catch (err) {
+      console.error("Failed to load users:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function loadUsersData() {
-      if (!user) return;
-      setFetching(true);
-      try {
-        const res = await fetch("/api/admin/users");
-        if (res.ok) {
-          const json = await res.json();
-          if (json.success && Array.isArray(json.users)) {
-            setUsersList(json.users);
-            return;
-          }
-        }
+    fetchUsers();
+  }, []);
 
-        // Direct Supabase Fallback if API fails
-        const { data: usersData } = await supabase
-          .from("users")
-          .select("*")
-          .order("created_at", { ascending: false });
+  // Filtered Users
+  const filteredUsers = useMemo(() => {
+    return users.filter((u) => {
+      const matchesSearch = 
+        u.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        u.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (u.phone && u.phone.includes(searchQuery)) ||
+        (u.primary_goal && u.primary_goal.toLowerCase().includes(searchQuery.toLowerCase()));
 
-        const { data: profilesData } = await supabase
-          .from("profiles")
-          .select("*");
+      const matchesStage = 
+        stageFilter === "all" || 
+        u.career_stage?.toUpperCase() === stageFilter.toUpperCase();
 
-        const { data: gamificationData } = await supabase
-          .from("user_gamification")
-          .select("*");
+      const matchesOnboarding = 
+        onboardingFilter === "all" || 
+        (onboardingFilter === "completed" && u.onboarding_completed) ||
+        (onboardingFilter === "pending" && !u.onboarding_completed);
 
-        const { data: interviewData } = await supabase
-          .from("interview_sessions")
-          .select("user_id, overall_score, score");
+      return matchesSearch && matchesStage && matchesOnboarding;
+    });
+  }, [users, searchQuery, stageFilter, onboardingFilter]);
 
-        const { data: questData } = await supabase
-          .from("quest_completions")
-          .select("user_id");
-
-        const { data: resumeData } = await supabase
-          .from("resumes")
-          .select("user_id");
-
-        const profilesMap = new Map((profilesData || []).map(p => [p.id || p.user_id, p]));
-        const gamifyMap = new Map((gamificationData || []).map(g => [g.user_id, g]));
-
-        const combined: UserAdminRecord[] = (usersData || profilesData || []).map((u: any) => {
-          const profile = profilesMap.get(u.id || u.user_id) || u;
-          const gamify = gamifyMap.get(u.id || u.user_id);
-          
-          const userInterviews = (interviewData || []).filter(i => i.user_id === u.id || i.user_id === u.user_id);
-          const avgScore = userInterviews.length > 0
-            ? Math.round(userInterviews.reduce((sum, curr) => sum + (curr.overall_score || curr.score || 0), 0) / userInterviews.length)
-            : 0;
-
-          const userQuests = (questData || []).filter(q => q.user_id === u.id || q.user_id === u.user_id);
-          const userResumes = (resumeData || []).filter(r => r.user_id === u.id || r.user_id === u.user_id);
-
-          return {
-            id: u.id || u.user_id,
-            name: profile?.display_name || profile?.name || u.name || "Learner",
-            email: profile?.email || u.email || "No email",
-            phone: profile?.phone || u.phone || undefined,
-            age_band: profile?.age_band || u.age_band || "18+",
-            grade: profile?.grade_level || u.grade || "College",
-            career_stage: profile?.career_stage || u.career_stage || undefined,
-            is_admin: Boolean(u.is_admin || profile?.role === "ADMIN" || profile?.role === "SUPER_ADMIN"),
-            is_employer: Boolean(u.is_employer || profile?.role === "EMPLOYER"),
-            is_suspended: Boolean(u.is_suspended || profile?.status === "SUSPENDED"),
-            created_at: u.created_at || profile?.created_at || new Date().toISOString(),
-            points: gamify?.points || 0,
-            current_streak: gamify?.current_streak || 0,
-            longest_streak: gamify?.longest_streak || 0,
-            badges_count: gamify?.badges?.length || 0,
-            badges_list: gamify?.badges || [],
-            interviews_count: userInterviews.length,
-            avg_interview_score: avgScore,
-            quests_completed: userQuests.length,
-            resumes_count: userResumes.length,
-            interests: profile?.interests || [],
-          };
-        });
-
-        setUsersList(combined);
-      } catch (err) {
-        console.warn("Error loading user administration dataset:", err);
-      } finally {
-        setFetching(false);
-      }
-    }
-
-    loadUsersData();
-  }, [user]);
-
-  const handleToggleSuspend = async (targetId: string, currentSuspended: boolean) => {
-    try {
-      const newStatus = !currentSuspended;
-      await supabase
-        .from("users")
-        .update({ is_suspended: newStatus })
-        .eq("id", targetId);
-
-      setUsersList(prev => prev.map(u => u.id === targetId ? { ...u, is_suspended: newStatus } : u));
-      if (selectedStudent && selectedStudent.id === targetId) {
-        setSelectedStudent(prev => prev ? { ...prev, is_suspended: newStatus } : null);
-      }
-      setActionMessage(`User account ${newStatus ? "suspended" : "reinstated"} successfully.`);
-      setTimeout(() => setActionMessage(null), 3000);
-
-      // Audit Log
-      try {
-        await supabase.from("audit_logs").insert({
-          actor_id: user?.uid,
-          actor_role: "admin",
-          action: newStatus ? "admin.user_suspended" : "admin.user_reinstated",
-          target_type: "user",
-          target_id: targetId,
-          metadata: { new_status: newStatus }
-        });
-      } catch (e) {
-        console.warn("Audit log note:", e);
-      }
-    } catch (e) {
-      console.warn("User suspend toggle error:", e);
+  const handleExport = (type: "excel" | "csv") => {
+    if (type === "excel") {
+      downloadUsersAsExcel(filteredUsers as any);
+    } else {
+      downloadUsersAsCsv(filteredUsers as any);
     }
   };
-
-  
-
-  const handleExportExcel = () => {
-    downloadUsersAsExcel(filteredUsers, "edworld_students_directory");
-  };
-
-  const handleExportCsv = () => {
-    downloadUsersAsCsv(filteredUsers, "edworld_students_directory");
-  };
-
-  const filteredUsers = usersList.filter(u => {
-    const matchesSearch = 
-      u.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      u.email?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      u.phone?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      u.id?.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesTrack = 
-      trackFilter === "all" || 
-      (trackFilter === "student" && (u.career_stage === "STUDENT" || u.career_stage === "college" || u.grade?.toLowerCase().includes("college") || u.grade?.toLowerCase().includes("year"))) ||
-      (trackFilter === "pro" && (u.career_stage === "PROFESSIONAL" || u.career_stage === "working_professional" || u.grade?.toLowerCase().includes("working")));
-
-    const matchesRole = 
-      roleFilter === "all" ||
-                  (roleFilter === "admin" && u.is_admin) ||
-      (roleFilter === "student" && !u.is_admin );
-
-    return matchesSearch && matchesTrack && matchesRole;
-  });
-
-  if (loading || fetching) {
-    return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-slate-50">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-4 border-slate-900 border-t-transparent rounded-full animate-spin" />
-          <span className="text-xs font-bold text-slate-500">Loading student database &amp; analytics...</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-6 bg-slate-50">
-        <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-slate-200 shadow-xl text-center space-y-4">
-          <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
-            <Lock className="w-6 h-6" />
-          </div>
-          <h1 className="text-xl font-bold text-slate-900">Platform Admin Clearance Required</h1>
-          <p className="text-xs text-slate-500">Only authorized administrators have access to user and student performance management.</p>
-          <Link href="/dashboard" className="inline-block px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold">
-            Return to Dashboard
-          </Link>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto space-y-8">
-        
-        {/* Header */}
+    <div className="space-y-6 animate-in fade-in duration-200">
+      
+      {/* Page Header */}
+      <div className="bg-white border border-neutral-200 rounded-3xl p-6 sm:p-8 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <Link href="/admin" className="text-xs font-bold text-slate-500 hover:text-slate-900">Admin Hub</Link>
-              <span className="text-xs text-slate-400">/</span>
-              <span className="text-xs font-bold text-slate-900">User &amp; Student Performance Management</span>
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-2 text-xs font-bold text-neutral-500 uppercase tracking-wider">
+              <Users className="w-3.5 h-3.5 text-black" />
+              <span>User Intelligence Directory</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mt-1">Student &amp; User Intelligence</h1>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Live database records, contact records, gamification scores, and competency metrics
+            <h1 className="text-2xl sm:text-3xl font-black text-black tracking-tight">
+              Registered Users &amp; Onboarding Data
+            </h1>
+            <p className="text-xs sm:text-sm text-neutral-600">
+              Audit all user registrations, career targets, onboarding submissions, and selected technical tracks.
             </p>
           </div>
-          <div className="flex items-center flex-wrap gap-2 self-start sm:self-auto">
+
+          <div className="flex items-center flex-wrap gap-2">
             <button
-              onClick={handleExportExcel}
-              className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all"
-              title="Download full user dataset formatted for Microsoft Excel & Google Sheets"
+              onClick={fetchUsers}
+              disabled={loading}
+              className="px-3.5 py-2 rounded-xl border border-neutral-200 hover:border-black text-black text-xs font-bold transition-all flex items-center gap-1.5 bg-white"
             >
-              <Download className="w-3.5 h-3.5 text-white" />
-              <span>Export Excel (.xls / .xlsx)</span>
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+              <span>Refresh</span>
             </button>
             <button
-              onClick={handleExportCsv}
-              className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:text-slate-900 text-xs font-bold shadow-sm flex items-center gap-1.5 hover:bg-slate-50 transition-all"
+              onClick={() => handleExport("excel")}
+              className="px-3.5 py-2 rounded-xl bg-black hover:bg-neutral-800 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs"
             >
-              <Download className="w-3.5 h-3.5 text-slate-500" />
-              <span>Export CSV</span>
+              <Download className="w-3.5 h-3.5" />
+              <span>Export Excel</span>
             </button>
-            <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-3.5 py-2 rounded-xl">
-              {filteredUsers.length} of {usersList.length} Learners
-            </span>
+            <button
+              onClick={() => handleExport("csv")}
+              className="px-3.5 py-2 rounded-xl border border-neutral-200 hover:border-black text-black text-xs font-bold transition-all flex items-center gap-1.5 bg-white"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>CSV</span>
+            </button>
           </div>
         </div>
 
-        {/* Global Summary Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-1">
-            <div className="flex items-center gap-2 text-slate-500 text-xs font-bold uppercase tracking-wider">
-              <Users className="w-4 h-4 text-slate-600" />
-              <span>Total Learners</span>
-            </div>
-            <div className="text-2xl font-black text-slate-900">{usersList.length}</div>
-            <div className="text-[11px] text-slate-400">Stored in Postgres database</div>
+        {/* Search & Filter Bar */}
+        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 mt-6 pt-6 border-t border-neutral-100">
+          <div className="sm:col-span-6 relative">
+            <Search className="w-4 h-4 text-neutral-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search by name, email, phone, or goal..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-neutral-200 focus:outline-none focus:border-black text-xs font-medium text-black placeholder:text-neutral-400 bg-white"
+            />
           </div>
 
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-1">
-            <div className="flex items-center gap-2 text-amber-600 text-xs font-bold uppercase tracking-wider">
-              <Trophy className="w-4 h-4 text-amber-500" />
-              <span>Platform XP</span>
-            </div>
-            <div className="text-2xl font-black text-slate-900">
-              {usersList.reduce((sum, u) => sum + u.points, 0).toLocaleString()}
-            </div>
-            <div className="text-[11px] text-emerald-600 font-semibold">Active gamification engine</div>
+          <div className="sm:col-span-3">
+            <select
+              value={stageFilter}
+              onChange={(e) => setStageFilter(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl border border-neutral-200 focus:outline-none focus:border-black text-xs font-bold text-black bg-white cursor-pointer"
+            >
+              <option value="all">All Career Stages</option>
+              <option value="STUDENT">Students Only</option>
+              <option value="PROFESSIONAL">Professionals Only</option>
+              <option value="EMPLOYER">Employers</option>
+              <option value="ADMIN">Administrators</option>
+            </select>
           </div>
 
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-1">
-            <div className="flex items-center gap-2 text-indigo-600 text-xs font-bold uppercase tracking-wider">
-              <Mic className="w-4 h-4 text-indigo-500" />
-              <span>Mock Interviews</span>
-            </div>
-            <div className="text-2xl font-black text-slate-900">
-              {usersList.reduce((sum, u) => sum + u.interviews_count, 0)}
-            </div>
-            <div className="text-[11px] text-indigo-600 font-semibold">Voice &amp; Content analyzed</div>
-          </div>
-
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-1">
-            <div className="flex items-center gap-2 text-emerald-600 text-xs font-bold uppercase tracking-wider">
-              <BookOpen className="w-4 h-4 text-emerald-500" />
-              <span>Quests Solved</span>
-            </div>
-            <div className="text-2xl font-black text-slate-900">
-              {usersList.reduce((sum, u) => sum + u.quests_completed, 0)}
-            </div>
-            <div className="text-[11px] text-slate-400">Junior &amp; Explorer stages</div>
+          <div className="sm:col-span-3">
+            <select
+              value={onboardingFilter}
+              onChange={(e) => setOnboardingFilter(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl border border-neutral-200 focus:outline-none focus:border-black text-xs font-bold text-black bg-white cursor-pointer"
+            >
+              <option value="all">All Onboarding Statuses</option>
+              <option value="completed">Onboarding Completed</option>
+              <option value="pending">Onboarding Pending</option>
+            </select>
           </div>
         </div>
+      </div>
 
-        {actionMessage && (
-          <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 shadow-sm animate-in fade-in">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            <span>{actionMessage}</span>
+      {/* Users Count Summary */}
+      <div className="flex items-center justify-between text-xs text-neutral-500 font-mono px-2">
+        <span>Showing {filteredUsers.length} of {users.length} registered users</span>
+        <span>Operating HQ: Hyderabad, Telangana</span>
+      </div>
+
+      {/* Users Table / List */}
+      <div className="bg-white border border-neutral-200 rounded-3xl overflow-hidden shadow-xs">
+        {loading ? (
+          <div className="text-center py-24 space-y-3">
+            <RefreshCw className="w-6 h-6 animate-spin text-black mx-auto" />
+            <p className="text-xs font-mono text-neutral-500">Loading user records from database...</p>
           </div>
-        )}
-
-        {/* Filter Controls & Search */}
-        <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-sm space-y-3">
-          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-            <div className="relative flex-1">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by student name, email, phone number, or ID..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900"
-              />
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-bold">
-                <button
-                  onClick={() => setTrackFilter("all")}
-                  className={`px-3 py-1.5 rounded-lg transition-all ${trackFilter === "all" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900"}`}
-                >
-                  All Stages
-                </button>
-                <button
-                  onClick={() => setTrackFilter("student")}
-                  className={`px-3 py-1.5 rounded-lg transition-all ${trackFilter === "student" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900"}`}
-                >
-                  College &amp; Student
-                </button>
-                <button
-                  onClick={() => setTrackFilter("pro")}
-                  className={`px-3 py-1.5 rounded-lg transition-all ${trackFilter === "pro" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900"}`}
-                >
-                  Working Professional
-                </button>
-              </div>
-
-              <select
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
-                className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900"
-              >
-                <option value="all">All Roles</option>
-                <option value="student">Learners / Students</option>
-                                                <option value="admin">Platform Admins</option>
-              </select>
-            </div>
+        ) : filteredUsers.length === 0 ? (
+          <div className="text-center py-24 space-y-3">
+            <Users className="w-10 h-10 text-neutral-300 mx-auto" />
+            <p className="text-sm font-bold text-black">No users matched your search criteria.</p>
+            <p className="text-xs text-neutral-500">Try adjusting your search terms or filters.</p>
           </div>
-        </div>
-
-        {/* Users & Student Performance Table */}
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+            <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-400 font-extrabold uppercase tracking-wider text-[10px]">
-                  <th className="py-3.5 pl-6">Student / User</th>
-                  <th className="py-3.5 px-3">Contact &amp; Stage</th>
-                  <th className="py-3.5 px-3 text-center">XP &amp; Streaks</th>
-                  <th className="py-3.5 px-3 text-center">Interviews &amp; Quests</th>
-                  <th className="py-3.5 px-3 text-center">Role</th>
-                  <th className="py-3.5 px-3 text-center">Status</th>
-                  <th className="py-3.5 pr-6 text-right">Actions</th>
+                <tr className="border-b border-neutral-200 bg-neutral-50/70 text-neutral-600 font-mono text-[11px] uppercase tracking-wider">
+                  <th className="py-3.5 px-4 font-bold">User Identity</th>
+                  <th className="py-3.5 px-4 font-bold">Stage &amp; Role</th>
+                  <th className="py-3.5 px-4 font-bold">Onboarding Status</th>
+                  <th className="py-3.5 px-4 font-bold">Primary Goal</th>
+                  <th className="py-3.5 px-4 font-bold">Tech Tracks</th>
+                  <th className="py-3.5 px-4 font-bold">Signed Up</th>
+                  <th className="py-3.5 px-4 font-bold text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredUsers.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="py-12 text-center text-slate-400">
-                      <Users className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                      <p className="font-bold text-slate-600 text-xs">No registered learners found</p>
-                      <p className="text-[11px] text-slate-400 mt-0.5">Learners will appear here once they register or log in.</p>
-                    </td>
-                  </tr>
-                ) : (
-                  filteredUsers.map((u) => (
-                    <tr key={u.id} className="hover:bg-slate-50/80 transition-all">
-                      <td className="py-4 pl-6">
+              <tbody className="divide-y divide-neutral-100">
+                {filteredUsers.map((u) => {
+                  const initials = (u.name || "U")
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .substring(0, 2)
+                    .toUpperCase();
+
+                  return (
+                    <tr 
+                      key={u.id}
+                      className="hover:bg-neutral-50/80 transition-colors group cursor-pointer"
+                      onClick={() => setSelectedUser(u)}
+                    >
+                      {/* Name & Email */}
+                      <td className="py-3.5 px-4">
                         <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-slate-900 text-white font-black text-sm flex items-center justify-center shrink-0 shadow-sm">
-                          {u.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <div className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
-                            <span>{u.name}</span>
-                            {u.is_suspended && (
-                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 font-extrabold">SUSPENDED</span>
+                          <div className="w-9 h-9 rounded-xl bg-black text-white font-black text-xs flex items-center justify-center shrink-0">
+                            {initials}
+                          </div>
+                          <div>
+                            <div className="font-extrabold text-black text-sm group-hover:underline">
+                              {u.name}
+                            </div>
+                            <div className="text-neutral-500 text-[11px] font-mono flex items-center gap-1">
+                              <Mail className="w-3 h-3 text-neutral-400" />
+                              <span>{u.email}</span>
+                            </div>
+                            {u.phone && (
+                              <div className="text-neutral-500 text-[10px] font-mono flex items-center gap-1 mt-0.5">
+                                <Phone className="w-2.5 h-2.5 text-neutral-400" />
+                                <span>{u.phone}</span>
+                              </div>
                             )}
                           </div>
-                          <div className="text-[11px] text-slate-400 font-mono flex items-center gap-1">
-                            <Mail className="w-3 h-3 text-slate-400" />
-                            <span>{u.email}</span>
-                          </div>
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    <td className="py-4 px-3">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-1.5 text-xs text-slate-700 font-semibold">
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-800 border border-slate-200">
-                            {u.age_band}
+                      {/* Career Stage & Role */}
+                      <td className="py-3.5 px-4">
+                        <div className="space-y-1">
+                          <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-neutral-100 border border-neutral-200 text-black">
+                            {u.career_stage || "STUDENT"}
                           </span>
-                          <span className="text-slate-500 font-medium">{u.grade}</span>
+                          {u.institution && (
+                            <div className="text-[10px] text-neutral-500 truncate max-w-[140px]" title={u.institution}>
+                              {u.institution}
+                            </div>
+                          )}
                         </div>
-                        {u.phone && (
-                          <div className="text-[11px] text-slate-500 font-mono flex items-center gap-1">
-                            <Phone className="w-2.5 h-2.5 text-slate-400" />
-                            <span>{u.phone}</span>
-                          </div>
+                      </td>
+
+                      {/* Onboarding Status */}
+                      <td className="py-3.5 px-4">
+                        {u.onboarding_completed ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                            <span>Completed</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-200">
+                            <Clock className="w-3 h-3 text-amber-600" />
+                            <span>Pending</span>
+                          </span>
                         )}
-                      </div>
-                    </td>
+                      </td>
 
-                    <td className="py-4 px-3 text-center">
-                      <div className="inline-flex flex-col items-center">
-                        <div className="flex items-center gap-1 font-black text-slate-900 text-xs">
-                          <Trophy className="w-3.5 h-3.5 text-amber-500" />
-                          <span>{u.points.toLocaleString()} XP</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-[11px] text-orange-600 font-bold">
-                          <Flame className="w-3 h-3" />
-                          <span>{u.current_streak}d streak</span>
-                          <span className="text-slate-300">|</span>
-                          <span className="text-slate-400 font-normal">{u.badges_count} badges</span>
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="py-4 px-3 text-center">
-                      <div className="inline-flex flex-col items-center">
-                        <div className="text-xs font-bold text-slate-900">
-                          {u.interviews_count} Interviews {u.interviews_count > 0 ? `(${u.avg_interview_score}%)` : ""}
-                        </div>
-                        <div className="text-[11px] text-slate-500">
-                          {u.quests_completed} Quests • {u.resumes_count} Resumes
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="py-4 px-3 text-center">
-                      {u.is_admin ? (
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
-                          Admin
+                      {/* Primary Goal */}
+                      <td className="py-3.5 px-4 max-w-[220px]">
+                        <span className="font-medium text-neutral-800 line-clamp-2 text-xs" title={u.primary_goal}>
+                          {u.primary_goal || "Campus Placements & Technical Mastery"}
                         </span>
-                      ) : (
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">
-                          Learner
-                        </span>
-                      )}
-                    </td>
+                      </td>
 
-                    <td className="py-4 px-3 text-center">
-                      {u.is_suspended ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600">
-                          <XCircle className="w-3.5 h-3.5" />
-                          <span>Suspended</span>
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>Active</span>
-                        </span>
-                      )}
-                    </td>
+                      {/* Tech Tracks */}
+                      <td className="py-3.5 px-4">
+                        <div className="flex flex-wrap gap-1 max-w-[200px]">
+                          {u.interests && u.interests.length > 0 ? (
+                            u.interests.slice(0, 2).map((item, idx) => (
+                              <span 
+                                key={idx}
+                                className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-neutral-100 text-neutral-700 border border-neutral-200"
+                              >
+                                {item.name || item.id}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-[10px] text-neutral-400 font-mono">None specified</span>
+                          )}
+                          {u.interests && u.interests.length > 2 && (
+                            <span className="text-[10px] text-neutral-400 font-mono">
+                              +{u.interests.length - 2} more
+                            </span>
+                          )}
+                        </div>
+                      </td>
 
-                    <td className="py-4 pr-6 text-right">
-                      <div className="flex items-center justify-end gap-2">
+                      {/* Signed Up */}
+                      <td className="py-3.5 px-4 text-neutral-500 font-mono text-[11px] whitespace-nowrap">
+                        {new Date(u.created_at).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric"
+                        })}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="py-3.5 px-4 text-right">
                         <button
-                          onClick={() => setSelectedStudent(u)}
-                          className="px-3 py-1.5 rounded-xl bg-slate-900 text-white hover:bg-slate-800 text-xs font-bold transition-all flex items-center gap-1"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedUser(u);
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-neutral-100 hover:bg-black hover:text-white text-black font-bold text-xs transition-colors inline-flex items-center gap-1"
                         >
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>Performance</span>
+                          <span>Dossier</span>
+                          <ChevronRight className="w-3 h-3" />
                         </button>
-
-                        <button
-                          onClick={() => handleToggleSuspend(u.id, u.is_suspended)}
-                          className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                            u.is_suspended
-                              ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200"
-                              : "bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200"
-                          }`}
-                        >
-                          {u.is_suspended ? "Reinstate" : "Suspend"}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                )))}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
-        </div>
+        )}
+      </div>
 
-        {/* Student Detailed Performance Modal */}
-        {selectedStudent && (
-          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-150">
-            <div className="bg-white max-w-2xl w-full rounded-3xl border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-              {/* Modal Header */}
-              <div className="p-6 bg-slate-900 text-white flex items-center justify-between">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-12 h-12 rounded-2xl bg-white/10 text-white font-black text-lg flex items-center justify-center border border-white/20">
-                    {selectedStudent.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-black">{selectedStudent.name}</h2>
-                    <div className="text-xs text-slate-300 flex items-center gap-2">
-                      <span>{selectedStudent.email}</span>
-                      {selectedStudent.phone && (
-                        <>
-                          <span>•</span>
-                          <span>{selectedStudent.phone}</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
+      {/* Interactive User Onboarding Dossier Modal */}
+      {selectedUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div 
+            className="bg-white border border-neutral-200 rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-start justify-between border-b border-neutral-200 pb-5">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-black text-white font-black text-base flex items-center justify-center shrink-0">
+                  {selectedUser.name.charAt(0).toUpperCase()}
                 </div>
-                <button
-                  onClick={() => setSelectedStudent(null)}
-                  className="w-8 h-8 rounded-full bg-white/10 text-white hover:bg-white/20 flex items-center justify-center transition-all"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Modal Body */}
-              <div className="p-6 space-y-6 overflow-y-auto">
-                {/* Academic & Track Profile */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Age Band</span>
-                    <span className="text-sm font-black text-slate-900">{selectedStudent.age_band}</span>
-                  </div>
-                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Grade Level</span>
-                    <span className="text-sm font-black text-slate-900">{selectedStudent.grade}</span>
-                  </div>
-                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Career Stage</span>
-                    <span className="text-sm font-black text-slate-900">{selectedStudent.career_stage || "General"}</span>
-                  </div>
-                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Account Status</span>
-                    <span className={`text-sm font-black ${selectedStudent.is_suspended ? "text-rose-600" : "text-emerald-600"}`}>
-                      {selectedStudent.is_suspended ? "Suspended" : "Active"}
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xl font-black text-black">{selectedUser.name}</h2>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-neutral-100 border border-neutral-200 text-black">
+                      {selectedUser.career_stage}
                     </span>
                   </div>
+                  <p className="text-xs text-neutral-500 font-mono">{selectedUser.email}</p>
                 </div>
-
-                {/* Performance & Gamification Intelligence */}
-                <div className="bg-amber-50/50 border border-amber-200/70 rounded-2xl p-5 space-y-3">
-                  <div className="flex items-center gap-2 text-amber-900 font-extrabold text-xs uppercase tracking-wider">
-                    <Trophy className="w-4 h-4 text-amber-600" />
-                    <span>Gamification &amp; Engagement Telemetry</span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-3 text-center">
-                    <div className="bg-white p-3 rounded-xl border border-amber-200">
-                      <div className="text-lg font-black text-amber-700">{selectedStudent.points.toLocaleString()}</div>
-                      <div className="text-[10px] font-bold text-slate-500 uppercase">Total XP Points</div>
-                    </div>
-                    <div className="bg-white p-3 rounded-xl border border-amber-200">
-                      <div className="text-lg font-black text-orange-600">{selectedStudent.current_streak} Days</div>
-                      <div className="text-[10px] font-bold text-slate-500 uppercase">Current Streak</div>
-                    </div>
-                    <div className="bg-white p-3 rounded-xl border border-amber-200">
-                      <div className="text-lg font-black text-indigo-600">{selectedStudent.longest_streak} Days</div>
-                      <div className="text-[10px] font-bold text-slate-500 uppercase">Longest Streak</div>
-                    </div>
-                  </div>
-
-                  {selectedStudent.badges_list.length > 0 && (
-                    <div className="pt-2">
-                      <span className="text-[11px] font-bold text-slate-700 block mb-1.5">Earned Badges ({selectedStudent.badges_list.length})</span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {selectedStudent.badges_list.map((b, i) => (
-                          <span key={i} className="px-2.5 py-1 rounded-lg bg-amber-100 text-amber-800 text-[11px] font-bold border border-amber-300 flex items-center gap-1">
-                            <Award className="w-3 h-3 text-amber-600" />
-                            <span>{b}</span>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Practical Skill & Career Telemetry */}
-                <div className="space-y-3">
-                  <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">Evaluated Core Milestones</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-200 space-y-1">
-                      <div className="flex items-center gap-1.5 text-indigo-700 font-bold text-xs">
-                        <Mic className="w-3.5 h-3.5" />
-                        <span>Mock Interviews</span>
-                      </div>
-                      <div className="text-xl font-black text-indigo-900">{selectedStudent.interviews_count} Completed</div>
-                      <div className="text-[11px] text-indigo-600 font-semibold">
-                        Avg Score: {selectedStudent.avg_interview_score}%
-                      </div>
-                    </div>
-
-                    <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200 space-y-1">
-                      <div className="flex items-center gap-1.5 text-emerald-700 font-bold text-xs">
-                        <BookOpen className="w-3.5 h-3.5" />
-                        <span>Quests &amp; Discovery</span>
-                      </div>
-                      <div className="text-xl font-black text-emerald-900">{selectedStudent.quests_completed} Solved</div>
-                      <div className="text-[11px] text-emerald-600 font-semibold">STEM &amp; AI Literacy</div>
-                    </div>
-
-                    <div className="p-4 rounded-2xl bg-sky-50/60 border border-sky-200 space-y-1">
-                      <div className="flex items-center gap-1.5 text-sky-700 font-bold text-xs">
-                        <FileText className="w-3.5 h-3.5" />
-                        <span>ATS Resumes</span>
-                      </div>
-                      <div className="text-xl font-black text-sky-900">{selectedStudent.resumes_count} Built</div>
-                      <div className="text-[11px] text-sky-600 font-semibold">Portfolio Ready</div>
-                    </div>
-                  </div>
-                </div>
-
-
               </div>
 
-              {/* Modal Footer */}
-              <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
-                <span className="text-[11px] text-slate-400 font-mono">User ID: {selectedStudent.id}</span>
-                <button
-                  onClick={() => setSelectedStudent(null)}
-                  className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800"
-                >
-                  Close Performance View
-                </button>
+              <button
+                onClick={() => setSelectedUser(null)}
+                className="p-2 rounded-xl text-neutral-400 hover:text-black hover:bg-neutral-100 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Dossier Body */}
+            <div className="space-y-5 text-xs">
+              
+              {/* Onboarding Status Badge Card */}
+              <div className="p-4 rounded-2xl bg-neutral-50 border border-neutral-200 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 block">
+                    Onboarding Verification
+                  </span>
+                  <div className="text-sm font-extrabold text-black mt-0.5">
+                    {selectedUser.onboarding_completed ? "Fully Completed" : "Pending Onboarding Setup"}
+                  </div>
+                </div>
+                {selectedUser.onboarding_completed ? (
+                  <span className="px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-900 border border-emerald-300 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+                    <span>Verified</span>
+                  </span>
+                ) : (
+                  <span className="px-3 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-amber-700" />
+                    <span>Action Required</span>
+                  </span>
+                )}
+              </div>
+
+              {/* Primary Goal */}
+              <div className="space-y-1.5">
+                <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider flex items-center gap-1.5">
+                  <Target className="w-3.5 h-3.5 text-black" />
+                  <span>Primary Career Target</span>
+                </span>
+                <div className="p-3.5 rounded-xl bg-white border border-neutral-200 text-black font-semibold text-sm leading-relaxed">
+                  {selectedUser.primary_goal || "No specific goal selected during signup."}
+                </div>
+              </div>
+
+              {/* Selected Tech Tracks & Skill Self-Assessment */}
+              <div className="space-y-2">
+                <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider flex items-center gap-1.5">
+                  <Code2 className="w-3.5 h-3.5 text-black" />
+                  <span>Enrolled Tech Tracks &amp; Skill Levels</span>
+                </span>
+                
+                {selectedUser.interests && selectedUser.interests.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {selectedUser.interests.map((track, idx) => (
+                      <div key={idx} className="p-3 rounded-xl border border-neutral-200 bg-neutral-50 space-y-1">
+                        <div className="flex items-center justify-between font-bold text-black text-xs">
+                          <span>{track.name || track.id}</span>
+                          <span className="text-[10px] font-mono px-1.5 py-0.2 bg-white border border-neutral-300 rounded">
+                            Level {track.selfLevel || 1} / 5
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-neutral-500">{track.category || "Engineering Focus"}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-3 rounded-xl bg-neutral-50 border border-neutral-200 text-neutral-500 font-mono text-[11px]">
+                    No custom technical tracks selected yet.
+                  </div>
+                )}
+              </div>
+
+              {/* User Metadata Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
+                <div className="p-3 rounded-xl border border-neutral-200 bg-white">
+                  <span className="text-[10px] text-neutral-500 font-bold uppercase block">Phone Contact</span>
+                  <span className="text-xs font-mono font-bold text-black">{selectedUser.phone || "Not provided"}</span>
+                </div>
+                <div className="p-3 rounded-xl border border-neutral-200 bg-white">
+                  <span className="text-[10px] text-neutral-500 font-bold uppercase block">Age Band Consent</span>
+                  <span className="text-xs font-mono font-bold text-black">{selectedUser.age_band || "18+"}</span>
+                </div>
+                <div className="p-3 rounded-xl border border-neutral-200 bg-white">
+                  <span className="text-[10px] text-neutral-500 font-bold uppercase block">Campus / College</span>
+                  <span className="text-xs font-medium text-black truncate block">{selectedUser.institution || "Independent"}</span>
+                </div>
+              </div>
+
+              {/* Account Standing */}
+              <div className="pt-2 text-[11px] text-neutral-500 font-mono flex items-center justify-between">
+                <span>Account ID: {selectedUser.id}</span>
+                <span>Registered: {new Date(selectedUser.created_at).toLocaleString()}</span>
               </div>
             </div>
-          </div>
-        )}
 
-      </div>
+            {/* Modal Footer */}
+            <div className="flex justify-end pt-4 border-t border-neutral-200">
+              <button
+                onClick={() => setSelectedUser(null)}
+                className="px-5 py-2.5 rounded-xl bg-black hover:bg-neutral-800 text-white font-bold text-xs"
+              >
+                Close Dossier
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

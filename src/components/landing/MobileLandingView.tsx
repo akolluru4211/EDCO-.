@@ -14,6 +14,7 @@ import {
   X
 } from "lucide-react";
 import MobileLandingHeader from "@/components/landing/MobileLandingHeader";
+import Footer from "@/components/layout/Footer";
 
 type MobileStageKey = "junior" | "student" | "pro";
 
@@ -206,24 +207,8 @@ export default function MobileLandingView() {
         </div>
       )}
 
-      {/* 7. Mobile Footer */}
-      <footer className="w-full px-4 py-3 bg-[#FAFAF8] border-t border-slate-200 text-center text-[10px] text-slate-500 space-y-1.5">
-        <div className="flex items-center justify-center gap-4 text-slate-700 font-medium">
-          <Link href="/pricing" className="hover:underline">Pricing</Link>
-          <span>&bull;</span>
-          <Link href="/colleges" className="hover:underline">For Colleges & Placements</Link>
-          <span>&bull;</span>
-          <Link href="/privacy" className="hover:underline">Privacy</Link>
-          <span>&bull;</span>
-          <Link href="/terms" className="hover:underline">Terms</Link>
-        </div>
-        <div className="flex items-center justify-center gap-1.5 text-slate-600 font-medium">
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-          <span>DPDP Act &amp; Youth Safe</span>
-          <span>&bull;</span>
-          <span>&copy; {new Date().getFullYear()} Edworld Co.</span>
-        </div>
-      </footer>
+      {/* 7. Mobile Compliance Footer */}
+      <Footer />
 
     </div>
   );

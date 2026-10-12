@@ -16,6 +16,7 @@ import SpotlightCard from "@/components/ui/SpotlightCard";
 import BorderBeam from "@/components/ui/BorderBeam";
 import ShimmerBadge from "@/components/ui/ShimmerBadge";
 import AmbientMeshBackground from "@/components/ui/AmbientMeshBackground";
+import Footer from "@/components/layout/Footer";
 
 type StageKey = "student" | "pro";
 
@@ -188,14 +189,14 @@ export default function DesktopLandingView() {
           <div className="flex items-center justify-center gap-4 pt-4">
             <Link
               href="/auth/signup"
-              className="btn-shine px-8 py-4 rounded-2xl bg-slate-950 hover:bg-black text-[#D7FC51] text-sm font-black uppercase tracking-wider flex items-center gap-3 shadow-xl hover:shadow-2xl transition-all hover:scale-105 active:scale-95"
+              className="px-8 py-4 rounded-xl bg-black hover:bg-neutral-800 text-white text-sm font-bold flex items-center gap-3 shadow-xs hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition-all"
             >
               <span>Get Started Free</span>
-              <ArrowRight className="w-5 h-5 transition-transform duration-200 group-hover:translate-x-1" />
+              <ArrowRight className="w-4 h-4 text-white" />
             </Link>
             <Link
               href="/auth/login"
-              className="px-8 py-4 rounded-2xl bg-white hover:bg-slate-50 text-slate-800 text-sm font-bold border border-slate-200/90 shadow-xs transition-all hover:border-slate-300 hover:scale-105 active:scale-95"
+              className="px-8 py-4 rounded-xl bg-white hover:bg-neutral-50 text-black text-sm font-bold border border-neutral-300 hover:border-black shadow-2xs hover:-translate-y-0.5 active:scale-[0.98] transition-all"
             >
               Sign In to Workspace
             </Link>
@@ -403,25 +404,8 @@ export default function DesktopLandingView() {
         </div>
       </section>
 
-      {/* 4. Desktop Enterprise Footer */}
-      <footer className="bg-white border-t border-slate-200/80 py-12 text-slate-500">
-        <div className="max-w-7xl mx-auto px-8 flex flex-col md:flex-row items-center justify-between gap-6 text-xs">
-          <div className="flex items-center gap-3">
-            <EdworldLogo size="sm" showText={false} />
-            <span className="font-bold text-slate-900">Edworld Co.</span>
-            <span>&bull;</span>
-            <span>&copy; {new Date().getFullYear()} Edworld Co. All rights reserved.</span>
-          </div>
-
-          <div className="flex items-center gap-6 font-medium">
-            <Link href="/pricing" className="hover:text-slate-950 transition-colors">Pricing</Link>
-            <Link href="/colleges" className="hover:text-slate-950 transition-colors">For Colleges & Placements</Link>
-            <Link href="/privacy" className="hover:text-slate-950 transition-colors">Privacy Policy</Link>
-            <Link href="/terms" className="hover:text-slate-950 transition-colors">Terms of Service</Link>
-            <Link href="/contact" className="hover:text-slate-950 transition-colors">Contact Support</Link>
-          </div>
-        </div>
-      </footer>
+      {/* 4. Desktop Enterprise Compliance Footer */}
+      <Footer />
 
     </div>
   );

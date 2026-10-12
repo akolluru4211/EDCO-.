@@ -498,7 +498,7 @@ export interface WeeklyScheduleDay {
 // Phase 3 Data Models: Job Board, Monetization, and Moderation
 // ==============================================================================
 
-export type JobType = "internship" | "full-time" | "part-time" | "freelance";
+export type JobType = "internship" | "full-time" | "part-time" | "freelance" | "contract";
 
 export interface InterviewExperience {
   id: string;
@@ -544,7 +544,18 @@ export interface JobOfferItem {
 }
 
 export type ModerationStatus = "pending" | "approved" | "rejected";
-export type ApplicationStatus = "applied" | "viewed" | "rejected" | "interview" | "offer";
+export type JobSourceType = "employer_posted" | "admin_curated" | "aggregated_api";
+
+export type ApplicationStatus = 
+  | "submitted" 
+  | "viewed_by_employer" 
+  | "shortlisted" 
+  | "rejected" 
+  | "withdrawn" 
+  | "applied" 
+  | "viewed" 
+  | "interview" 
+  | "offer";
 
 export interface JobListing {
   id: string;
@@ -567,6 +578,12 @@ export interface JobListing {
   experienceLevel?: string;
   externalUrl?: string;
   sourceNotes?: string;
+  sourceType?: JobSourceType;
+  sourceName?: string;
+  postedAt?: string;
+  lastVerifiedAt?: string;
+  isStale?: boolean;
+  expiresAt?: string;
 }
 
 export interface JobApplication {
@@ -586,6 +603,8 @@ export interface JobApplication {
   statusUpdatedAt: string;
   matchScore?: number;
   employerNotes?: string;
+  feedbackNote?: string;
+  viewedAt?: string;
 }
 
 export type SubscriptionPlanId = "free" | "pro";

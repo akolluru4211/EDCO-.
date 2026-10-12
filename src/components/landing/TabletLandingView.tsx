@@ -20,6 +20,7 @@ import EdworldLogo from "@/components/ui/EdworldLogo";
 import GrowthRing from "@/components/ui/GrowthRing";
 
 import Interactive3DCard from "@/components/ui/Interactive3DCard";
+import Footer from "@/components/layout/Footer";
 
 type StageKey = "student" | "pro";
 
@@ -283,25 +284,8 @@ export default function TabletLandingView() {
 
       </main>
 
-      {/* Tablet Footer */}
-      <footer className="bg-white border-t border-slate-200/80 py-6 text-center text-xs text-slate-500">
-        <div className="max-w-4xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span>&copy; {new Date().getFullYear()} Edworld Co. All rights reserved.</span>
-            <span>&bull;</span>
-            <span className="flex items-center gap-1 text-slate-700 font-bold">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              DPDP Act &amp; Youth Safe
-            </span>
-          </div>
-          <div className="flex items-center gap-4 text-[11px] font-medium text-slate-600">
-            <Link href="/pricing" className="hover:underline">Pricing</Link>
-            <Link href="/colleges" className="hover:underline">For Colleges & Placements</Link>
-            <Link href="/privacy" className="hover:underline">Privacy</Link>
-            <Link href="/terms" className="hover:underline">Terms</Link>
-          </div>
-        </div>
-      </footer>
+      {/* Tablet Compliance Footer */}
+      <Footer />
 
     </div>
   );

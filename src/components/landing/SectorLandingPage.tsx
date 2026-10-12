@@ -262,14 +262,14 @@ export default function SectorLandingPage({
             </Link>
           </div>
 
-          <div className="pt-2 flex flex-wrap items-center justify-center gap-6 text-xs text-[#8E95A5] dark:text-slate-400">
+          <div className="pt-2 flex flex-wrap items-center justify-center gap-6 text-xs text-[#5E6573] dark:text-slate-300">
             <span className="flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4 text-emerald-500" />
               100% Free Starter Tier
             </span>
             <span className="flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-indigo-500" />
-              Zero Fake Scores Guarantee
+              Rubric-Calibrated Scoring
             </span>
             {isMaximalist ? (
               <span className="flex items-center gap-1.5">
@@ -424,6 +424,8 @@ export default function SectorLandingPage({
             <Link href={getMainAppUrl("/for-professionals")} className="hover:underline">Professionals</Link>
             <Link href={getMainAppUrl("/privacy")} className="hover:underline">Privacy</Link>
             <Link href={getMainAppUrl("/terms")} className="hover:underline">Terms</Link>
+            <Link href={getMainAppUrl("/refund")} className="hover:underline">Refunds</Link>
+            <Link href={getMainAppUrl("/cookies")} className="hover:underline">Cookies</Link>
           </div>
         </div>
       </footer>

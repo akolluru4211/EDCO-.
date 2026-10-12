@@ -7,6 +7,7 @@ import { CURRENT_TOS_VERSION, CURRENT_PRIVACY_VERSION } from "@/lib/types";
 import ReconsentModal from "@/components/legal/ReconsentModal";
 import FloatingNav from "@/components/layout/FloatingNav";
 import MyraChatbot from "@/components/ai/MyraChatbot";
+import CookieConsentBanner from "@/components/ui/CookieConsentBanner";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -64,7 +65,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <FloatingNav />
 
         {/* Main Full-Width Application Content Area */}
-        <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden pt-16 sm:pt-18">
+        <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden pt-20 sm:pt-24">
           <main id="main-content" tabIndex={-1} className="flex-1 w-full max-w-full outline-none">
             {children}
           </main>
@@ -77,6 +78,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Floating AI Educational Mentor & Doubt Solver */}
         <MyraChatbot />
+
+        {/* Global Privacy & Cookie Consent */}
+        <CookieConsentBanner />
       </div>
     );
   }
@@ -104,6 +108,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Floating AI Educational Mentor & Doubt Solver */}
       <MyraChatbot />
+
+      {/* Global Privacy & Cookie Consent */}
+      <CookieConsentBanner />
     </div>
   );
 }

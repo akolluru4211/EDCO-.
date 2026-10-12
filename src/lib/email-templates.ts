@@ -62,8 +62,15 @@ export function renderBrandedEmailHtml(props: EmailLayoutProps): string {
           </div>
           <div class="footer">
             <p>${footerNote || "You received this email because of your verified account on Edworld Co."}</p>
-            <p>Questions or support: <a href="mailto:edworld.eden@gmail.com">edworld.eden@gmail.com</a></p>
-            <p>&copy; ${new Date().getFullYear()} EdWorld Co. All rights reserved. &bull; <a href="${appUrl}/privacy">Privacy Policy</a> &bull; <a href="${appUrl}/terms">Terms</a></p>
+            <p>EdWorld Co. &bull; Operating Headquarters: Hyderabad, Telangana 500081, India</p>
+            <p>Support &amp; Grievance Redressal: <a href="mailto:edworld.eden@gmail.com">edworld.eden@gmail.com</a></p>
+            <p>
+              &copy; ${new Date().getFullYear()} EdWorld Co. All rights reserved. &bull; 
+              <a href="${appUrl}/privacy">Privacy Policy</a> &bull; 
+              <a href="${appUrl}/terms">Terms</a> &bull; 
+              <a href="${appUrl}/refund">Refunds</a> &bull; 
+              <a href="${appUrl}/newsletter/unsubscribe" style="color: #8E95A5; text-decoration: underline;">Unsubscribe</a>
+            </p>
           </div>
         </div>
       </td>

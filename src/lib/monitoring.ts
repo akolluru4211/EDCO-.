@@ -1,4 +1,5 @@
 import { logger } from "@/lib/logger";
+import { sentryClient } from "@/lib/monitoring/sentry-client";
 
 export interface CostMetricEvent {
   service: "razorpay" | "resend_email" | "ai_llm_inference" | "tts_speech" | "whisper_audio";
@@ -18,13 +19,20 @@ const COST_ALERT_THRESHOLDS: Record<string, number> = {
 
 export const monitoring = {
   captureException: (err: Error, context: Record<string, any> = {}) => {
-    logger.error(`[SENTRY_CAPTURED_EXCEPTION]: ${err.message}`, {
-      stack: err.stack,
-      ...context
+    const report = sentryClient.captureException(err, {
+      service: "nextjs-frontend",
+      metadata: context,
+      requestPath: context.path,
+      httpMethod: context.method,
+      statusCode: context.statusCode,
+      userId: context.userId
     });
+
     return {
-      eventId: `err-${Date.now()}`,
-      handled: true
+      eventId: report.eventId,
+      handled: true,
+      alertChannel: report.alertChannel,
+      dispatched: report.dispatched
     };
   },
 

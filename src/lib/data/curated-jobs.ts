@@ -1,6 +1,6 @@
 import { JobListing } from "@/lib/types";
 
-export const CURATED_JOB_LISTINGS: JobListing[] = [
+const RAW_CURATED_JOBS = [
   {
     id: "e0000001-0000-4000-8000-000000000001",
     title: "Fullstack Engineer – Intern",
@@ -422,3 +422,14 @@ export const CURATED_JOB_LISTINGS: JobListing[] = [
     recommendedMinLevel: 1
   }
 ];
+
+export const CURATED_JOB_LISTINGS: JobListing[] = RAW_CURATED_JOBS.map((job: any) => ({
+  ...job,
+  sourceType: (job.sourceType || "admin_curated") as any,
+  sourceName: job.sourceName || "Curated by Edworld",
+  postedAt: job.postedAt || job.createdAt,
+  lastVerifiedAt: job.lastVerifiedAt || "2026-10-10T12:00:00.000Z",
+  isStale: job.isStale ?? false
+}));
+
+

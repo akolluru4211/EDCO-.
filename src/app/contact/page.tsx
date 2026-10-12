@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import Button from "@/components/ui/Button";
 import { Mail, Phone, MapPin, ShieldAlert, CheckCircle2 } from "lucide-react";
 
@@ -12,10 +13,15 @@ export default function ContactPage() {
   const [email, setEmail] = useState("");
   const [category, setCategory] = useState("General Support");
   const [message, setMessage] = useState("");
+  const [consentAgreed, setConsentAgreed] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !email.trim() || !message.trim()) return;
+    if (!consentAgreed) {
+      setErrorMsg("Please grant consent for processing your contact details to submit this inquiry.");
+      return;
+    }
 
     setIsSubmitting(true);
     setErrorMsg("");
@@ -100,7 +106,7 @@ export default function ContactPage() {
               </div>
               <div className="flex items-center gap-3">
                 <MapPin className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Operating Jurisdiction: Bengaluru, Karnataka, India</span>
+                <span>Operating Headquarters: Hyderabad, Telangana, India</span>
               </div>
             </div>
           </div>
@@ -178,10 +184,25 @@ export default function ContactPage() {
                   />
                 </div>
 
+                <div className="flex items-start gap-2 pt-1">
+                  <input
+                    type="checkbox"
+                    id="contactConsent"
+                    required
+                    checked={consentAgreed}
+                    onChange={(e) => setConsentAgreed(e.target.checked)}
+                    className="mt-0.5 rounded border-[#E8ECF2] text-[#13141B] focus:ring-[#13141B] cursor-pointer"
+                  />
+                  <label htmlFor="contactConsent" className="text-xs text-[#5E6573] cursor-pointer leading-relaxed">
+                    I consent to EdWorld Co. processing my name, email, and inquiry details to resolve this request in accordance with the{" "}
+                    <Link href="/privacy" className="text-emerald-700 font-bold underline" target="_blank">Privacy Policy</Link>.
+                  </label>
+                </div>
+
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-3 rounded-xl bg-[#13141B] hover:bg-[#252632] text-white font-bold text-xs transition-all shadow-xs disabled:opacity-50 cursor-pointer"
+                  className="w-full py-3 rounded-xl bg-black hover:bg-neutral-800 text-white font-bold text-xs transition-all shadow-xs disabled:opacity-50 cursor-pointer active:scale-[0.98]"
                 >
                   {isSubmitting ? "Sending Message..." : "Send Message"}
                 </button>

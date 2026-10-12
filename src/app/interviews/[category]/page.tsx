@@ -96,6 +96,51 @@ export default function ActiveInterviewStudioPage() {
   const [resumeConnected, setResumeConnected] = useState(false);
   const [sessionTranscripts, setSessionTranscripts] = useState<Record<number, string>>({});
 
+  // Myra Auto-Setup & Progress States
+  const [isAutoSettingUp, setIsAutoSettingUp] = useState(false);
+  const [myraNotice, setMyraNotice] = useState<string | null>(null);
+  const [isScoring, setIsScoring] = useState(false);
+  const [scoringStageIndex, setScoringStageIndex] = useState(0);
+  const [generatingStageIndex, setGeneratingStageIndex] = useState(0);
+
+  const scoringStages = [
+    "Evaluating interview audio telemetry...",
+    "Analyzing STAR narrative structure...",
+    "Cross-referencing JD competency keywords...",
+    "Synthesizing actionable upgrade roadmap..."
+  ];
+
+  const generatingStages = [
+    "Calibrating industry competency benchmarks...",
+    "Aligning questions to target job profile...",
+    "Synthesizing real-world scenario challenges...",
+    "Finalizing mock interview environment..."
+  ];
+
+  // Progress timer for generating questions
+  useEffect(() => {
+    if (!generating) {
+      setGeneratingStageIndex(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setGeneratingStageIndex((prev) => (prev < generatingStages.length - 1 ? prev + 1 : prev));
+    }, 1800);
+    return () => clearInterval(interval);
+  }, [generating]);
+
+  // Progress timer for scoring session
+  useEffect(() => {
+    if (!isScoring) {
+      setScoringStageIndex(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setScoringStageIndex((prev) => (prev < scoringStages.length - 1 ? prev + 1 : prev));
+    }, 1800);
+    return () => clearInterval(interval);
+  }, [isScoring]);
+
   // 1. Fetch User's Saved Resumes from Supabase
   useEffect(() => {
     if (!user || isMinorUser) {
@@ -132,6 +177,41 @@ export default function ActiveInterviewStudioPage() {
     selectedResumeObj?.content?.skills?.tools || 
     (Array.isArray(selectedResumeObj?.content?.skills) ? selectedResumeObj.content.skills : []) || [];
   const resumeProjects: Array<{ title: string; technologies?: string[] }> = selectedResumeObj?.content?.projects || [];
+
+  // "Let Myra set this up for me" Handler
+  const handleMyraAutoSetup = () => {
+    setIsAutoSettingUp(true);
+    const inferredRole = profile?.targetRole || selectedResumeObj?.content?.target_role || categoryName;
+    setTargetRole(inferredRole);
+
+    const lowerRole = inferredRole.toLowerCase();
+    let bestSector = "Software & Full-Stack";
+    if (lowerRole.includes("data") || lowerRole.includes("ai") || lowerRole.includes("machine learning") || lowerRole.includes("ml")) {
+      bestSector = "AI, ML & Data Science";
+    } else if (lowerRole.includes("cloud") || lowerRole.includes("devops") || lowerRole.includes("infrastructure") || lowerRole.includes("sre")) {
+      bestSector = "Cloud & DevOps";
+    } else if (lowerRole.includes("security") || lowerRole.includes("cyber") || lowerRole.includes("penetration")) {
+      bestSector = "CyberSecurity";
+    } else if (lowerRole.includes("fintech") || lowerRole.includes("quant") || lowerRole.includes("trading") || lowerRole.includes("bank")) {
+      bestSector = "Fintech & Banking";
+    } else if (lowerRole.includes("product") || lowerRole.includes("pm")) {
+      bestSector = "Product Management";
+    }
+    setSelectedSector(bestSector);
+
+    if (savedResumes.length > 0) {
+      setSelectedResumeId(savedResumes[0].id);
+    }
+
+    if (!jobDescriptionInput.trim()) {
+      setJobDescriptionInput(
+        `Core Competencies for ${inferredRole}:\n- Architecture design and rigorous technical problem solving\n- Robust error boundaries, performance optimization, and testing\n- Clear communication of engineering trade-offs, constraints, and business outcomes`
+      );
+    }
+
+    setMyraNotice(`Myra configured your setup for ${inferredRole} in ${bestSector}!`);
+    setTimeout(() => setIsAutoSettingUp(false), 350);
+  };
 
   const handleStartSession = async () => {
     setGenerating(true);
@@ -230,6 +310,7 @@ export default function ActiveInterviewStudioPage() {
     }
 
     // Finished all questions or final submission -> Score Session
+    setIsScoring(true);
     try {
       const combinedTranscript = Object.values(updatedTranscripts).join(" \n\n ");
 
@@ -259,6 +340,8 @@ export default function ActiveInterviewStudioPage() {
     } catch (e) {
       console.warn("Session score submission error:", e);
       router.push("/interviews");
+    } finally {
+      setIsScoring(false);
     }
   };
 
@@ -352,8 +435,8 @@ export default function ActiveInterviewStudioPage() {
               </div>
             </div>
 
-            {/* Myra AI Lead Interviewer Banner */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-[#13141B] text-white flex items-center justify-between gap-4 border border-white/10 shadow-lg">
+            {/* Myra AI Lead Interviewer Banner with "Let Myra set this up for me" Action */}
+            <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-950 via-slate-900 to-emerald-950 text-white flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-emerald-500/20 shadow-xl">
               <div className="flex items-center gap-3.5">
                 <div className="relative w-12 h-12 rounded-2xl overflow-hidden bg-emerald-500/20 border border-[#00D2B4]/40 shrink-0">
                   <img
@@ -363,18 +446,45 @@ export default function ActiveInterviewStudioPage() {
                   />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-bold text-sm text-white">Myra • Lead AI Interviewer</h3>
                     <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-[#00D2B4]/20 text-[#00D2B4] border border-[#00D2B4]/30">
                       Live Audio &amp; Video
                     </span>
                   </div>
                   <p className="text-xs text-gray-300 mt-0.5">
-                    Myra will conduct your interview in full-screen locked mode, speak questions aloud, and provide an upgrade roadmap.
+                    Myra will conduct your interview in locked mode, evaluate your STAR responses, and provide an upgrade roadmap.
                   </p>
                 </div>
               </div>
+
+              <button
+                type="button"
+                onClick={handleMyraAutoSetup}
+                disabled={isAutoSettingUp}
+                className="w-full md:w-auto px-4 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-xs flex items-center justify-center gap-2 shadow-sm transition-all hover:scale-102 cursor-pointer active:scale-95 shrink-0 border border-emerald-400/30"
+              >
+                <Sparkles className="w-4 h-4 text-amber-300" />
+                <span>{isAutoSettingUp ? "Calibrating..." : "Let Myra set this up for me"}</span>
+              </button>
             </div>
+
+            {/* Myra Auto-Setup Confirmation Notice */}
+            {myraNotice && (
+              <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center justify-between gap-3 animate-in fade-in">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span className="font-medium">{myraNotice}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setMyraNotice(null)}
+                  className="text-emerald-700 hover:text-emerald-950 font-bold text-xs"
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
 
             {/* Step 1: Sector & Target Job Description */}
             <div className="space-y-4 pt-2">
@@ -624,6 +734,37 @@ export default function ActiveInterviewStudioPage() {
               userId={user?.uid}
               onSubmitSession={handleQuestionSubmit}
             />
+          </div>
+        )}
+
+        {/* Multi-Stage Branded Progress Loader during Generation or Scoring */}
+        {(generating || isScoring) && (
+          <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
+            <div className="max-w-md w-full bg-slate-900 border border-emerald-500/30 rounded-3xl p-6 sm:p-8 text-center space-y-5 shadow-2xl">
+              <div className="relative w-16 h-16 mx-auto">
+                <div className="absolute inset-0 rounded-full border-4 border-emerald-500/20 animate-ping" />
+                <div className="w-16 h-16 rounded-full border-4 border-emerald-400 border-t-transparent animate-spin flex items-center justify-center">
+                  <Sparkles className="w-6 h-6 text-emerald-300" />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-lg font-black text-white font-serif">
+                  {isScoring ? "Evaluating Your Session" : "Calibrating Your Interview"}
+                </h3>
+                <p className="text-xs text-emerald-400 font-medium">
+                  {isScoring ? scoringStages[scoringStageIndex] : generatingStages[generatingStageIndex]}
+                </p>
+              </div>
+              <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden border border-slate-700">
+                <div
+                  className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full transition-all duration-500 rounded-full"
+                  style={{ width: `${((isScoring ? scoringStageIndex + 1 : generatingStageIndex + 1) / 4) * 100}%` }}
+                />
+              </div>
+              <p className="text-[11px] text-slate-400">
+                EdWorld Production Standard &bull; Zero Mock Data
+              </p>
+            </div>
           </div>
         )}
 

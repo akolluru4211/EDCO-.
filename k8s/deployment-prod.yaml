@@ -63,13 +63,17 @@ spec:
               memory: "2048Mi"
           readinessProbe:
             httpGet:
-              path: /api/feature-flags
+              path: /api/health
               port: 3000
-            initialDelaySeconds: 10
-            periodSeconds: 5
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
           livenessProbe:
             httpGet:
-              path: /api/feature-flags
+              path: /api/health
               port: 3000
-            initialDelaySeconds: 15
-            periodSeconds: 10
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3

@@ -29,12 +29,13 @@ function SignupForm() {
   const { signupWithEmail } = useAuth();
 
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(searchParams?.get("email") || "");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [termsAgreed, setTermsAgreed] = useState(false);
+  const [ageConsent, setAgeConsent] = useState(false);
   const [referralCode, setReferralCode] = useState(searchParams.get("ref") || "");
 
   const [loading, setLoading] = useState(false);
@@ -54,7 +55,11 @@ function SignupForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!termsAgreed) {
-      setError("Please agree to the Terms of Service and Privacy Policy.");
+      setError("Please agree to the Terms of Service, Privacy Policy, and Refund Policy.");
+      return;
+    }
+    if (!ageConsent) {
+      setError("Please confirm your age eligibility / guardian consent to proceed.");
       return;
     }
     if (!isPasswordValid) {
@@ -199,8 +204,8 @@ function SignupForm() {
                 <label className="block text-xs font-bold text-[#13141B] uppercase tracking-wider">
                   Phone Number
                 </label>
-                <span className="text-[10px] font-mono text-[#5E6573] font-bold">
-                  (No OTP Required)
+                <span className="text-[10px] text-[#5E6573] font-medium">
+                  (Optional &bull; For 2FA Recovery)
                 </span>
               </div>
               <div className="relative">
@@ -300,36 +305,51 @@ function SignupForm() {
               </div>
             </div>
 
-            <div className="flex items-start gap-2.5 pt-2">
-              <input
-                type="checkbox"
-                id="terms"
-                checked={termsAgreed}
-                onChange={(e) => setTermsAgreed(e.target.checked)}
-                className="mt-0.5 rounded border-[#EBECEF] text-[#13141B] focus:ring-[#13141B] cursor-pointer"
-              />
-              <label htmlFor="terms" className="text-xs text-[#5E6573] cursor-pointer leading-relaxed">
-                I agree to the{" "}
-                <Link href="/terms" className="text-[#13141B] font-bold underline">Terms of Service</Link>
-                {" "}and{" "}
-                <Link href="/privacy" className="text-[#13141B] font-bold underline">Privacy Policy</Link>.
-              </label>
+            <div className="space-y-2 pt-2">
+              <div className="flex items-start gap-2.5">
+                <input
+                  type="checkbox"
+                  id="terms"
+                  checked={termsAgreed}
+                  onChange={(e) => setTermsAgreed(e.target.checked)}
+                  className="mt-0.5 rounded border-[#EBECEF] text-[#13141B] focus:ring-[#13141B] cursor-pointer"
+                />
+                <label htmlFor="terms" className="text-xs text-[#5E6573] cursor-pointer leading-relaxed">
+                  I agree to the{" "}
+                  <Link href="/terms" className="text-[#13141B] font-bold underline" target="_blank">Terms of Service</Link>,{" "}
+                  <Link href="/privacy" className="text-[#13141B] font-bold underline" target="_blank">Privacy Policy</Link>, and{" "}
+                  <Link href="/refund" className="text-[#13141B] font-bold underline" target="_blank">Refund Policy</Link>.
+                </label>
+              </div>
+
+              <div className="flex items-start gap-2.5">
+                <input
+                  type="checkbox"
+                  id="ageConsent"
+                  checked={ageConsent}
+                  onChange={(e) => setAgeConsent(e.target.checked)}
+                  className="mt-0.5 rounded border-[#EBECEF] text-[#13141B] focus:ring-[#13141B] cursor-pointer"
+                />
+                <label htmlFor="ageConsent" className="text-xs text-[#5E6573] cursor-pointer leading-relaxed">
+                  I confirm I am 18 years or older, or between 13–17 years old with verifiable parental/guardian consent (DPDP Act &amp; COPPA).
+                </label>
+              </div>
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-xl bg-[#13141B] hover:bg-black disabled:opacity-50 text-white font-extrabold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-2xs cursor-pointer mt-2"
+              className="w-full py-3 rounded-xl bg-black hover:bg-neutral-800 disabled:opacity-50 text-white font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-xs cursor-pointer mt-2 active:scale-[0.98]"
             >
               {loading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin text-[#00D2B4]" />
+                  <Loader2 className="w-4 h-4 animate-spin text-white" />
                   <span>{loadingStep}</span>
                 </>
               ) : (
                 <>
                   <span>Create Account</span>
-                  <ArrowRight className="w-4 h-4 text-[#00D2B4]" />
+                  <ArrowRight className="w-4 h-4 text-white" />
                 </>
               )}
             </button>

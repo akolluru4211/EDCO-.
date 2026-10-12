@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { getDbPool } from "@/lib/db-server";
 import { 
   sendConnectionRequestNotification, 
   sendConnectionAcceptedNotification 
@@ -14,26 +14,19 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Unauthorized: Missing user authentication." }, { status: 401 });
     }
 
-    const { data: conns, error } = await supabase
-      .from("connections")
-      .select(`
-        id,
-        requester_id,
-        receiver_id,
-        status,
-        request_type,
-        message,
-        created_at,
-        updated_at
-      `)
-      .or(`requester_id.eq.${userId},receiver_id.eq.${userId}`)
-      .order("updated_at", { ascending: false });
+    const pool = getDbPool();
 
-    if (error) {
-      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-    }
+    // Fetch all connections where user is requester or recipient
+    const connsRes = await pool.query(
+      `SELECT id, requester_id, recipient_id, status, type, note, created_at, updated_at
+       FROM public.connections
+       WHERE requester_id = $1 OR recipient_id = $1
+       ORDER BY updated_at DESC`,
+      [userId]
+    );
 
-    if (!conns || conns.length === 0) {
+    const conns = connsRes.rows || [];
+    if (conns.length === 0) {
       return NextResponse.json({
         success: true,
         connections: [],
@@ -43,38 +36,40 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Collect all partner user IDs to fetch their live profiles
+    // Collect all partner user IDs
     const partnerIds = Array.from(new Set(
-      conns.map((c: any) => (c.requester_id === userId ? c.receiver_id : c.requester_id))
+      conns.map((c: any) => (c.requester_id === userId ? c.recipient_id : c.requester_id))
     ));
 
-    const { data: partnerProfiles } = await supabase
-      .from("profiles")
-      .select("id, name, username, headline, avatar_url, role, career_stage, college, company")
-      .in("id", partnerIds);
+    // Fetch live partner profiles
+    const partnersRes = await pool.query(
+      `SELECT id, name, username, headline, bio, grade_level, career_stage
+       FROM public.profiles
+       WHERE id = ANY($1::uuid[])`,
+      [partnerIds]
+    );
 
-    const profileMap = new Map<string, any>((partnerProfiles || []).map((p: any) => [p.id, p]));
+    const profileMap = new Map<string, any>((partnersRes.rows || []).map((p: any) => [p.id, p]));
 
     const mappedConns = conns.map((c: any) => {
       const isReq = c.requester_id === userId;
-      const partnerId = isReq ? c.receiver_id : c.requester_id;
+      const partnerId = isReq ? c.recipient_id : c.requester_id;
       const partner = profileMap.get(partnerId) || {};
       const normStatus = (c.status || "").toLowerCase();
 
       return {
         id: c.id,
         requesterId: c.requester_id,
-        receiverId: c.receiver_id,
+        receiverId: c.recipient_id,
         partnerId,
         partnerName: partner.name || "EdWorld Member",
         partnerUsername: partner.username || "member",
-        partnerHeadline: partner.headline || (partner.role === "STUDENT" ? "Student" : "Working Professional"),
-        partnerAvatarUrl: partner.avatar_url || null,
-        partnerCollege: partner.college,
-        partnerCompany: partner.company,
+        partnerHeadline: partner.headline || (partner.career_stage === "college" ? "Student" : "Working Professional"),
+        partnerAvatarUrl: null,
+        partnerCollege: partner.grade_level,
         status: normStatus,
-        requestType: c.request_type || "connection",
-        message: c.message || "",
+        requestType: c.type || "connection",
+        message: c.note || "",
         isRequester: isReq,
         createdAt: c.created_at,
         updatedAt: c.updated_at
@@ -93,6 +88,7 @@ export async function GET(req: NextRequest) {
       count: activeConnections.length
     });
   } catch (err: any) {
+    console.error("[Connections GET Error]:", err);
     return NextResponse.json({ success: false, error: err.message || "Internal error" }, { status: 500 });
   }
 }
@@ -103,88 +99,73 @@ export async function POST(req: NextRequest) {
     const userId = req.headers.get("x-user-id") || body.userId;
     const targetUserId = body.receiverId || body.targetUserId || body.recipientId;
     const message = (body.message || "").trim();
-    const requestType = body.requestType || "connection";
+    const rawType = (body.requestType || body.type || "").toLowerCase();
+    const validConnType = rawType === "mentorship" ? "mentorship" : "peer";
 
     if (!userId || !targetUserId) {
-      return NextResponse.json({ success: false, error: "Missing requester or receiver ID." }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Missing requester or recipient ID." }, { status: 400 });
     }
 
     if (userId === targetUserId) {
       return NextResponse.json({ success: false, error: "Cannot create a connection with yourself." }, { status: 400 });
     }
 
-    // Check if target user has blocked requester or vice versa
-    const { data: blocks } = await supabase
-      .from("user_blocks")
-      .select("id")
-      .or(`and(blocker_id.eq.${userId},blocked_id.eq.${targetUserId}),and(blocker_id.eq.${targetUserId},blocked_id.eq.${userId})`);
+    const pool = getDbPool();
 
-    if (blocks && blocks.length > 0) {
+    // Check user blocks
+    const blockCheck = await pool.query(
+      `SELECT id FROM public.user_blocks 
+       WHERE (blocker_id = $1 AND blocked_id = $2) OR (blocker_id = $2 AND blocked_id = $1)`,
+      [userId, targetUserId]
+    );
+
+    if (blockCheck.rows.length > 0) {
       return NextResponse.json({ success: false, error: "Unable to connect with this member." }, { status: 403 });
     }
 
-    // Check for existing connection
-    const { data: existing } = await supabase
-      .from("connections")
-      .select("id, status, requester_id, receiver_id")
-      .or(`and(requester_id.eq.${userId},receiver_id.eq.${targetUserId}),and(requester_id.eq.${targetUserId},receiver_id.eq.${userId})`)
-      .maybeSingle();
+    // Check existing connection
+    const existingRes = await pool.query(
+      `SELECT id, status, requester_id, recipient_id FROM public.connections
+       WHERE (requester_id = $1 AND recipient_id = $2) OR (requester_id = $2 AND recipient_id = $1)`,
+      [userId, targetUserId]
+    );
+
+    const existing = existingRes.rows[0];
 
     if (existing) {
-      const status = (existing.status || "").toUpperCase();
-      if (status === "ACCEPTED") {
+      const status = (existing.status || "").toLowerCase();
+      if (status === "accepted") {
         return NextResponse.json({ success: true, message: "Already connected.", connection: existing });
       }
-      if (status === "PENDING") {
+      if (status === "pending") {
         return NextResponse.json({ success: true, message: "Connection request is already pending.", connection: existing });
       }
-      // If declined previously, reactivate request
-      const { data: updated, error: updateErr } = await supabase
-        .from("connections")
-        .update({
-          requester_id: userId,
-          receiver_id: targetUserId,
-          status: "PENDING",
-          message,
-          request_type: requestType,
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", existing.id)
-        .select()
-        .single();
 
-      if (updateErr) {
-        return NextResponse.json({ success: false, error: updateErr.message }, { status: 500 });
-      }
+      // Reactivate previously declined/removed connection
+      const updateRes = await pool.query(
+        `UPDATE public.connections
+         SET requester_id = $1, recipient_id = $2, status = 'pending', note = $3, type = $4, updated_at = NOW()
+         WHERE id = $5
+         RETURNING *`,
+        [userId, targetUserId, message || null, validConnType, existing.id]
+      );
 
-      // Dispatch email notification to recipient
       notifyConnectionRequest(userId, targetUserId, message);
-
-      return NextResponse.json({ success: true, connection: updated, message: "Connection request sent." });
+      return NextResponse.json({ success: true, connection: updateRes.rows[0], message: "Connection request sent." });
     }
 
-    // Create new connection request
-    const { data: created, error: insertErr } = await supabase
-      .from("connections")
-      .insert({
-        requester_id: userId,
-        receiver_id: targetUserId,
-        status: "PENDING",
-        request_type: requestType,
-        message: message || null
-      })
-      .select()
-      .single();
+    // Insert new connection request
+    const insertRes = await pool.query(
+      `INSERT INTO public.connections (id, requester_id, recipient_id, status, type, note, created_at, updated_at)
+       VALUES (gen_random_uuid(), $1, $2, 'pending', $3, $4, NOW(), NOW())
+       RETURNING *`,
+      [userId, targetUserId, validConnType, message || null]
+    );
 
-    if (insertErr) {
-      return NextResponse.json({ success: false, error: insertErr.message }, { status: 500 });
-    }
-
-    // Dispatch email notification to recipient
     notifyConnectionRequest(userId, targetUserId, message);
-
-    return NextResponse.json({ success: true, connection: created, message: "Connection request sent." });
+    return NextResponse.json({ success: true, connection: insertRes.rows[0], message: "Connection request sent." });
   } catch (err: any) {
+    console.error("[Connections POST Error]:", err);
     return NextResponse.json({ success: false, error: err.message || "Internal error" }, { status: 500 });
   }
 }
@@ -200,30 +181,29 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Invalid parameters for connection response." }, { status: 400 });
     }
 
-    const newStatus = action === "accept" ? "ACCEPTED" : "DECLINED";
+    const newStatus = action === "accept" ? "accepted" : "declined";
+    const pool = getDbPool();
 
-    const { data, error } = await supabase
-      .from("connections")
-      .update({
-        status: newStatus,
-        updated_at: new Date().toISOString()
-      })
-      .eq("id", connectionId)
-      .eq("receiver_id", userId)
-      .select()
-      .single();
+    const updateRes = await pool.query(
+      `UPDATE public.connections
+       SET status = $1, updated_at = NOW()
+       WHERE id = $2 AND recipient_id = $3
+       RETURNING *`,
+      [newStatus, connectionId, userId]
+    );
 
-    if (error) {
-      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    const updated = updateRes.rows[0];
+    if (!updated) {
+      return NextResponse.json({ success: false, error: "Connection request not found or not addressed to you." }, { status: 404 });
     }
 
-    // If accepted, notify the original requester via email
-    if (newStatus === "ACCEPTED" && data) {
-      notifyConnectionAccepted(data);
+    if (newStatus === "accepted") {
+      notifyConnectionAccepted(updated);
     }
 
-    return NextResponse.json({ success: true, connection: data, action: newStatus });
+    return NextResponse.json({ success: true, connection: updated, action: newStatus });
   } catch (err: any) {
+    console.error("[Connections PUT Error]:", err);
     return NextResponse.json({ success: false, error: err.message || "Internal error" }, { status: 500 });
   }
 }
@@ -238,37 +218,39 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Missing user identification or connection identifier." }, { status: 400 });
     }
 
-    let query = supabase.from("connections").delete();
+    const pool = getDbPool();
 
     if (connectionId) {
-      query = query.eq("id", connectionId).or(`requester_id.eq.${userId},receiver_id.eq.${userId}`);
+      await pool.query(
+        `DELETE FROM public.connections WHERE id = $1 AND (requester_id = $2 OR recipient_id = $2)`,
+        [connectionId, userId]
+      );
     } else if (targetUserId) {
-      query = query.or(`and(requester_id.eq.${userId},receiver_id.eq.${targetUserId}),and(requester_id.eq.${targetUserId},receiver_id.eq.${userId})`);
-    }
-
-    const { error } = await query;
-    if (error) {
-      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+      await pool.query(
+        `DELETE FROM public.connections 
+         WHERE (requester_id = $1 AND recipient_id = $2) OR (requester_id = $2 AND recipient_id = $1)`,
+        [userId, targetUserId]
+      );
     }
 
     return NextResponse.json({ success: true, message: "Connection removed successfully." });
   } catch (err: any) {
+    console.error("[Connections DELETE Error]:", err);
     return NextResponse.json({ success: false, error: err.message || "Internal error" }, { status: 500 });
   }
 }
 
-/**
- * Dispatches connection request received email to the target recipient
- */
 async function notifyConnectionRequest(reqUserId: string, targetUserId: string, msg?: string) {
   try {
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("id, name, email, headline, username, college, company")
-      .in("id", [reqUserId, targetUserId]);
+    const pool = getDbPool();
+    const profilesRes = await pool.query(
+      `SELECT id, name, email, headline, username, grade_level FROM public.profiles WHERE id = ANY($1::uuid[])`,
+      [[reqUserId, targetUserId]]
+    );
 
-    const reqProfile = profiles?.find((p: any) => p.id === reqUserId);
-    const targetProfile = profiles?.find((p: any) => p.id === targetUserId);
+    const profiles = profilesRes.rows || [];
+    const reqProfile = profiles.find((p: any) => p.id === reqUserId);
+    const targetProfile = profiles.find((p: any) => p.id === targetUserId);
 
     if (targetProfile?.email) {
       await sendConnectionRequestNotification({
@@ -276,7 +258,7 @@ async function notifyConnectionRequest(reqUserId: string, targetUserId: string, 
         recipientName: targetProfile.name || targetProfile.username || "EdWorld Member",
         requesterName: reqProfile?.name || reqProfile?.username || "A fellow member",
         requesterHeadline: reqProfile?.headline || undefined,
-        requesterCollegeOrCompany: reqProfile?.company || reqProfile?.college || undefined,
+        requesterCollegeOrCompany: reqProfile?.grade_level || undefined,
         message: msg || undefined,
       });
     }
@@ -285,21 +267,20 @@ async function notifyConnectionRequest(reqUserId: string, targetUserId: string, 
   }
 }
 
-/**
- * Dispatches connection accepted confirmation email to the original requester
- */
 async function notifyConnectionAccepted(connectionRecord: any) {
   try {
+    const pool = getDbPool();
     const originalRequesterId = connectionRecord.requester_id;
-    const originalReceiverId = connectionRecord.receiver_id;
+    const originalReceiverId = connectionRecord.recipient_id;
 
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("id, name, email, headline, username, college, company")
-      .in("id", [originalRequesterId, originalReceiverId]);
+    const profilesRes = await pool.query(
+      `SELECT id, name, email, headline, username, grade_level FROM public.profiles WHERE id = ANY($1::uuid[])`,
+      [[originalRequesterId, originalReceiverId]]
+    );
 
-    const reqProfile = profiles?.find((p: any) => p.id === originalRequesterId);
-    const receiverProfile = profiles?.find((p: any) => p.id === originalReceiverId);
+    const profiles = profilesRes.rows || [];
+    const reqProfile = profiles.find((p: any) => p.id === originalRequesterId);
+    const receiverProfile = profiles.find((p: any) => p.id === originalReceiverId);
 
     if (reqProfile?.email) {
       await sendConnectionAcceptedNotification({
@@ -307,11 +288,10 @@ async function notifyConnectionAccepted(connectionRecord: any) {
         requesterName: reqProfile.name || reqProfile.username || "EdWorld Member",
         accepterName: receiverProfile?.name || receiverProfile?.username || "Your connection",
         accepterHeadline: receiverProfile?.headline || undefined,
-        accepterCollegeOrCompany: receiverProfile?.company || receiverProfile?.college || undefined,
+        accepterCollegeOrCompany: receiverProfile?.grade_level || undefined,
       });
     }
   } catch (err) {
     console.warn("[Connection Accepted Email Dispatch Note]:", err);
   }
 }
-

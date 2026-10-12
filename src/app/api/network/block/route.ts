@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     await supabase
       .from("connections")
       .delete()
-      .or(`and(requester_id.eq.${blockerId},receiver_id.eq.${blockedId}),and(requester_id.eq.${blockedId},receiver_id.eq.${blockerId})`);
+      .or(`and(requester_id.eq.${blockerId},recipient_id.eq.${blockedId}),and(requester_id.eq.${blockedId},recipient_id.eq.${blockerId})`);
 
     return NextResponse.json({ success: true, block: blockRecord, message: "User blocked successfully." });
   } catch (err: any) {

@@ -102,6 +102,26 @@ export default async function PricingPage() {
           ))}
         </div>
 
+        {/* 100% Transparent Billing Guarantee (Zero Hidden Fees) */}
+        <div className="p-6 rounded-3xl bg-white border border-[#EBECEF] text-center space-y-2 max-w-3xl mx-auto shadow-xs">
+          <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-bold text-[#13141B]">
+            <span className="text-emerald-700">&bull; All prices inclusive of applicable GST (18%)</span>
+            <span className="text-slate-400">|</span>
+            <span className="text-emerald-700">&bull; Zero hidden platform surcharges</span>
+            <span className="text-slate-400">|</span>
+            <span className="text-emerald-700">&bull; 1-Click self-service cancellation</span>
+          </div>
+          <p className="text-xs text-[#5E6573] max-w-xl mx-auto leading-relaxed">
+            All paid tiers are backed by our transparent{" "}
+            <Link href="/refund" className="text-emerald-700 font-bold underline hover:text-[#13141B]">
+              7-Day Money-Back Guarantee
+            </Link>. Subscriptions may be cancelled anytime with zero penalty. View our full{" "}
+            <Link href="/terms" className="text-emerald-700 font-bold underline hover:text-[#13141B]">
+              Terms of Service
+            </Link>.
+          </p>
+        </div>
+
         <div className="bg-white rounded-3xl p-8 border border-[#EBECEF] text-center space-y-3 max-w-2xl mx-auto shadow-xs">
           <h3 className="text-lg font-bold text-[#13141B]">Have institutional questions?</h3>
           <p className="text-xs text-[#5E6573]">

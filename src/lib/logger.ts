@@ -14,6 +14,12 @@ const SENSITIVE_KEYS = new Set([
   "credit_card",
   "journal_content",
   "transcript",
+  "interview_transcript",
+  "raw_transcript",
+  "resume_snapshot",
+  "resume_content",
+  "full_resume",
+  "cv_text",
   "direct_message_content",
   "video_url"
 ]);

@@ -47,17 +47,18 @@ export async function recordAuditLog(params: {
   // Background write to Supabase table
   try {
     supabase.from("audit_logs").insert({
-      id: logEntry.id,
-      actor_id: logEntry.actorId,
-      actor_name: logEntry.actorName,
-      actor_role: logEntry.actorRole,
-      action: logEntry.action,
-      resource: logEntry.resource,
-      resource_id: logEntry.resourceId || null,
-      result: logEntry.result,
-      metadata: logEntry.metadata,
+      actor_id: String(logEntry.actorId || "system"),
+      actor_role: String(logEntry.actorRole || "SYSTEM"),
+      action: String(logEntry.action),
+      target_type: String(logEntry.resource || "system"),
+      target_id: String(logEntry.resourceId || logEntry.actorId || "unknown"),
+      metadata: {
+        actor_name: logEntry.actorName,
+        result: logEntry.result,
+        ...(logEntry.metadata || {}),
+      },
       created_at: logEntry.timestamp,
-    }).then(() => {});
+    }).then(() => {}, (e) => console.warn("[Audit Logger Supabase Note]:", e?.message));
   } catch (err) {
     console.warn("[Audit Logger Supabase Sync Note]:", err);
   }

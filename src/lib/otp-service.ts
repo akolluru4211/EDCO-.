@@ -28,7 +28,11 @@ export interface SecurityEvent {
     | "OTP_LOCKED" 
     | "RATE_LIMIT_EXCEEDED" 
     | "ACCOUNT_SUSPENDED_LOGIN_ATTEMPT" 
-    | "LOGOUT";
+    | "LOGOUT"
+    | "WAF_SQLI_BLOCKED"
+    | "WAF_XSS_BLOCKED"
+    | "WAF_PATH_TRAVERSAL_BLOCKED"
+    | "WAF_BOT_BLOCKED";
   identifier: string;
   ip?: string;
   userAgent?: string;

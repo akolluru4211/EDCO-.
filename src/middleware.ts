@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { evaluateFirewall } from "@/lib/firewall/waf";
 
 // Subdomain to Sector Map (Main App handles Career track; Junior/Explorer deployed standalone)
 const SUBDOMAIN_SECTOR_MAP: Record<string, string> = {
@@ -48,7 +49,21 @@ const PUBLIC_API_PREFIXES = [
   "/api/health",
   "/api/landing",
   "/api/billing/webhook",
+  "/api/jobs/maintenance",
 ];
+
+// Apply hardened security & data protection headers to responses
+function applySecurityHeaders(res: NextResponse, requestId: string): NextResponse {
+  res.headers.set("x-request-id", requestId);
+  res.headers.set("X-Frame-Options", "DENY");
+  res.headers.set("X-Content-Type-Options", "nosniff");
+  res.headers.set("X-XSS-Protection", "1; mode=block");
+  res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
+  res.headers.set("Permissions-Policy", "camera=(self), microphone=(self), geolocation=()");
+  res.headers.set("X-Permitted-Cross-Domain-Policies", "none");
+  return res;
+}
 
 export function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
@@ -63,7 +78,6 @@ export function middleware(req: NextRequest) {
     }
   }
 
-
   // 1. Always allow static files, internal Next.js assets, and favicon
   if (
     pathname.startsWith("/_next") ||
@@ -77,18 +91,45 @@ export function middleware(req: NextRequest) {
     return res;
   }
 
-  // 2. Subdomain Routing: Check Host header
+  // 2. Web Application Firewall (WAF) Request Inspection
+  const wafResult = evaluateFirewall(req);
+  if (wafResult.blocked) {
+    const isApi = pathname.startsWith("/api");
+    if (isApi) {
+      const blockedRes = NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: "FIREWALL_BLOCKED",
+            message: wafResult.reason || "Access blocked by application security firewall.",
+            threat_type: wafResult.threatType,
+            request_id: requestId,
+          },
+        },
+        { status: wafResult.statusCode || 403 }
+      );
+      return applySecurityHeaders(blockedRes, requestId);
+    } else {
+      const blockedHtml = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>403 Request Blocked | Edworld Co</title><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{background:#0a0a0a;color:#ededed;font-family:-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:20px}.box{max-width:480px;background:#141414;border:1px solid #262626;border-radius:16px;padding:32px;text-align:center}h1{font-size:20px;color:#f43f5e;margin:0 0 12px}p{font-size:14px;color:#a3a3a3;line-height:1.5;margin:0 0 24px}.badge{display:inline-block;padding:4px 12px;border-radius:999px;background:#262626;font-size:12px;font-family:monospace;color:#d4d4d4}</style></head><body><div class="box"><h1>403 Request Blocked by Firewall</h1><p>${wafResult.reason || "Malicious injection syntax was detected in this request."}</p><div class="badge">Reference ID: ${requestId}</div></div></body></html>`;
+      const blockedRes = new NextResponse(blockedHtml, {
+        status: wafResult.statusCode || 403,
+        headers: { "Content-Type": "text/html" },
+      });
+      return applySecurityHeaders(blockedRes, requestId);
+    }
+  }
+
+  // 3. Subdomain Routing: Check Host header
   const rawHost = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
   const host = rawHost.toLowerCase().split(":")[0];
   const matchedSector = SUBDOMAIN_SECTOR_MAP[host];
 
   if (matchedSector) {
-    // If visitor visits root on subdomain (e.g. junior.edworldco.in/), rewrite internally to /sector-landing/[sector]
+    // If visitor visits root on subdomain, rewrite internally to /sector-landing/[sector]
     if (pathname === "/" || pathname === "") {
       const rewriteUrl = new URL(`/sector-landing/${matchedSector}`, req.url);
       const res = NextResponse.rewrite(rewriteUrl);
-      res.headers.set("x-request-id", requestId);
-      return res;
+      return applySecurityHeaders(res, requestId);
     }
 
     // If visitor attempts to access auth from a subdomain, redirect to main app domain
@@ -104,16 +145,14 @@ export function middleware(req: NextRequest) {
   // 3. Allow root landing page
   if (pathname === "/") {
     const res = NextResponse.next();
-    res.headers.set("x-request-id", requestId);
-    return res;
+    return applySecurityHeaders(res, requestId);
   }
 
   // 4. Allow public pages
   const isPublicPage = PUBLIC_PAGE_PREFIXES.some((prefix) => pathname.startsWith(prefix));
   if (isPublicPage) {
     const res = NextResponse.next();
-    res.headers.set("x-request-id", requestId);
-    return res;
+    return applySecurityHeaders(res, requestId);
   }
 
   // 5. Check API endpoints
@@ -121,24 +160,26 @@ export function middleware(req: NextRequest) {
     const isPublicApi = PUBLIC_API_PREFIXES.some((prefix) => pathname.startsWith(prefix));
     if (isPublicApi) {
       const res = NextResponse.next();
-      res.headers.set("x-request-id", requestId);
-      return res;
+      return applySecurityHeaders(res, requestId);
     }
 
-    // Protected API: Check for session cookie or authorization header
+    // Protected API: Check for session cookie, authorization bearer token, or internal service secret
     const hasSessionCookie =
       req.cookies.has("edworld_session") ||
       req.cookies.has("sb-access-token") ||
       req.cookies.has("edworld_auth");
-    const hasAuthHeader = req.headers.has("authorization") || req.headers.has("x-user-id");
+    
+    const internalSecret = process.env.INTERNAL_SERVICE_SECRET || "edworld-internal-k8s-secret-2026";
+    const hasInternalAuth = req.headers.get("x-internal-secret") === internalSecret;
+    const hasBearerToken = req.headers.has("authorization");
 
-    if (!hasSessionCookie && !hasAuthHeader) {
-      return NextResponse.json(
+    if (!hasSessionCookie && !hasBearerToken && !hasInternalAuth) {
+      const errRes = NextResponse.json(
         {
           success: false,
           error: {
             code: "AUTH_REQUIRED",
-            message: "Unauthorized: Authentication session required to access this resource.",
+            message: "Unauthorized: Valid authentication session required to access this resource.",
             request_id: requestId
           }
         },
@@ -150,11 +191,11 @@ export function middleware(req: NextRequest) {
           }
         }
       );
+      return applySecurityHeaders(errRes, requestId);
     }
 
     const res = NextResponse.next();
-    res.headers.set("x-request-id", requestId);
-    return res;
+    return applySecurityHeaders(res, requestId);
   }
 
   // 6. Protected Page Routes (/dashboard, /employee, /hr, /founder, /admin, /profile, etc.)
@@ -172,15 +213,7 @@ export function middleware(req: NextRequest) {
 
   // Add strict security and data protection firewall headers
   const response = NextResponse.next();
-  response.headers.set("x-request-id", requestId);
-  response.headers.set("X-Frame-Options", "DENY");
-  response.headers.set("X-Content-Type-Options", "nosniff");
-  response.headers.set("X-XSS-Protection", "1; mode=block");
-  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  response.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
-  response.headers.set("Permissions-Policy", "camera=(self), microphone=(self), geolocation=()");
-  response.headers.set("X-Permitted-Cross-Domain-Policies", "none");
-  return response;
+  return applySecurityHeaders(response, requestId);
 }
 
 export const config = {

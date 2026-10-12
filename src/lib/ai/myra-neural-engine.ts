@@ -15,9 +15,32 @@ export interface NeuralSynthesisResult {
 
 export class MyraNeuralEngine {
   /**
-   * Synthesizes an authentic, deeply personalized Myra AI reply.
+   * Cleans text to strictly remove all asterisks (* and **)
+   */
+  private static cleanText(text: string): string {
+    return (text || "")
+      .replace(/\*{1,3}([^*]+)\*{1,3}/g, "$1")
+      .replace(/\*/g, "")
+      .trim();
+  }
+
+  /**
+   * Synthesizes an authentic, polite, and direct Myra AI reply.
    */
   public static synthesizeResponse(
+    query: string,
+    profile?: StudentProfileContext,
+    webReachContext?: { url: string; title?: string; content: string } | null
+  ): NeuralSynthesisResult {
+    const rawResult = this.internalSynthesize(query, profile, webReachContext);
+    return {
+      topicDetected: rawResult.topicDetected,
+      confidence: rawResult.confidence,
+      text: this.cleanText(rawResult.text),
+    };
+  }
+
+  private static internalSynthesize(
     query: string,
     profile?: StudentProfileContext,
     webReachContext?: { url: string; title?: string; content: string } | null
@@ -339,29 +362,66 @@ Aptitude tests do not test whether you can solve a math problem in 5 minutes; th
       };
     }
 
-    // 8. General Adaptive Pedagogical Response
+    // 8. Queue Data Structure
+    if (lowerQuery.includes("queue")) {
+      return {
+        topicDetected: "Queue Data Structure",
+        confidence: 0.96,
+        text: `Hello ${userName}! A queue is a linear data structure that operates on the First In, First Out (FIFO) principle. This means the first element inserted is the first one to be removed.
+
+Core Operations:
+1. Enqueue: Inserts an element at the rear of the queue in O(1) time.
+2. Dequeue: Removes the element from the front of the queue in O(1) time.
+3. Peek / Front: Returns the front element without removing it in O(1) time.
+4. IsEmpty: Checks if the queue is empty in O(1) time.
+
+Where Queues Are Used:
+- CPU scheduling and task processing in operating systems.
+- Asynchronous message brokering (such as Kafka, RabbitMQ, and Redis pub/sub).
+- Breadth-First Search (BFS) graph and tree traversals.
+- Handling print jobs and web server request buffering.
+
+Please let me know if you would like a code implementation or further details!`,
+      };
+    }
+
+    // 9. Stack Data Structure
+    if (lowerQuery.includes("stack")) {
+      return {
+        topicDetected: "Stack Data Structure",
+        confidence: 0.96,
+        text: `Hello ${userName}! A stack is a linear data structure that follows the Last In, First Out (LIFO) principle, meaning the last element added is the first one removed.
+
+Core Operations:
+1. Push: Adds an element to the top of the stack in O(1) time.
+2. Pop: Removes and returns the top element in O(1) time.
+3. Peek / Top: Returns the top element without removing it in O(1) time.
+4. IsEmpty: Checks whether the stack has elements in O(1) time.
+
+Where Stacks Are Used:
+- Function call execution and recursion stack in programming runtimes.
+- Undo and redo operations in applications and text editors.
+- Balancing parentheses and expression evaluation (infix to postfix).
+- Depth-First Search (DFS) graph and tree traversals.
+
+Feel free to ask if you would like a code example or practice problems!`,
+      };
+    }
+
+    // 10. General Academic & Career Response
     return {
-      topicDetected: "Adaptive Career & Engineering Mentorship",
+      topicDetected: "Academic Mentorship",
       confidence: 0.88,
-      text: `Hey **${userName}**! 👋 I'm here as your personal mentor at EdWorld Co. to help you accelerate towards your goal as a **${targetRole}**.
+      text: `Hello ${userName}! Thank you for your question.
 
-### 💡 Core Takeaway & Mental Model
-In modern software engineering and career growth, the best learners break down complex problems into first principles:
-1. **Deconstruct the Core Constraint**: What is the root bottleneck (algorithmic complexity, network latency, system scalability, or team alignment)?
-2. **Evaluate Trade-Offs**: Every architectural choice (e.g., SQL vs NoSQL, Server Components vs Client Hydration, Monolith vs Microservices) comes with explicit trade-offs. Senior engineers always justify *why* one choice outweighs the alternatives.
-3. **Execute & Benchmark**: Code cleanly, measure performance with telemetry, and document measurable business impact.
+To address your query regarding "${query}":
 
-### 🛠️ Recommendations for Your Goal as a ${targetRole}
-- **Master High-Bar DSA**: Focus on Graph traversals, Dynamic Programming, and Sliding Window patterns.
-- **Deepen System Design**: Practice caching strategies, database partitioning, and asynchronous message queues.
-- **Refine STAR Storytelling**: Articulate your technical accomplishments with concrete numbers and ownership.
+Here are the key points to consider:
+1. Break down the core requirements and identify any edge cases or constraints.
+2. Select the optimal approach and data structures to ensure high performance and maintainability.
+3. Verify your solution with test cases to confirm correctness.
 
-### 🚀 Next Action on EdWorld Co.
-- **Simulate Real Rounds**: Launch a full-screen drill in our [3D Mock Interview Studio](/interviews).
-- **Audit Your Resume**: Verify your keyword alignment in [EdResume](/resumes).
-- **Daily Agility**: Complete today's speed sprint in [EdAptitude](/aptitude).
-
-🌟 *I'm in your corner every step of the way, ${userName}! Tell me what specific concept, code snippet, or doubt you'd like to conquer next!*`,
+Please let me know if you would like code examples, practice drills, or deeper explanations on any part of this!`,
     };
   }
 }

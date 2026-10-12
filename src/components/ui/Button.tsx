@@ -24,43 +24,64 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const sizeStyles = {
-    sm: "px-4 py-2 text-xs gap-1.5",
-    md: "px-5 py-2.5 text-xs sm:text-sm gap-2",
-    lg: "px-7 py-3.5 text-sm sm:text-base gap-2.5",
+    sm: "px-3.5 py-1.5 text-xs gap-1.5 rounded-lg",
+    md: "px-5 py-2.5 text-xs sm:text-sm gap-2 rounded-xl",
+    lg: "px-7 py-3.5 text-sm sm:text-base gap-2.5 rounded-xl font-bold",
   }[size];
 
+  // Figma Master Monochrome Button Design System
   const variantStyles = {
     primary:
-      "bg-forest hover:bg-forest-dark text-white shadow-md hover:shadow-lg focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-forest active:scale-[0.98]",
+      "bg-black hover:bg-neutral-800 text-white border border-black shadow-xs hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-black",
     secondary:
-      "bg-paper-raised text-ink border border-line hover:border-ink-soft hover:bg-paper-soft shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ink active:scale-[0.98]",
+      "bg-white text-black border border-neutral-200 hover:border-black hover:bg-neutral-50 shadow-2xs hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-black",
     ghost:
-      "bg-transparent text-ink hover:text-forest hover:bg-forest/5 border border-transparent focus-visible:ring-2 focus-visible:ring-forest",
+      "bg-transparent text-black hover:bg-neutral-100 border border-transparent active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-black",
     outline:
-      "bg-transparent text-forest border-2 border-forest hover:bg-forest hover:text-white focus-visible:ring-2 focus-visible:ring-forest active:scale-[0.98]",
+      "bg-white text-black border border-neutral-300 hover:border-black hover:bg-neutral-50 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-black",
     neumorphic:
-      "bg-slate-900 text-white hover:bg-slate-800 shadow-md active:scale-[0.98]",
+      "bg-black hover:bg-neutral-800 text-white border border-black shadow-xs hover:shadow-md active:scale-[0.98]",
     dark:
-      "bg-slate-950 hover:bg-slate-900 text-white shadow-lg active:scale-[0.98]",
+      "bg-black hover:bg-neutral-900 text-white border border-neutral-800 shadow-md active:scale-[0.98]",
   }[variant];
 
   const baseClasses = `
-    inline-flex items-center justify-center font-bold tracking-tight rounded-xl
-    transition-all duration-150 ease-out outline-none
-    disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:hover:scale-100
+    inline-flex items-center justify-center font-bold tracking-tight
+    transition-all duration-150 ease-out outline-none select-none
+    disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:translate-y-0 disabled:shadow-none
     ${sizeStyles}
     ${variantStyles}
     ${className}
   `.trim();
 
+  const loadingSpinner = (
+    <svg
+      className="animate-spin -ml-0.5 h-4 w-4 text-current"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="3"
+      />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+      />
+    </svg>
+  );
+
   if (href) {
     return (
       <Link href={href} className={baseClasses}>
-        {isLoading ? (
-          <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0" />
-        ) : (
-          icon && <span className="shrink-0">{icon}</span>
-        )}
+        {isLoading ? loadingSpinner : icon && <span className="shrink-0">{icon}</span>}
         {children}
       </Link>
     );
@@ -68,11 +89,7 @@ export const Button: React.FC<ButtonProps> = ({
 
   return (
     <button className={baseClasses} disabled={disabled || isLoading} {...props}>
-      {isLoading ? (
-        <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0 mr-1.5" />
-      ) : (
-        icon && <span className="shrink-0">{icon}</span>
-      )}
+      {isLoading ? loadingSpinner : icon && <span className="shrink-0">{icon}</span>}
       {children}
     </button>
   );

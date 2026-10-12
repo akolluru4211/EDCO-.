@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import Link from "next/link";
+import Image from "next/image";
 
 interface EdworldLogoProps {
   size?: "sm" | "md" | "lg" | "xl";
@@ -22,37 +22,42 @@ export const EdworldLogo: React.FC<EdworldLogoProps> = ({
   className = "",
 }) => {
   const dimension = {
-    sm: { box: "w-8 h-8", imgSize: 22, font: "text-sm", sub: "text-[9px]" },
-    md: { box: "w-10 h-10", imgSize: 28, font: "text-base", sub: "text-[10px]" },
-    lg: { box: "w-12 h-12", imgSize: 34, font: "text-xl", sub: "text-xs" },
-    xl: { box: "w-16 h-16", imgSize: 48, font: "text-2xl", sub: "text-xs" },
+    sm: { box: "w-7 h-7", iconSize: 28, font: "text-xs", sub: "text-[8px]" },
+    md: { box: "w-8 h-8", iconSize: 32, font: "text-sm", sub: "text-[9px]" },
+    lg: { box: "w-10 h-10", iconSize: 40, font: "text-base", sub: "text-[10px]" },
+    xl: { box: "w-12 h-12", iconSize: 48, font: "text-lg", sub: "text-xs" },
   }[size];
 
   const isDark = variant === "dark";
 
   const content = (
     <div className={`inline-flex items-center gap-2.5 group select-none ${className}`}>
-      {/* Brand Icon Mark */}
+      {/* Bespoke Geometric "ED" Monogram Mark */}
       <div
-        className={`relative rounded-2xl bg-zinc-950 overflow-hidden flex items-center justify-center shadow-md border border-zinc-200/40 dark:border-white/15 transition-transform group-hover:scale-105 duration-200 p-1 shrink-0 ${dimension.box}`}
+        className={`relative rounded-xl overflow-hidden bg-black flex items-center justify-center shadow-xs border border-neutral-800 transition-all group-hover:scale-105 duration-200 shrink-0 ${dimension.box}`}
       >
         <Image
-          src="/images/edworld-logo.png"
-          alt="Edworld Co Logo"
-          width={dimension.imgSize}
-          height={dimension.imgSize}
-          className="object-contain"
+          src="/images/edworld-mark.png"
+          alt="EdWorld Co. Logo"
+          width={dimension.iconSize}
+          height={dimension.iconSize}
+          className="w-full h-full object-cover"
           priority
         />
       </div>
 
       {showText && (
         <div className="flex flex-col">
-          <span className={`font-black tracking-tight leading-none ${isDark ? "text-white" : "text-zinc-950"} ${dimension.font} ${textClassName}`}>
-            Edworld <span className="text-[#00D2B4] font-black">Co.</span>
-          </span>
-          <span className={`font-bold ${isDark ? "text-zinc-400" : "text-zinc-500"} uppercase tracking-wider mt-0.5 ${dimension.sub}`}>
-            Career &amp; Learning OS
+          <div className="flex items-center gap-1 leading-none">
+            <span className={`font-black tracking-tight ${isDark ? "text-white" : "text-black"} ${dimension.font} ${textClassName}`}>
+              Edworld
+            </span>
+            <span className="text-[10px] font-mono font-black px-1.5 py-0.5 rounded-md bg-neutral-100 border border-neutral-300 text-black">
+              CO.
+            </span>
+          </div>
+          <span className={`font-semibold tracking-wider uppercase mt-1 ${isDark ? "text-neutral-400" : "text-neutral-500"} ${dimension.sub}`}>
+            Skills &amp; Career OS
           </span>
         </div>
       )}
@@ -61,7 +66,7 @@ export const EdworldLogo: React.FC<EdworldLogoProps> = ({
 
   if (href) {
     return (
-      <Link href={href} aria-label="EdWorld Co. Home" className="inline-block hover:opacity-95 transition-opacity">
+      <Link href={href} className="inline-flex items-center outline-none focus-visible:ring-2 focus-visible:ring-black rounded-lg">
         {content}
       </Link>
     );

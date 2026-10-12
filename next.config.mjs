@@ -51,6 +51,14 @@ const nextConfig = {
             key: "Permissions-Policy",
             value: "camera=(self), microphone=(self), geolocation=()",
           },
+          {
+            key: "X-Permitted-Cross-Domain-Policies",
+            value: "none",
+          },
+          {
+            key: "X-XSS-Protection",
+            value: "1; mode=block",
+          },
         ],
       },
     ];

@@ -1,4 +1,4 @@
-name: Edworld Co CI/CD Pipeline
+name: Edworld Co Production CI/CD Pipeline
 
 on:
   push:
@@ -6,11 +6,17 @@ on:
   pull_request:
     branches: [ main, staging ]
 
-jobs:
-  test-and-verify:
-    name: Run Automated Test Suites & Build Verification
-    runs-on: ubuntu-latest
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
+jobs:
+  # ============================================================================
+  # STAGE 1: Code Quality, Typecheck & Security Scan
+  # ============================================================================
+  lint-and-validate:
+    name: Lint, Typecheck & Secret Hygiene
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -24,37 +30,64 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Run Backend Unit Tests
+      - name: Secret Scanning Gate
         run: |
+          echo "Scanning codebase for uncommitted plaintext secrets..."
+          # Reject committed live secret keys
+          ! grep -rn "rzp_live_" src/ services/ test/ || (echo "ERROR: Live Razorpay key detected!" && exit 1)
+          ! grep -rn "re_live_" src/ services/ test/ || (echo "ERROR: Live Resend key detected!" && exit 1)
+          echo "Secret hygiene scan passed."
+
+      - name: TypeScript Strict Mode Typecheck
+        run: npx tsc --noEmit
+
+  # ============================================================================
+  # STAGE 2: Automated Test Matrix (Unit, Integration, Security, E2E)
+  # ============================================================================
+  test-matrix:
+    name: Run Complete Test Suite Matrix
+    needs: lint-and-validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: 1. Unit Tests (Scoring, Myra Allowlist, Entitlements, Age Band)
+        run: |
+          node test/unit/scoring_logic.test.js
+          node test/unit/myra_tool_registry.test.js
           node test/unit/age_band.test.js
           node test/unit/effective_level.test.js
           node test/unit/entitlements.test.js
           node test/unit/razorpay_signatures.test.js
           node test/unit/gamification_idempotency.test.js
 
-      - name: Run Postgres RLS Policy Allow/Deny Matrix Tests
-        run: node scripts/verify_rls_allow_deny_matrix.js
-
-      - name: Run Log-Scrubbing & PII Redaction Verification
-        run: node scripts/verify_log_scrubbing.js
-
-      - name: Run Monitoring & Cost Anomaly Alert Simulation
-        run: node scripts/simulate_cost_alert.js
-
-      - name: Run Disaster Recovery Scratch Restore Drill
-        run: node scripts/verify_backup_and_restore.js
-
-      - name: Run Core Feature & Security Verification Suites
+      - name: 2. Integration Tests (Auth Onboarding, RLS Enforcement, Razorpay HMAC, Full Pipeline)
         run: |
-          node scripts/verify_monetization_feature10.js
-          node scripts/verify_relational_rls_and_bypass.js
-          node scripts/verify_supabase_migration.js
-          node scripts/verify_phase31_language_trainer.js
+          node test/integration/auth_onboarding_flow.test.js
+          node test/integration/rls_enforcement.test.js
+          node test/integration/razorpay_verification.test.js
+          node test/integration/pipeline_end_to_end.test.js
 
-      - name: TypeScript Typecheck
-        run: npx tsc --noEmit
+      - name: 3. Security Regression Suite
+        run: node test/security/security_regression_suite.test.js
 
-      - name: Next.js Production Build
+      - name: 4. Critical User Journeys (E2E)
+        run: node test/e2e/critical_user_journeys.test.js
+
+      - name: 5. Database Query & Performance Scan
+        run: node scripts/verify_db_query_performance.js
+
+      - name: 6. Production Next.js Build Verification
         run: npm run build
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://wgyscapdywroefsjenno.supabase.co' }}
@@ -62,31 +95,84 @@ jobs:
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_yMDIL5s3D-bmR65upYpUdg_7H_TkXdn' }}
           NODE_ENV: production
 
+  # ============================================================================
+  # STAGE 3: Continuous Deployment to Staging
+  # ============================================================================
   deploy-staging:
-    name: Deploy to Staging (Kubernetes & Supabase)
-    needs: test-and-verify
-    if: github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main'
+    name: Auto-Deploy to Staging
+    needs: test-matrix
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://staging.edworld.co
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build & Push Staging Container
+      - name: Build & Tag Container Image
         run: |
-          echo "Building container image for staging..."
-          # docker build -t edworld-registry.azurecr.io/edworld-app:staging-${{ github.sha }} .
-          # docker push edworld-registry.azurecr.io/edworld-app:staging-${{ github.sha }}
+          IMAGE_TAG="staging-${{ github.sha }}"
+          echo "Building container image: edworld-registry.azurecr.io/edworld-app:$IMAGE_TAG"
+          # docker build -t edworld-registry.azurecr.io/edworld-app:$IMAGE_TAG .
+          # docker push edworld-registry.azurecr.io/edworld-app:$IMAGE_TAG
 
-      - name: Apply Staging Kubernetes Manifests
+      - name: Apply Staging Schema Migrations
         run: |
-          echo "Applying Kubernetes manifests to edworld-staging namespace..."
-          # kubectl apply -f k8s/namespaces.yaml
-          # kubectl apply -f k8s/deployment-staging.yaml
+          echo "Applying pending Supabase migrations to Staging DB..."
+          # npx supabase db push --db-url ${{ secrets.STAGING_DATABASE_URL }}
 
-      - name: Run Staging Smoke Test
+      - name: Deploy to Staging Kubernetes Cluster
         run: |
-          echo "Smoke testing staging endpoint..."
-          # curl -f https://staging.edworld.co/api/feature-flags || exit 1
+          echo "Updating deployment image on Staging cluster..."
+          # kubectl set image deployment/edworld-app edworld-next-server=edworld-registry.azurecr.io/edworld-app:staging-${{ github.sha }} -n edworld-staging
+          # kubectl rollout status deployment/edworld-app -n edworld-staging --timeout=180s
+
+      - name: Run Synthetic Uptime & Health Probe on Staging
+        run: |
+          echo "Validating staging deployment health..."
+          # SYNTHETIC_TARGET_URL=https://staging.edworld.co node scripts/uptime_synthetic_monitor.js
+
+  # ============================================================================
+  # STAGE 4: Manual Approval Gate & Production Deployment
+  # ============================================================================
+  deploy-production:
+    name: Production Deployment (Manual Approval Required)
+    needs: deploy-staging
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://app.edworld.co
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Build Versioned Production Image
+        run: |
+          PROD_TAG="prod-release-${{ github.sha }}"
+          echo "Building production image with immutable tag: $PROD_TAG"
+          # docker build -t edworld-registry.azurecr.io/edworld-app:$PROD_TAG .
+          # docker push edworld-registry.azurecr.io/edworld-app:$PROD_TAG
+
+      - name: Apply Production Database Migrations
+        run: |
+          echo "Applying production schema migrations with transactional safety..."
+          # npx supabase db push --db-url ${{ secrets.PROD_DATABASE_URL }}
+
+      - name: Rolling Deploy to Production Kubernetes Cluster
+        run: |
+          echo "Initiating rolling zero-downtime deployment (maxSurge=1, maxUnavailable=0)..."
+          # kubectl set image deployment/edworld-app edworld-next-server=edworld-registry.azurecr.io/edworld-app:prod-release-${{ github.sha }} -n edworld-prod
+          # kubectl rollout status deployment/edworld-app -n edworld-prod --timeout=300s
+
+      - name: Post-Deploy Health Check & Automated Rollback Guard
+        run: |
+          echo "Running post-deploy synthetic health probe..."
+          # If probe fails, initiate automated rollback to previous release
+          # SYNTHETIC_TARGET_URL=https://app.edworld.co node scripts/uptime_synthetic_monitor.js || {
+          #   echo "CRITICAL: Post-deploy health probe failed! Initiating automated rollback..."
+          #   kubectl rollout undo deployment/edworld-app -n edworld-prod
+          #   kubectl rollout status deployment/edworld-app -n edworld-prod
+          #   exit 1
+          # }

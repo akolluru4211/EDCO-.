@@ -33,6 +33,7 @@ import {
   Check
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import MyraActionCard from "@/components/ai/MyraActionCard";
 
 interface ChatMessage {
   id: string;
@@ -41,6 +42,7 @@ interface ChatMessage {
   timestamp: string;
   sourceUrl?: string;
   sourceTitle?: string;
+  actionProposal?: any;
 }
 
 interface CognitiveMemoryState {
@@ -84,7 +86,7 @@ export default function MyraChatbot() {
     const initialGreeting: ChatMessage = {
       id: "initial-welcome",
       role: "assistant",
-      content: `Hello **${studentName}**! 👋 I'm **Myra**, your personal AI mentor and career companion for **${targetRole}**.\n\nI learn from everything you ask, search, and practice. I'm trained across all EdWorld Co. tools (3D Mock Interviews, STAR behavioral drills, ATS Resume Matcher, EdFix, and Aptitude) alongside deep Computer Science and System Design.\n\nWhat concept, interview drill, or code doubt can we conquer together today?`,
+      content: `Hello ${studentName}! I am Myra, your AI mentor and career guide. How can I help you today?`,
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
     setMessages([initialGreeting]);
@@ -107,13 +109,21 @@ export default function MyraChatbot() {
     }
   }, [user?.name, user?.uid, profile?.name]);
 
+  const handleSendRef = useRef<(customPrompt?: string) => Promise<void>>(null as any);
+
   // Listen for open-myra-copilot trigger from header or anywhere on platform
   useEffect(() => {
-    const handleOpenCopilot = () => {
+    const handleOpenCopilot = (e: any) => {
       setIsOpen(true);
+      if (e?.detail?.prompt) {
+        setInput(e.detail.prompt);
+        if (e.detail.autoSend) {
+          handleSendRef.current?.(e.detail.prompt);
+        }
+      }
     };
-    window.addEventListener("open-myra-copilot", handleOpenCopilot);
-    return () => window.removeEventListener("open-myra-copilot", handleOpenCopilot);
+    window.addEventListener("open-myra-copilot", handleOpenCopilot as EventListener);
+    return () => window.removeEventListener("open-myra-copilot", handleOpenCopilot as EventListener);
   }, []);
 
   useEffect(() => {
@@ -201,6 +211,7 @@ export default function MyraChatbot() {
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         sourceUrl: data.webReach?.url,
         sourceTitle: data.webReach?.title,
+        actionProposal: data.actionProposal || null,
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
@@ -229,6 +240,7 @@ export default function MyraChatbot() {
       setToolState(null);
     }
   };
+  handleSendRef.current = handleSend;
 
   const handleClearChat = () => {
     const studentName = profile?.name || user?.name || "Student";
@@ -337,24 +349,29 @@ export default function MyraChatbot() {
     setTimeout(() => setCopiedSnippetIndex(null), 2000);
   };
 
-  // Enhanced Markdown text renderer for bold, code blocks, section headers, and in-app action pills
+  // Enhanced text renderer for code blocks, section headers, and in-app action pills (with asterisks stripped)
   const renderFormattedContent = (content: string) => {
+    // Strip all asterisk formatting symbols so responses are strictly asterisk-free
+    const sanitizedContent = (content || "")
+      .replace(/\*{1,3}([^*]+)\*{1,3}/g, "$1")
+      .replace(/\*/g, "");
+
     // 1. Split code blocks (```lang ... ```)
     const codeBlockRegex = /```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g;
     const segments: Array<{ type: "code" | "text"; content: string; lang?: string }> = [];
     let lastIndex = 0;
     let match;
 
-    while ((match = codeBlockRegex.exec(content)) !== null) {
+    while ((match = codeBlockRegex.exec(sanitizedContent)) !== null) {
       if (match.index > lastIndex) {
-        segments.push({ type: "text", content: content.slice(lastIndex, match.index) });
+        segments.push({ type: "text", content: sanitizedContent.slice(lastIndex, match.index) });
       }
       segments.push({ type: "code", lang: match[1] || "code", content: match[2].trim() });
       lastIndex = match.index + match[0].length;
     }
 
-    if (lastIndex < content.length) {
-      segments.push({ type: "text", content: content.slice(lastIndex) });
+    if (lastIndex < sanitizedContent.length) {
+      segments.push({ type: "text", content: sanitizedContent.slice(lastIndex) });
     }
 
     return segments.map((seg, sIdx) => {
@@ -678,6 +695,13 @@ export default function MyraChatbot() {
                   <div className="whitespace-pre-wrap break-words">
                     {renderFormattedContent(msg.content)}
                   </div>
+
+                  {msg.actionProposal && (
+                    <MyraActionCard
+                      proposal={msg.actionProposal}
+                      userId={user?.uid}
+                    />
+                  )}
 
                   {msg.sourceUrl && (
                     <div className="mt-2 pt-2 border-t border-zinc-200 text-[10px] text-zinc-500 flex items-center gap-1">

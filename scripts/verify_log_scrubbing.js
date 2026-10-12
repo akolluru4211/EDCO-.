@@ -15,7 +15,13 @@ const SENSITIVE_KEYS = new Set([
   "journal_content",
   "transcript",
   "direct_message_content",
-  "video_url"
+  "video_url",
+  "resume_snapshot",
+  "resume_content",
+  "full_resume",
+  "interview_transcript",
+  "raw_transcript",
+  "cv_text"
 ]);
 
 function scrubObject(obj) {
